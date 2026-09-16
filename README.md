@@ -21,19 +21,21 @@ three agents: there is no central orchestrator or central topology database.
 Each agent holds a replica of the complete topology, node relationships, and
 approved configuration state contributed by every domain.
 
-Read [the domain-agent architecture](docs/domain-agent-architecture.md) for
-the complete operating model, DSO LangGraphs, topology/configuration federation,
-swarm optimization, game-theoretic negotiation and cost model, domain closed
-loops, continual learning, message protocol, safety boundaries, and
-implementation milestones.
+Start with the [system overview](docs/system-overview.md) for a first-read
+explanation of the complete federation. The [domain-agent architecture](docs/domain-agent-architecture.md)
+contains the detailed operating model, DSO LangGraphs, topology/configuration
+federation, swarm optimization, game-theoretic negotiation and cost model,
+domain closed loops, continual learning, message protocol, safety boundaries,
+and implementation milestones.
 
 ## Core rule
 
 Each agent's local service orchestrator may manage its local service lifecycle,
 policy gates, reservation, execution request, and verification evidence. It
 cannot issue an arbitrary device configuration or authorize another domain. A
-domain controller accepts only a named, policy-approved, locally authorized
-operation after its owning agent has validated the negotiated contract.
+domain Controller MCP Server accepts only a typed, policy-approved, locally
+authorized configuration transaction after its owning agent has validated the
+negotiated contract.
 
 ## First target scenario
 

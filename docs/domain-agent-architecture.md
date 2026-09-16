@@ -176,6 +176,123 @@ flowchart LR
     A --> L[Outcome trace and continual learning]
 ```
 
+## A2A federation substrate
+
+A2A is the required base protocol for every DSO-to-DSO interaction. The system
+does not define a parallel peer REST protocol for topology, negotiation, swarm,
+assurance, or learning. Each DSO publishes an A2A Agent Card, discovers peers
+through their cards, and exchanges typed payloads through A2A messages, tasks,
+and artifacts over mutually authenticated HTTPS.
+
+```mermaid
+flowchart LR
+    PA[Packet A DSO] -->|A2A Agent Card\nmessage:send\ntask and artifact| O[Optical DSO]
+    O -->|A2A Agent Card\nmessage:send\ntask and artifact| PB[Packet B DSO]
+    PA -->|A2A Agent Card\nmessage:send\ntask and artifact| PB
+    PA -->|Local MCP client| CA[Packet A Controller MCP Server]
+    O -->|Local MCP client| CO[Optical Controller MCP Server]
+    PB -->|Local MCP client| CB[Packet B Controller MCP Server]
+```
+
+| A2A facility | Role in this architecture |
+|---|---|
+| Agent Card | Peer discovery, DSO identity, supported schema versions, domain scope, authentication requirements, and advertised skills. |
+| `message:send` | Delivery of every typed peer request, offer, status event, or synchronization message. |
+| Task/context IDs | Bind related topology, service, incident, bargaining, reservation, and learning exchanges to one correlation chain. |
+| Artifacts | Carry validated structured results such as topology snapshots/deltas, candidate sets, signed offers, receipts, verification summaries, and learning releases. |
+| A2A extensions | Declare the domain-specific typed contracts below without changing A2A core transport and task semantics. |
+
+The following A2A extensions define the federation payloads:
+
+| Extension | A2A artifacts/messages it carries |
+|---|---|
+| `topology-federation/v1` | `TOPOLOGY_DIGEST`, `TOPOLOGY_SNAPSHOT`, `TOPOLOGY_DELTA`, `TOPOLOGY_SYNC_ACK`, and withdrawal records. |
+| `service-contract/v1` | Intent-derived contracts, offers, counteroffers, acceptances, coordination leases, reservations, commits, rollbacks, and verification summaries. |
+| `swarm-optimization/v1` | `SWARM_QUALITY_SIGNAL`, `SWARM_CANDIDATE`, and `SWARM_FEEDBACK`. |
+| `continual-learning/v1` | Peer outcome summaries, evidence references, and signed learning releases/revocations. |
+
+The controller interfaces remain local to their owning DSO and are not A2A peer
+interfaces. A2A enables an agent to ask a peer to reason, reserve, accept, or
+verify; it never gives that peer direct controller access. mTLS authenticates
+the transport connection, while each typed A2A artifact also carries its owner,
+schema version, correlation ID, graph/contract revision, expiry, digest, and
+signature.
+
+## Local SDN controller MCP servers
+
+Each networking domain exposes one **Controller MCP Server** in its own trust
+boundary. The owning AI agent/DSO uses it as its only controller integration:
+to observe state, prepare an approved configuration change, commit it, roll it
+back, and retrieve verification evidence. Packet A cannot call the Optical or
+Packet B MCP Server; the Optical DSO cannot call a packet-domain MCP Server.
+
+```mermaid
+flowchart LR
+    AI[Domain AI agent\nreasoning and candidate proposal] --> DSO[Domain Service Orchestrator\npolicy, bargaining, transaction gate]
+    DSO -->|MCP tool call| MCP[Local Controller MCP Server]
+    MCP --> SDN[Local SDN controller]
+    SDN --> NE[Owned network elements]
+    NE --> SDN
+    SDN --> MCP
+    MCP -->|MCP tool result| DSO
+    DSO -->|signed A2A topology or service update| PEER[Peer DSOs]
+```
+
+The Controller MCP Server exposes typed tools rather than a generic shell or
+unbounded configuration channel:
+
+| MCP tool | Purpose |
+|---|---|
+| `get_topology` / `get_inventory` | Return the domain's current nodes, interfaces, links, capabilities, and controller revision for topology federation. |
+| `get_configuration` / `get_telemetry` | Return configuration state and measured health for the agent's read-only reasoning and closed loop. |
+| `validate_change` | Validate a named configuration patch or resource request against controller inventory, schema, policy, and current state without changing the network. |
+| `reserve_resources` | Create an idempotent, time-bound local reservation for a negotiated candidate. |
+| `prepare_change` | Persist a controller-validated transaction and rollback information while leaving traffic unchanged. |
+| `commit_change` | Apply the prepared packet, optical, or QoS configuration transaction to the local SDN controller. |
+| `rollback_change` / `release_reservation` | Compensate a failed or expired transaction using its local receipt. |
+| `get_transaction` / `verify_change` | Return durable controller receipts and post-change operational evidence. |
+
+Packet-domain MCP servers map these tools to their SDN controller's routing,
+VPN, QoS, interface, and traffic-engineering APIs, such as typed OpenConfig or
+controller-native models. The Optical MCP Server maps them to its transport,
+transponder, ROADM, channel, spectrum, and QoT APIs, such as typed T-API,
+OpenConfig optical models, or controller-native models.
+
+The AI agent can therefore cause a network configuration change through MCP,
+but only through this transaction path:
+
+```mermaid
+sequenceDiagram
+    participant A as AI agent
+    participant D as Owning DSO
+    participant M as Local Controller MCP Server
+    participant C as Local SDN controller
+
+    A->>D: Candidate and rationale
+    D->>D: Verify evidence, policy, contract, graph, and peer agreement
+    D->>M: validate_change
+    M->>C: Validate typed configuration transaction
+    C-->>M: Validation result
+    M-->>D: Feasible transaction and rollback reference
+    D->>M: reserve_resources / prepare_change
+    M->>C: Reserve and prepare
+    C-->>M: Durable reservation receipt
+    M-->>D: Receipt
+    D->>D: Recheck agreement and reservation barrier
+    D->>M: commit_change
+    M->>C: Apply configuration transaction
+    C-->>M: Controller receipt and observed state
+    M-->>D: verify_change result
+```
+
+Every mutating MCP call is bound to the local domain ID, service/incident
+correlation ID, graph and contract revisions, candidate digest, idempotency key,
+expiry, and caller workload identity. The DSO's `controller_transaction` node
+uses these tools only after candidate verification, game-theoretic agreement,
+reservation, and commit authorization. A successful MCP tool call proves only
+that local configuration completed; the DSO still requires fresh service
+verification before declaring the end-to-end service healthy.
+
 ## Federated topology and configuration exchange
 
 Use OSPF's link-state database as the mental model: every peer learns a
@@ -298,6 +415,58 @@ services, alternative routes, shared-risk links, and configuration compatibility
 before it negotiates. The graph is read-only outside the originating domain;
 topology visibility never changes controller-write authority.
 
+## Database ownership and replication
+
+Each networking domain operates its own DSO database. There is no single shared
+database connection and no central writer. The DSOs synchronize selected state
+through signed A2A messages, so every database contains a complete logical view
+of the multi-domain topology while the originating domain remains authoritative
+for its own records.
+
+```mermaid
+flowchart LR
+    subgraph DA[Packet A domain]
+        ADB[(Packet A DSO database)]
+        AOWN[Authoritative Packet A\ntopology, configuration,\ntelemetry, receipts, policy]
+        ADB --- AOWN
+    end
+    subgraph DO[Optical domain]
+        ODB[(Optical DSO database)]
+        OOWN[Authoritative Optical\ntopology, configuration,\ntelemetry, receipts, policy]
+        ODB --- OOWN
+    end
+    subgraph DB[Packet B domain]
+        BDB[(Packet B DSO database)]
+        BOWN[Authoritative Packet B\ntopology, configuration,\ntelemetry, receipts, policy]
+        BDB --- BOWN
+    end
+    ADB <-->|Signed topology, contracts,\nquality signals, learning releases| ODB
+    ODB <-->|Signed topology, contracts,\nquality signals, learning releases| BDB
+    ADB <-->|Signed topology, contracts,\nquality signals, learning releases| BDB
+```
+
+Every DSO database has these logical partitions:
+
+| Partition | Contents | Writer |
+|---|---|---|
+| Local authoritative state | The domain's source topology/configuration records, raw telemetry, local policy, private cost model, controller credentials, and local controller receipts | Its owning DSO only |
+| Federated topology replica | Signed nodes, interfaces, links, relationships, and approved configuration records from all three domains, including the owner's own records | Owner writes; peer DSOs apply verified replicas only |
+| Shared contract replica | Signed service-contract revisions, offers, acceptances, incident coordination leases, reservation summaries, and verification summaries | The originating signer writes each record; every DSO verifies and stores it |
+| Swarm and learning replica | Signed quality signals, candidate summaries, verified feedback, and approved learning releases | The origin DSO writes; peers accept or reject after verification |
+| Local audit journal | Full local evidence, policy decisions, controller request/response details, and immutable trace links | Its owning DSO only |
+
+The result is **logical sharing with physical separation**. For example, the
+Optical DSO publishes a signed configuration record for a channel and every DSO
+stores the same read-only replica. Only the Optical DSO can revise that channel,
+ask its optical controller to reserve it, or commit a change.
+
+Topology replicas converge eventually through origin sequence numbers, signed
+snapshots, deltas, and graph digests. Service-changing operations demand a
+stronger boundary: each DSO must have the same contract revision, valid current
+graph/configuration digest, and valid local reservation before commit. The
+distributed saga and signed receipts provide cross-domain coordination; they do
+not require a distributed ACID transaction or a shared database.
+
 ## DSO LangGraph design
 
 Each DSO runs three LangGraphs over one durable local state store. Separating
@@ -310,7 +479,8 @@ flowchart LR
     T[Topology federation graph] --> G[(DSO durable state\nFederated Topology Graph\nservice and reservation journal)]
     S[Service lifecycle graph] --> G
     A[Assurance and recovery graph] --> G
-    G --> C[Local controller]
+    G --> M[Local Controller MCP Server]
+    M --> C[Local SDN controller]
     G <--> P[Peer DSOs]
 ```
 
@@ -357,7 +527,7 @@ same bounded lifecycle in every domain.
 | `local_reservation` | Ask the local controller to create an idempotent, time-bound reservation for its named operation. |
 | `reservation_barrier` | Wait for valid reservation receipts from every affected DSO; route to expiry or compensation on rejection/timeout. |
 | `commit_authorization_gate` | Recheck local policy, graph freshness, contract revision, reservation validity, and controller state immediately before commit. |
-| `controller_transaction` | Request the local controller's named commit or compensating rollback; persist the local receipt. |
+| `controller_transaction` | Use the local Controller MCP Server to commit or roll back the named transaction, then persist the returned local receipt. |
 | `service_verification` | Evaluate local and border measurements, then exchange signed verification summaries with the peers. |
 | `service_outcome_journal` | Record `VERIFIED`, `FAILED`, `EXPIRED`, or `ROLLED_BACK`, notify the initiating DSO, and create an immutable decision trace. |
 
@@ -434,7 +604,7 @@ flowchart LR
 | Monitor | Read domain-scoped telemetry, controller state, service probes, configuration state, and signed peer summaries. Packet DSOs observe loss, latency, queues, utilization, and route state; the Optical DSO observes spectrum, QoT/gOSNR, transponder, and ROADM state. |
 | Analyze | Normalize evidence, refresh the federated graph, assess the local contribution to every active service, correlate local changes with peer evidence, and classify health, degradation, or risk. |
 | Plan | Traverse the full topology graph, generate controller-feasible local candidates, calculate local QoS/cost/risk utility, and determine whether the action can affect another domain's service. |
-| Execute | For an isolated local action, use the local policy gate. For an action affecting a shared service, complete bargaining and reservation with every affected DSO first. The owning DSO alone invokes its controller's named prepare/commit/rollback operation. |
+| Execute | For an isolated local action, use the local policy gate. For an action affecting a shared service, complete bargaining and reservation with every affected DSO first. The owning DSO alone invokes its Controller MCP Server's named prepare/commit/rollback operation. |
 | Verify | Collect fresh local and border measurements, exchange signed verification summaries, and mark the contract healthy only when its applicable end-to-end evidence satisfies the agreed SLA. |
 | Knowledge | Persist topology/configuration revisions, service contracts, evidence, incidents, offers, reservations, controller receipts, outcomes, and approved learning releases. |
 
@@ -782,10 +952,10 @@ before it can be committed.
 
 ## Negotiation protocol
 
-Use A2A HTTP+JSON (or an equivalent typed HTTPS protocol) for peer discovery
-and message delivery. Each agent publishes an Agent Card describing its
-identity, supported contract version, border capabilities, and endpoint. Use
-mTLS workload identities and signed messages in a multi-operator deployment.
+Use A2A HTTP+JSON for peer discovery and every DSO-to-DSO message. Each agent
+publishes an Agent Card describing its identity, supported contract version,
+border capabilities, A2A extensions, and endpoint. Use mTLS workload identities
+and signed artifacts in a multi-operator deployment.
 
 ```mermaid
 sequenceDiagram
