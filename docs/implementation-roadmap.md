@@ -3,8 +3,18 @@
 Build this as a sequence of AI DSO federation capabilities. Deterministic policy,
 graph, protocol, and controller-transaction nodes establish the first
 cross-domain service. Conditional LLM reasoning, swarm optimization, bargaining,
-and continual learning consume this proven state and never replace its safety
+and continual learning consume this validated state and never replace its safety
 gates.
+
+This document is an implementation and evaluation plan, not implementation
+evidence. For the Elsevier *Computer Networks* paper, prioritize the
+[research protocol requirements](domain-agent-architecture.md#research-protocol-requirements):
+agreements tied to network dependencies, evidence-grounded reasoning, and
+coordinated recovery across independent packet and optical owners. The
+[literature assessment](related-work-and-novelty.md) treats these as candidate
+contributions that still require comparison and validation. Swarm optimization
+and learning remain optional extensions rather than prerequisites for the core
+paper experiment.
 
 ```mermaid
 flowchart LR
@@ -14,8 +24,9 @@ flowchart LR
     P3 --> P4[4. Deterministic service saga]
     P4 --> P5[5. Closed-loop assurance]
     P5 --> P6[6. RAG, GraphRAG, and safe LLM context]
-    P6 --> P7[7. Swarm and bargaining]
-    P7 --> P8[8. Continual learning]
+    P6 --> E[Core protocol and LLM comparison]
+    E -.-> P7[7. Optional optimization experiments]
+    P7 -.-> P8[8. Optional continual learning]
 ```
 
 ## Technology baseline
@@ -52,13 +63,27 @@ Define versioned Pydantic/JSON Schema models before building services:
 - MCP tool input/output models and durable controller receipt models.
 - Intent, QoS budget, cost quote, utility, candidate, and rollback models.
 
+Bind the agreement to the intent/contract revision, participant set, candidate
+digest, topology/configuration dependencies, evidence windows, policy versions,
+reservation conditions, coordination epoch, and operation idempotency keys.
+Define local versus aggregate service states, including unknown, partially
+applied, compensating, degraded, and unresolved outcomes. Record which controller
+primitives can enforce execution preconditions and which only approximate them.
+
+State the failure model and disclosure assumptions: cooperating authenticated
+owners, eventual topology replication, complete approved-topology sharing, and
+delayed, duplicated, reordered, or lost messages. Specify restart persistence,
+clock/lease assumptions, and peer rules for replacing a coordinator. Select the
+properties to check before designing fault experiments.
+
 Create one small deterministic topology: Packet A → Optical → Packet B, two
 candidate packet paths in each packet domain, and at least two optical resource
 options. Supply fixed telemetry fixtures for healthy, Packet A failure, Optical
 QoT degradation, Packet B failure, and a stale topology revision.
 
-**Exit criterion:** Every message and controller action can be validated from
-schema alone, with canonical digests and correlation IDs.
+**Exit criterion:** Message structure and canonical digests are validated by
+schema checks; authorization, feasibility, and state-transition rules have
+separate specifications. Schema validation alone does not establish correctness.
 
 ## Phase 1 — independent domain foundations
 
@@ -92,11 +117,20 @@ get_topology / get_telemetry
 ```
 
 Every mutating MCP request must include domain ID, correlation ID, candidate
-digest, graph/contract revision, idempotency key, expiry, and caller identity.
-Persist an immutable receipt before the tool returns success.
+digest, graph/contract revision, expected resource/configuration conditions,
+reservation reference, coordination epoch, idempotency key, expiry, and caller
+identity. Persist distinct acceptance and application receipts. Add
+`get_transaction` to reconcile a lost response without blindly repeating a write.
 
-**Exit criterion:** Repeated commits are idempotent; an interrupted transaction
-can be reconciled from its receipt; rollback restores the known before-state.
+Enforce preconditions at controller acceptance or through an equivalent protected
+reservation, not only through an earlier DSO read. If the real adapter lacks this
+primitive, retain that limitation in the capability profile and experiments.
+
+**Exit criterion:** Retries do not duplicate effects; altered payloads cannot
+reuse a key; superseded epochs and invalid resource conditions are rejected.
+Inject a change between validation and acceptance. Demonstrate receipt
+reconciliation and both successful and failed compensation; unresolved outcomes
+survive restart instead of being reported as a restored before-state.
 
 ## Phase 3 — A2A topology federation
 
@@ -122,6 +156,12 @@ sequenceDiagram
 snapshot and after a node, link, or configuration delta. Wrong-owner, replayed,
 expired, and malformed records are rejected.
 
+Also test delayed/out-of-order advertisements, tombstones, owner restart, a
+cross-domain link with inconsistent endpoint advertisements, and Neo4j projection
+lag. Equal digests identify equal replicas at an observed point; they do not
+establish that no newer remote state exists. No service mutation may rely solely
+on an expired or unverified remote dependency.
+
 ## Phase 4 — deterministic cross-domain service saga
 
 Implement the service lifecycle LangGraph without model-driven reasoning. It
@@ -138,8 +178,10 @@ correlation ID but cannot issue a peer controller call.
 - Successful three-domain provisioning and endpoint verification.
 - A remote policy rejection with no controller change.
 - Reservation expiry and clean release.
-- A commit failure followed by safe rollback/reconciliation.
+- Partial application followed by supported compensation or an explicit unresolved state.
 - Rejection of a plan based on a stale graph or contract revision.
+- Lost commit acknowledgements followed by receipt reconciliation and no duplicate effects.
+- A failed compensation and a DSO restart while a recovery task is pending.
 
 ## Phase 5 — closed-loop assurance
 
@@ -147,7 +189,9 @@ Add periodic and event-driven assurance workflows. Normalize packet, optical,
 controller, and endpoint observations into typed evidence bound to graph and
 configuration revisions. Implement health evaluation, incident deduplication,
 impact analysis, a short-lived coordination lease, cooldowns, hysteresis, and
-action-rate limits.
+action-rate limits. Bind incident coordination to durable epochs and require
+controller-side rejection of superseded requests. Specify how participants grant
+and replace a coordinator; a timeout lease alone is not evidence of exclusion.
 
 The initial recovery catalog should contain only named, reversible actions, such
 as switching Packet A to a prevalidated alternate path or changing a packet QoS
@@ -157,6 +201,11 @@ saga.
 **Exit criterion:** Inject Packet A, Optical, Packet B, joint, stale-state, and
 agent-outage scenarios. Record SLA violation duration, recovery success,
 rollback success, and conflicting-action prevention.
+
+Include simultaneous alarms, a partitioned old coordinator, and reconnection
+after expiry. Define which independent local protection actions remain permitted
+while a new shared-service change waits for required peer acknowledgements.
+Treat exclusion and progress as separate properties with explicit assumptions.
 
 ## Phase 6 — RAG and GraphRAG
 
@@ -174,12 +223,20 @@ ranking. The assembled LLM context must include the canonical intent or event,
 fresh evidence, feasible candidate set, peer state, hard constraints, and
 node-specific response schema. The LLM cannot call MCP or introduce a candidate.
 
+Record absent/conflicting evidence rather than assuming perfect context.
+Connect retrieved revisions and evidence IDs to the candidate and execution
+preconditions. Compare the same protocol with LLM nodes disabled; a benefit caused
+only by controller checks must be attributed to those checks rather than to AI.
+
 **Exit criterion:** The agent can answer bounded topology-impact and procedure
 questions with traceable sources, and the grounding gate rejects stale or
 unsupported context. An LLM timeout or invalid response follows a deterministic
 fallback without blocking the closed loop.
 
-## Phase 7 — swarm optimization and game-theoretic bargaining
+Required protocol dependencies may still block the dependent change. An LLM
+fallback does not bypass missing evidence or permit an unapproved operation.
+
+## Phase 7 — optional swarm and bargaining comparisons
 
 Add bounded ACO scouts over the federated graph. Start with a fixed number of
 paths and fixed quality weights. Feed verified path outcomes into time-decaying
@@ -187,16 +244,25 @@ quality/pheromone signals. Add PSO only for clearly continuous choices such as
 bandwidth allocation or queue-share tuning.
 
 Next, calculate each domain's local utility, disagreement value, and cost quote.
-Implement offer, counteroffer, acceptance, and rejection using the
+Extend the existing offer, counteroffer, acceptance, and rejection protocol using the
 `service-contract/v1` A2A extension. Select an agreement only after feasibility,
 budget, individual-rationality, and matching-signature checks; weighted Nash
 bargaining ranks the admissible contracts.
 
-**Exit criterion:** Compare fixed routing, independently greedy selection, and
-swarm-plus-bargaining across the same failure and load scenarios. Report SLA,
-cost, convergence rounds, rejected offers, and selected utility.
+For the cooperative prototype, disclose signed candidate-specific utility gains,
+model versions, and agreed normalization/weights; retain underlying coefficients
+locally. Record the information disclosed and assume neither truthful strategic
+behavior nor zero economic leakage. Define no-agreement and score tie-break
+outcomes. Keep the numerical game-theory calculation independent of LLM calls.
 
-## Phase 8 — continual learning
+**Exit criterion:** Compare constrained K-shortest candidate search with ACO
+under matched compute budgets and repeated seeds. Compare greedy acceptance with
+Nash selection over the same feasible candidates. Use a tractable exact solver
+on small instances to measure search gaps. Report service outcomes, cost,
+negotiation rounds, utility gains, and overhead without conflating search and
+bargaining effects.
+
+## Phase 8 — optional continual learning
 
 Make terminal decision traces the only input to the asynchronous learning graph.
 Implement comparable-trace retrieval, novelty/provenance gates, offline replay
@@ -208,6 +274,11 @@ and reproducible replay evidence.
 configuration revisions, reproducible from retained traces, and automatically
 ignored when stale or revoked.
 
+Compare fixed policies with each permitted learning level on held-out scenarios.
+Separate incident-memory retrieval from parameter updates and model training.
+The deployment is a federation of domains; federated model training is a
+different mechanism and is not implied.
+
 ## Recommended first demonstration
 
 The first end-to-end demonstration should use no paid model provider and no live
@@ -216,3 +287,67 @@ convergence, an approved three-domain service contract, reservations and MCP
 commits, endpoint verification, an injected failure, closed-loop recovery, and
 a complete auditable trace. This validates the federation before optimization
 or learning adds complexity.
+
+## Journal evaluation plan
+
+Use this plan to test the candidate contributions. It does not promise favorable
+results. The initial demonstration establishes feasibility; the journal study
+must explain what the proposed mechanisms add beyond existing orchestration.
+
+### Baselines and ablations
+
+| Comparison | Controlled variables and research question |
+| --- | --- |
+| Same federation with all three LLM nodes disabled | Keep graph, evidence, protocol, candidates, tools, and policies matched. Which tasks benefit from generative reasoning? |
+| Central ACTN-style orchestrator | Match information, resources, algorithms, and failure scenarios. What does federation change in service outcomes, delay, availability, and overhead? |
+| Established distributed orchestration | Compare a reproducible implementation or clearly labeled adaptation of relevant prior work. Do not label an inspired baseline as an exact reproduction. |
+| Conventional multi-agent LLM workflow | Match tools, evidence, and model budget. Does selective reasoning improve cost or task completion? |
+| Document RAG, graph retrieval, and graph retrieval with freshness/dependency checks | Separate diagnosis/recommendation quality from rejection of invalid actions by the controller. |
+| Whole-graph versus dependency-scoped invalidation | Later protocol refinement: measure unnecessary renegotiations and verify that the dependency set is complete before accepting unrelated changes. |
+| K-shortest versus ACO; greedy versus Nash | Separate search quality from agreement quality; use matched candidate sets or computational budgets as appropriate. |
+| Fixed policies versus learning | Optional held-out evaluation with explicit regression and promotion criteria. |
+
+For the first paper, prioritize the same-protocol/no-LLM comparison, a meaningful
+orchestration baseline, and fault experiments for the proposed execution protocol.
+Add optimization and learning claims only when their separate comparisons justify
+them. New controller protection is itself a protocol variable; evaluate it with
+and without LLM advice to avoid attributing its effects to the model.
+
+### Experiment matrix and measurements
+
+Begin with three packet–optical–packet domains. Vary domains, nodes per domain,
+concurrent intents, load, advertisement delay, controller delay, and change rate.
+Counts such as 5, 10, and 20 domains are proposed experiment points, not claimed
+supported scale. Record whether packet forwarding is emulated, optical behavior
+is simulated, or actual equipment is measured. State optical feasibility limits.
+
+| Scenario family | Measurements |
+| --- | --- |
+| Admission and healthy operation | Verified service success, rejection causes, provisioning latency, resource cost, and per-domain utility gains. |
+| Optical impairment, packet congestion, and simultaneous incidents | SLA violation duration, recovery success and latency, action conflicts, and regressions in unaffected services. |
+| Stale replicas, projection lag, and changes between validation and acceptance | Invalidated decisions, rejected stale operations, unnecessary renegotiations, and unsupported recommendations. |
+| Lost/duplicate messages, partial commits, failed compensation, and restart | Duplicate effects, leaked reservations, unresolved transactions, reconciliation time, and durable recovery continuity. |
+| Partitions and coordinator replacement | Conflicting writers, epoch rejections, actions deferred for missing approval, and progress after reconnection. |
+| Incorrect or unavailable LLM output | Fallback outcome, diagnosis quality, model calls/tokens/cost, and end-to-end completion. |
+| Scaling and repeated state changes | A2A messages/bytes, replica lag/storage, graph queries, controller calls, CPU/memory, and tail latency. |
+
+Use paired traffic/failure traces, repeated runs, reported random seeds, confidence
+intervals, and recorded model/prompt/tool versions. Publish measured median and
+tail behavior; do not infer tail reliability from too few samples. Preserve raw
+outcome classifications, including failed or unresolved trials.
+
+### Claim readiness
+
+| Candidate claim | Evidence required before using it in the paper |
+| --- | --- |
+| Execution respects local authorization and state dependencies | Specified invariants and controller capabilities, protocol analysis/model checking where appropriate, and injected race/failure tests. |
+| Evidence-grounded reasoning improves decisions | Matched retrieval and no-LLM comparisons showing an attributable effect. |
+| Recovery is coordinated across owners | Explicit epoch/replacement rules plus concurrent-incident, partition, partial-completion, and restart experiments. |
+| Economic allocation improves | Defined units, disclosed inputs, disagreement outcomes, fairness measures, and comparison with simpler selection. |
+| Swarm or learning is beneficial | Separate improvements under fair budgets and held-out cases, including overhead and regressions. |
+
+State assumptions for every guarantee. Zero failures in a finite experiment is
+not a proof; a model-checked property applies only within the modeled semantics.
+Compare the final protocol in detail with NSI, SENSE, ACTN, and consistent network
+updates, then refresh the closest papers before submission. Full topology privacy,
+atomic physical activation, and automatic strategy-proofness are not claimed.

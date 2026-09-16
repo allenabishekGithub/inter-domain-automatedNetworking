@@ -3,21 +3,29 @@
 ## Purpose and boundary
 
 This repository focuses on collaboration among three agents owned by different
-network operators. Each agent contains a **Domain Service Orchestrator (DSO)**:
-a local instance of the service-orchestrator capabilities needed to handle its
-part of a cross-domain service.
+network operators. Each agent **is a Domain Service Orchestrator (DSO)**: one
+persistent runtime with the capabilities needed to handle its part of a
+cross-domain service.
 
-| Domain | Agent + DSO owns | Local controller owns |
+This is a proposed architecture for an Elsevier *Computer Networks* research
+paper. The [literature assessment](related-work-and-novelty.md) motivates the
+protocol requirements below; it does not establish novelty or measured results.
+
+| Domain | AI DSO owns | Local controller owns |
 |---|---|---|
 | Packet A | Local ingress/egress view, packet-path candidates, QoS contribution, policy and local approval | Router, VPN/SR/MPLS/EVPN, queue and shaping changes |
 | Optical | Border attachments, transport/spectrum candidates, QoT contribution, policy and local approval | Transponder, OTN, ROADM and spectrum changes |
 | Packet B | Local ingress/egress view, packet-path candidates, QoS contribution, policy and local approval | Router, VPN/SR/MPLS/EVPN, queue and shaping changes |
 
 The design does **not** assume a central entity authorizes every controller.
-Instead, each DSO owns an equal replica of the complete federated topology:
+Instead, each DSO maintains an eventually convergent replica of the complete federated topology:
 every node, interface, link, relationship, and approved configuration state
 advertised by the three domains. Each DSO remains the only authority that can
 ask its own controller to reserve or activate a resource.
+
+Full topology disclosure is an explicit federation assumption. Separate databases
+and credentials preserve local authority; they do not make shared topology or
+approved configuration confidential from peers.
 
 This takes the useful parts of the local `AgenticAI-packet-optical-qos-platform`
 reference—scoped agents, typed candidate messages, direct agent-to-agent
@@ -28,9 +36,9 @@ the central service-orchestrator responsibilities across the three domains.
 
 ```mermaid
 flowchart LR
-    U[Authorized user] --> A[Packet A agent + DSO\nintent ingress]
-    A <-->|A2A: contracts + topology sync| O[Optical agent + DSO]
-    O <-->|A2A: contracts + topology sync| B[Packet B agent + DSO]
+    U[Authorized user] --> A[Packet A AI DSO\nintent ingress]
+    A <-->|A2A: contracts + topology sync| O[Optical AI DSO]
+    O <-->|A2A: contracts + topology sync| B[Packet B AI DSO]
     A <-->|A2A: topology sync| B
     A --> CA[Packet A controller]
     O --> CO[Optical controller]
@@ -107,19 +115,20 @@ that commands three subordinate domains.
    and configuration snapshots. Every DSO then holds the full multi-domain graph:
    nodes, interfaces, packet and optical links, node relationships, capacities,
    operational state, and approved configuration revisions. Signed deltas keep
-   all replicas current.
+   replicas convergent when communication resumes; temporary revision differences
+   are expected and must be checked during service decisions.
 2. **Intent admission.** An authorized user submits a desired service outcome to
    any DSO. The receiving DSO becomes the initiating DSO for that correlation ID.
    It authenticates the user, checks local entitlement, records the intent, and
    creates the initial versioned `ServiceContract`.
-3. **Path and QoS planning.** Every affected DSO uses the same federated graph
+3. **Path and QoS planning.** Every affected DSO uses an agreed graph snapshot
    to validate end-to-end continuity and configuration compatibility. The
    initiating DSO derives bandwidth, latency, loss, availability, deadline, and
    budget requirements; each domain derives the contribution it can make.
 4. **Local candidate generation.** Each DSO creates only local,
    controller-feasible candidates. Packet DSOs may offer packet paths, QoS
    profiles, and border attachments. The Optical DSO may offer a transport path,
-   wavelength/spectrum allocation, and transponder settings. Bounded swarm
+   wavelength/spectrum allocation, and transponder settings. Optional bounded swarm
    scouts explore the shared graph to discover and rank diverse alternatives.
    AI may explain or rank these candidates, but deterministic code checks their
    evidence, freshness, topology/configuration compatibility, and policy.
@@ -131,19 +140,19 @@ that commands three subordinate domains.
    its fallback. Weighted Nash bargaining selects among such contracts.
 6. **Reservation and commit.** Each DSO reserves its own named resources through
    its own controller. When every reservation receipt is valid, each DSO rechecks
-   policy and current graph/configuration state, then commits its local action.
-   This is a distributed saga: a failure, timeout, stale plan, or failed
-   verification causes reservation expiry or compensating rollback, never a
-   cross-domain controller write.
+   policy and decision state; its controller conditionally accepts the local
+   action. Failures trigger receipt reconciliation, resource release, or
+   supported compensation. Partial and unresolved outcomes remain explicit.
 7. **Service verification.** The DSOs collect fresh endpoint, border, packet,
    and optical measurements. They exchange signed verification summaries and
-   mark the service active only when the applicable end-to-end SLA is proven.
+   mark the service active only when applicable checks pass for the defined
+   observation window; assurance continues for the service lifetime.
 8. **Continuous assurance.** Every DSO independently runs a closed loop that
    monitors, analyzes, plans, acts locally, verifies, and records the result.
    A local action affecting a shared service returns to bargaining before commit.
-   A short-lived coordination lease prevents three simultaneous loops from
-   issuing conflicting negotiations for the same incident.
-9. **Continual learning.** Terminal outcomes feed each DSO's asynchronous
+   A lease organizes the conversation; durable epochs and controller enforcement
+   are required to reject superseded recovery actions.
+9. **Optional continual learning.** Terminal outcomes feed each DSO's asynchronous
    learning graph. It learns calibrated QoS, risk, cost, and ranking estimates
    from evidence and signed peer outcomes. Learning is observational, advisory,
    or review-gated; it cannot create a controller action or bypass the service
@@ -164,15 +173,15 @@ change its controller-managed resources.
 flowchart LR
     I[Intent] --> V[Validate identity and policy]
     V --> G[Read synchronized topology and configuration graph]
-    G --> W[Swarm explores feasible alternatives]
+    G --> W[Constrained search with optional swarm exploration]
     W --> C[Create local candidates and cost quotes]
     C --> B[Nash bargaining among DSOs]
     B --> R[Time-bound local reservations]
     R -->|All valid| X[Each DSO commits through its controller]
     R -->|Any reject or expiry| F[Release or compensate]
     X --> Q[Endpoint and border verification]
-    Q -->|SLA proven| A[Active service and assurance loop]
-    Q -->|SLA not proven| F
+    Q -->|Observation checks pass| A[Active service and assurance loop]
+    Q -->|Checks fail or evidence missing| F
     A --> L[Outcome trace and continual learning]
 ```
 
@@ -249,7 +258,7 @@ unbounded configuration channel:
 | `validate_change` | Validate a named configuration patch or resource request against controller inventory, schema, policy, and current state without changing the network. |
 | `reserve_resources` | Create an idempotent, time-bound local reservation for a negotiated candidate. |
 | `prepare_change` | Persist a controller-validated transaction and rollback information while leaving traffic unchanged. |
-| `commit_change` | Apply the prepared packet, optical, or QoS configuration transaction to the local SDN controller. |
+| `commit_change` | Accept a prepared local change only if its controller-enforced resource conditions, reservation, authorization, and coordination epoch remain valid; track application separately. |
 | `rollback_change` / `release_reservation` | Compensate a failed or expired transaction using its local receipt. |
 | `get_transaction` / `verify_change` | Return durable controller receipts and post-change operational evidence. |
 
@@ -264,12 +273,10 @@ but only through this transaction path:
 
 ```mermaid
 sequenceDiagram
-    participant A as AI agent
-    participant D as Owning DSO
+    participant D as AI DSO
     participant M as Local Controller MCP Server
     participant C as Local SDN controller
 
-    A->>D: Candidate and rationale
     D->>D: Verify evidence, policy, contract, graph, and peer agreement
     D->>M: validate_change
     M->>C: Validate typed configuration transaction
@@ -280,19 +287,147 @@ sequenceDiagram
     C-->>M: Durable reservation receipt
     M-->>D: Receipt
     D->>D: Recheck agreement and reservation barrier
-    D->>M: commit_change
-    M->>C: Apply configuration transaction
+    D->>M: commit_change with expected conditions and epoch
+    M->>C: Conditionally accept prepared transaction
     C-->>M: Controller receipt and observed state
-    M-->>D: verify_change result
+    M-->>D: Transaction receipt
+    D->>M: verify_change
+    M->>C: Read operational evidence
+    C-->>M: Observations
+    M-->>D: Verification evidence
 ```
 
 Every mutating MCP call is bound to the local domain ID, service/incident
 correlation ID, graph and contract revisions, candidate digest, idempotency key,
 expiry, and caller workload identity. The DSO's `controller_transaction` node
 uses these tools only after candidate verification, game-theoretic agreement,
-reservation, and commit authorization. A successful MCP tool call proves only
-that local configuration completed; the DSO still requires fresh service
+reservation, and commit authorization. A receipt must distinguish a request
+accepted for processing from an observed local application; the DSO requires fresh service
 verification before declaring the end-to-end service healthy.
+
+A DSO-side recheck alone cannot close a race between reading state and applying
+a change. The controller adapter must enforce expected conditions at local
+acceptance or use an equivalent protected reservation. Hardware application may
+complete later and still fail. An adapter lacking the required primitive must
+advertise the limitation; its weaker behavior is evaluated separately. An MCP
+transport success or request acknowledgement is not proof of applied state.
+
+## Research protocol requirements
+
+The following requirements turn the literature recommendations into a proposed
+prototype contract. They refine existing workflow nodes. They are not claims
+that the repository implements or proves the protocol. The main research question
+is how independent packet and optical owners maintain a valid service agreement
+under changing evidence, asynchronous execution, and partial failure.
+
+### Agreement and evidence binding
+
+Each accepted service decision must bind the following information:
+
+| Binding | Purpose |
+| --- | --- |
+| Service ID, intent revision, contract revision, participant set | Identify the exact request and affected owners. |
+| Candidate/action digest and agreed QoS, price, weights, and expiry | Prevent execution of a different allocation or agreement. |
+| Topology/configuration revision vector and dependency records | Identify the resources and relationships used to establish feasibility. |
+| Evidence IDs, digests, observation windows, and known missing data | Relate retrieval and reasoning to the decision's evidence. |
+| Local policy versions and signed participant acceptances | Preserve attribution and independent local approval. |
+| Reservation IDs, protected resources, expiry, and expected controller conditions | Establish which local allocation can still be accepted. |
+| Coordination epoch and per-operation idempotency key | Reject superseded requests and reconcile retries. |
+| Verification obligations and compensation references | Define measured completion and recovery responsibilities. |
+
+Use the complete agreed graph digest as the initial conservative decision
+snapshot. Recompute feasibility if it changes; do not silently carry forward old
+approvals. A controller-confirmed reservation may protect a specific resource
+condition, but its scope must be explicit. Comparing whole-graph invalidation
+with validation of only the complete dependency set is a proposed later
+experiment, not an assumed guarantee of the initial design. Avoid including
+constantly changing raw telemetry in the topology digest; record its windows and
+validity conditions separately.
+
+Expected changes caused by this contract's own reservations and application
+must be recorded as authorized transitions from its agreed pre-change snapshot.
+Preparation receipts bind their resulting controller revisions and protected
+conditions. Distinguish these planned transitions from external invalidation so
+the transaction does not invalidate itself merely by reserving its resources.
+An unanticipated transition requires a new feasibility and agreement decision.
+
+`reasoning_context_assembly`, candidate verification, bargaining, and commit
+authorization must reference compatible decision evidence. Context assembly
+includes missing, stale, or conflicting observations explicitly. A required
+dependency that is unavailable prevents the dependent action; an LLM cannot
+invent it. More prompt content does not establish completeness.
+
+### Local acceptance and uncertain outcomes
+
+1. Verify the exact agreement and collect local reservations and preparation receipts.
+2. Require a valid receipt from every participant before requesting activation.
+3. Each owner independently authorizes its operation; its controller checks the
+   expected conditions and coordination epoch when accepting that operation.
+4. Journal acceptance and observed application as separate facts. An idempotency
+   key is scoped to domain, service, contract revision, and operation; reuse with
+   a different payload is rejected. Retries retrieve the original outcome.
+5. Query `get_transaction` after a lost response. Until reconciled, preserve an
+   unknown outcome rather than blindly retrying or assuming failure.
+6. Verify local, border, and endpoint behavior for the agreed observation window.
+   Preserve unmet or unmeasured obligations; a short probe cannot prove future
+   availability throughout a service lifetime.
+
+Each domain must expose local `PREPARED`, `COMMITTING`, `APPLIED`, `UNKNOWN`,
+`COMPENSATING`, `COMPENSATED`, and `RECONCILING` outcomes as applicable. Aggregate
+service state may be `PARTIALLY_COMMITTED`, `VERIFIED`, `DEGRADED`, or `UNRESOLVED`.
+Only confirmed observations permit advancement to verified or compensated state.
+An unresolved operation retains a durable recovery task across DSO restarts.
+
+A saga permits intermediate physical states. Release unused reservations and
+attempt supported compensations after failure; compensation can itself fail.
+Make-before-break or per-packet forwarding consistency requires additional
+controller/data-plane mechanisms and is not implied by the saga.
+
+```mermaid
+flowchart TD
+    A["Agreed contract and evidence"] --> R["Reserve and prepare in each domain"]
+    R --> G["Check all required receipts"]
+    G --> C["Local controller checks expected conditions"]
+    C -->|"Invalid"| N["Refresh evidence or release reservations"]
+    C -->|"Accepted"| X["Track local application"]
+    X -->|"Receipt missing"| U["Unknown outcome: query transaction"]
+    U --> Q["Reconcile durable receipts and observations"]
+    X -->|"Application observed"| V["Verify service obligations"]
+    Q -->|"Resolved"| V
+    Q -->|"Still uncertain"| D["Unresolved or degraded service"]
+    V -->|"Satisfied"| H["Verified service and assurance"]
+    V -->|"Partial or failed"| K["Release or attempt compensation"]
+    K -->|"Recovery unverified"| D
+    K -->|"Recovery confirmed"| Z["Recovered outcome recorded"]
+```
+
+### Authority, failure model, and properties to evaluate
+
+The initial research profile assumes authenticated, cooperating operators. Their
+messages can be delayed, duplicated, reordered, or lost; agents and controllers
+can restart. Signatures identify a sender but do not prove truthful telemetry
+or utility reports. Byzantine behavior and strategy-proof bargaining are not
+established properties of this profile.
+
+Record coordination grants and monotonically ordered epochs durably. Each
+controller must reject requests superseded by an epoch it has installed, and
+the peer protocol must define when a new epoch can replace the old one. Specify
+the required participant acknowledgements, recovery behavior, and clock/expiry
+assumptions. A lease by itself does not prove exclusion across partitions. Missing
+acknowledgements do not authorize a new shared-service change; local monitoring
+and independently preauthorized protection can continue within their scope.
+
+Evaluate local authorization, conditional acceptance, effective idempotency,
+conflicting-writer exclusion, preservation of unaffected services, and recovery
+from uncertain completion. State assumptions separately for each property.
+Progress is conditional on communication, available resources, and recoverable
+participants; unconditional availability during partitions is not a claim.
+
+These mechanisms build on established reservations, consistency control, and
+compensation. The candidate contribution is their precise inter-domain behavior
+and measured benefit relative to prior approaches, with the
+[journal evaluation plan](implementation-roadmap.md#journal-evaluation-plan)
+separating protocol effects from LLM effects.
 
 ## Federated topology and configuration exchange
 
@@ -496,10 +631,11 @@ flowchart LR
 
 Topology replicas converge eventually through origin sequence numbers, signed
 snapshots, deltas, and graph digests. Service-changing operations demand a
-stronger boundary: each DSO must have the same contract revision, valid current
-graph/configuration digest, and valid local reservation before commit. The
+stronger boundary: participants agree on a contract and graph snapshot, while
+each controller checks its current protected resource conditions before local
+acceptance. Matching digests do not establish that no newer state exists. The
 distributed saga and signed receipts provide cross-domain coordination; they do
-not require a distributed ACID transaction or a shared database.
+not provide atomic physical activation or require a shared database.
 
 ## RAG and GraphRAG knowledge layer
 
@@ -624,9 +760,11 @@ flowchart LR
     P -->|only after policy gates| M[Local Controller MCP Server]
 ```
 
-Only three nodes optionally require a generative LLM. All other 54 nodes are
-deterministic code, structured retrieval, graph algorithms, protocol handling,
-or controller/database integration.
+Only three nodes optionally require a generative LLM. All other 54 nodes use
+non-generative policy, retrieval, graph algorithms, optimization, protocol
+handling, or controller/database integration. ACO is stochastic even when its
+seed is recorded; embedding-based retrieval can use learned models. These are
+distinct from generative LLM reasoning.
 
 The shared deterministic `reasoning_context_assembly` node builds the complete
 **decision-relevant** situation package before every LLM call. It includes the
@@ -635,9 +773,10 @@ authorized identity and scope, triggering event or incident, current topology
 and configuration revisions, GraphRAG subgraph, time-bound telemetry evidence,
 applicable policy and hard constraints, feasible candidate set with computed
 scores, peer offers and reservation state, uncertainty, provenance references,
-and the required structured response schema. It includes the complete context
-needed for the decision while filtering secrets, unrelated tenant data, and
-topology detail that the recipient is not authorized to receive.
+and the required structured response schema. Required dependencies and missing
+or contradictory evidence are identified explicitly, while secrets, unrelated
+tenant data, and unauthorized topology detail are filtered. This is a defined
+decision-context contract, not an assumption of perfect network knowledge.
 
 The AI DSO never waits indefinitely for an LLM. Before any LLM call, its
 deterministic nodes require an authorized request, current topology and
@@ -658,9 +797,9 @@ confidence and assumptions, and use the node-specific structured schema. It
 cannot introduce a new controller action, topology fact, peer commitment, or
 candidate outside the assembled package.
 
-The following nodes are deterministic and do not contact a generative LLM:
+The following nodes do not contact a generative LLM:
 
-| Graph | Deterministic nodes |
+| Graph | Non-generative nodes |
 |---|---|
 | Topology federation | `topology_event_ingest`, `peer_identity_gate`, `topology_message_verifier`, `topology_reconciler`, `graph_apply`, `graph_integrity_gate`, `topology_impact_analysis`, `topology_ack_and_journal` |
 | Service lifecycle | `intent_intake_and_normalization`, `service_event_ingest`, `identity_and_entitlement_gate`, `service_context_load`, `topology_freshness_gate`, `rag_context_retrieval`, `graphrag_subgraph_retrieval`, `retrieval_grounding_gate`, `graph_reachability_and_impact`, `bounded_path_enumeration`, `constraint_path_ranking`, `qos_budget_derivation`, `path_and_dependency_analysis`, `swarm_state_refresh`, `swarm_candidate_exploration`, `swarm_candidate_aggregation`, `local_candidate_generation`, `candidate_verification`, `local_policy_selection`, `local_utility_evaluation`, `peer_contract_negotiation`, `bargaining_solution_gate`, `local_reservation`, `reservation_barrier`, `commit_authorization_gate`, `controller_transaction`, `service_verification`, `service_outcome_journal` |
@@ -668,7 +807,8 @@ The following nodes are deterministic and do not contact a generative LLM:
 | Continual learning | `decision_trace_ingest`, `peer_outcome_correlation`, `comparable_trace_retrieval`, `novelty_gate`, `provenance_validator`, `experiment_planner`, `safe_experiment_runner`, `evaluation_gate`, `promotion_gate`, `publish_learning_release`, `reject_or_revoke` |
 | Shared reasoning utility | `reasoning_context_assembly` |
 
-Retrieval and integration nodes use explicit backends but remain deterministic:
+Retrieval and integration nodes use explicit backends; their execution methods
+are distinguished in the node catalogue:
 
 | Backend | Nodes that use it | Role |
 |---|---|---|
@@ -806,18 +946,18 @@ same bounded lifecycle in every domain.
 | `swarm_candidate_exploration` | Run bounded virtual scouts over feasible packet-optical paths and resource/configuration combinations; this is planning only. |
 | `swarm_candidate_aggregation` | Aggregate scouts into a small, diverse, deduplicated candidate set with reproducible score components. |
 | `local_candidate_generation` | Generate only controller-feasible local actions and predicted QoS effects for this DSO's domain. |
-| `advisory_reasoning` | Optionally use the AI model to explain evidence, rank alternatives, or propose a counteroffer; it cannot add an action outside the deterministic candidate set. |
+| `advisory_reasoning` | Optionally explain evidence, rank verified alternatives, or draft a counteroffer rationale; it cannot introduce an action outside the supplied candidate set. |
 | `candidate_verification` | Ground every candidate in current graph/telemetry/configuration evidence and reject unsupported claims. |
 | `local_policy_selection` | Apply local policy, cost, risk, disruption, and rollback rules to select an offer or counteroffer. |
 | `local_utility_evaluation` | Calculate this domain's utility and disagreement value for each policy-approved candidate. |
 | `peer_contract_negotiation` | Exchange signed bargaining offer, counteroffer, acceptance, and rejection messages with the DSOs on the selected path. |
 | `bargaining_solution_gate` | Require a mutually beneficial agreement plus matching contract revision, graph digest, path, QoS budget, and peer acknowledgements. |
-| `local_reservation` | Ask the local controller to create an idempotent, time-bound reservation for its named operation. |
+| `local_reservation` | Reserve and prepare the named operation through local MCP; persist expiry, protected conditions, expected transitions, and compensation references. |
 | `reservation_barrier` | Wait for valid reservation receipts from every affected DSO; route to expiry or compensation on rejection/timeout. |
-| `commit_authorization_gate` | Recheck local policy, graph freshness, contract revision, reservation validity, and controller state immediately before commit. |
-| `controller_transaction` | Use the local Controller MCP Server to commit or roll back the named transaction, then persist the returned local receipt. |
+| `commit_authorization_gate` | Recheck agreement, dependencies, policy, reservation, and coordination epoch; supply expected conditions for controller enforcement. |
+| `controller_transaction` | Request conditional acceptance through local MCP, reconcile uncertain outcomes with `get_transaction`, or attempt compensation; persist each observed result. |
 | `service_verification` | Evaluate local and border measurements, then exchange signed verification summaries with the peers. |
-| `service_outcome_journal` | Record `VERIFIED`, `FAILED`, `EXPIRED`, or `ROLLED_BACK`, notify the initiating DSO, and create an immutable decision trace. |
+| `service_outcome_journal` | Record verified, failed, partial, or unresolved outcomes, notify the initiating DSO, and retain recovery-task references; only eligible terminal traces enter learning. |
 
 ```mermaid
 flowchart LR
@@ -913,13 +1053,17 @@ All three loops may detect the same service problem. To avoid contradictory
 actions or negotiation storms, each service incident has a short-lived,
 signed **coordination lease**. The first DSO to create the incident proposes a
 lease bound to the contract revision and graph digest. Peer DSOs acknowledge it
-only if they see the same current service state. The lease holder coordinates
+only if they see the same service decision state. The lease holder coordinates
 the bargaining conversation; it does not gain authority over peer controllers.
+Conflict exclusion additionally depends on the durable epochs, controller
+enforcement, and peer replacement rules in the research protocol requirements.
+Do not infer mutual exclusion from lease expiry alone.
 
 Every DSO retains the right to reject an offer, withdraw a reservation, or
 start a new incident after the lease expires. Controller idempotency keys,
 candidate digests, cooldown timers, hysteresis/deadbands, and a maximum action
-rate per service prevent repeated oscillating changes. A topology change,
+rate per service limit repeated oscillating changes; stability must be evaluated.
+A topology change,
 contract revision, stale graph, failed peer acknowledgement, or verification
 failure invalidates the active plan and returns the loops to Analyze.
 
@@ -996,10 +1140,12 @@ what can be connected; each player still evaluates the impact on its own
 capacity, risk, operational policy, and commercial terms.
 
 For a joint action `a = (a_packet_a, a_optical, a_packet_b)`, let `F(G)` be the
-set of actions feasible in the replicated topology graph `G`. An action enters
-`F(G)` only when it has continuous end-to-end connectivity, configuration
-compatibility, sufficient capacity, valid resource reservations, and no hard
-policy violation. Each domain calculates a local utility:
+set of candidate actions feasible under the agreed graph `G` and locally checked
+resource conditions. Admission requires end-to-end connectivity, configuration
+compatibility, sufficient capacity, applicable optical spectrum/transponder/QoT
+constraints, and no hard policy violation. Reservations are obtained after
+agreement and rechecked before activation; graph reachability is not optical
+feasibility. Each domain calculates a local utility:
 
 ```text
 U_i(a, x_i) = SLA/revenue benefit_i(a) + settlement_i(x_i)
@@ -1046,6 +1192,21 @@ be contract fields, never model-generated values. This method favors a service
 option that improves every participating domain over its fallback, rather than
 choosing the option with the highest benefit to only one domain.
 
+For the recommended cooperative prototype, each domain publishes a signed
+candidate-specific gain `g_i(a) = U_i(a) - d_i`, its utility-model version, and
+the agreed scale/normalization. Every participant computes the same objective
+over the same candidate set and declared weights. Cost coefficients can remain
+local, but disclosed gains are not private and may reveal commercial information.
+Refusal to share the required gains prevents use of this calculation; specify a
+different agreement mechanism rather than assuming invisible access to utilities.
+
+The log objective requires strictly positive gains. If none of the feasible
+candidates satisfies that condition for every domain, return no agreement or
+use a separately documented weak-acceptance policy; do not evaluate `log(0)`.
+Use a fixed tie-break rule for equal finite-candidate scores. This is a Nash
+bargaining objective, not a claim of Nash equilibrium, truthful reporting,
+strategy-proofness, uniqueness, or global optimality over unexplored paths.
+
 ### Cost quantification
 
 Every DSO calculates cost in one agreed unit: a real currency for a commercial
@@ -1064,7 +1225,7 @@ C_i(a) = C_capacity + C_opportunity + C_operation + C_energy + C_risk
 | `C_capacity` | Reserved resource quantity × reservation duration × domain unit rate. Packet domains use committed bandwidth/port/queue units; the optical domain uses spectrum slots, wavelength/transponder use, and optionally fiber distance. |
 | `C_opportunity` | The cost of reducing future sellable capacity. Use a convex utilization function, for example `reference_cost × (utilization_after^p - utilization_before^p)` where `p > 1`; scarce links therefore cost more than idle links. |
 | `C_operation` | Fixed cost for each approved controller transaction plus expected rollback/validation effort. It is zero for retain-current. |
-| `C_energy` | Expected incremental watts × reservation hours × local energy rate. |
+| `C_energy` | Incremental watts × reservation hours / 1000 × the local price per kWh; preserve compatible units. |
 | `C_risk` | Probability that the change or resource fails × the locally defined service/rollback impact cost. Historical failure data can calibrate the probability. |
 
 The DSO keeps its unit rates, utilization curve, and risk model private. It
@@ -1253,9 +1414,9 @@ and signed artifacts in a multi-operator deployment.
 ```mermaid
 sequenceDiagram
     participant User
-    participant PA as Packet A agent + DSO
-    participant O as Optical agent + DSO
-    participant PB as Packet B agent + DSO
+    participant PA as Packet A AI DSO
+    participant O as Optical AI DSO
+    participant PB as Packet B AI DSO
     participant CA as Packet A controller
     participant CO as Optical controller
     participant CB as Packet B controller
@@ -1267,13 +1428,15 @@ sequenceDiagram
     O-->>PA: CAPABILITY_OFFER / COUNTEROFFER
     PA->>O: PROPOSE_CONTRACT
     O->>PB: PROPOSE_CONTRACT
-    PB-->>O: RESERVE_ACK or REJECT
-    O-->>PA: RESERVE_ACK or REJECT
+    PB-->>O: Signed ACCEPT or REJECT
+    O-->>PA: Signed ACCEPT or REJECT
     PA->>CA: Reserve local named option
     O->>CO: Reserve local named option
     PB->>CB: Reserve local named option
-    PA->>O: COMMIT
-    O->>PB: COMMIT
+    PB-->>O: Durable reservation summary
+    O-->>PA: Required reservation summaries
+    PA->>O: COMMIT proposal with complete barrier receipts
+    O->>PB: COMMIT proposal with complete barrier receipts
     PB->>CB: Commit its named option
     O->>CO: Commit its named option
     PA->>CA: Commit its named option
@@ -1283,22 +1446,30 @@ sequenceDiagram
     PA-->>User: Active / failed / rolled back
 ```
 
-The protocol states are `DISCOVERED`, `OFFERED`, `COUNTERED`, `AGREED`,
-`RESERVED`, `COMMITTED`, `VERIFIED`, `REJECTED`, `EXPIRED`, and `ROLLED_BACK`.
-Every message is idempotent under its correlation ID and includes an expiry.
+The negotiation states are `DISCOVERED`, `OFFERED`, `COUNTERED`, `AGREED`,
+`REJECTED`, and `EXPIRED`. Execution and recovery use the local and aggregate
+states defined in the research protocol requirements, including uncertain and
+partial outcomes. The diagram shows the successful branch; controller calls
+pass through each domain's local MCP adapter and enforce expected conditions.
+Deduplicate messages by sender, message ID, and payload digest; scope mutating
+operation keys separately. A correlation ID groups a workflow and is not by
+itself an idempotency key for all its operations. Requests include an expiry.
 Expired, replayed, unsigned, or revision-mismatched messages are rejected.
 
 Reservation is intentionally separate from commit. Each domain first creates a
 short-lived, recoverable reservation for a locally named candidate. Commit can
 proceed only when every required reservation is valid. A failure before
-verification releases reservations or runs each controller's compensating
-rollback operation. A controller reports its local receipt; no peer receives
-write access to it.
+verification triggers receipt reconciliation, release, or supported compensation.
+Failed or unverified recovery remains explicit in the service state. A controller
+reports its local receipt; no peer receives write access to it.
 
 ## What each agent reasons about
 
-An agent can use an LLM to interpret a natural-language intent, summarize local
-telemetry, or explain a counteroffer. The LLM is advisory. Deterministic code
+The current intent intake accepts a structured schema. A natural-language
+translator would be a separately specified component with validated output;
+it is not one of the three conditional LLM nodes. Those nodes summarize evidence,
+explain or rank verified candidates, and propose learning hypotheses. Their
+output is advisory. Deterministic code
 must enforce identity, policy, schema validation, QoS arithmetic, freshness,
 candidate feasibility, reservation, and controller authorization.
 
@@ -1360,3 +1531,9 @@ never replace the independent local-policy and controller checks.
 The first working demo should prove one service request from Packet A to Packet
 B, a successful three-domain reservation and commit, a remote policy rejection,
 and a failed commit that rolls back/reconciles safely.
+
+For the paper, prioritize the protocol, evidence binding, and multi-domain
+recovery over optional swarm or learning extensions. The
+[implementation roadmap](implementation-roadmap.md#journal-evaluation-plan)
+defines matched baselines, fault scenarios, metrics, and the evidence required
+before converting a proposed property into a paper claim.

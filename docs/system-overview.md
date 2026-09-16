@@ -5,6 +5,13 @@ owned networks: Packet Domain A, an Optical Domain, and Packet Domain B. It is
 a federation, so no central orchestrator, controller, or database has authority
 over all three networks.
 
+This is a technical architecture and research design for an Elsevier *Computer
+Networks* paper. The recommended contribution is a precise inter-domain service
+protocol under changing state and partial failure, with selective LLM assistance.
+Existing work already covers many individual components; see the
+[literature assessment](related-work-and-novelty.md). The behaviors below are
+proposed requirements, not experimentally verified guarantees.
+
 Each domain runs the same autonomous control unit:
 
 ```text
@@ -28,9 +35,9 @@ flowchart LR
     BM --> BC[Packet B SDN controller]
 ```
 
-The **AI agent is the Domain Service Orchestrator (DSO)**. It is one persistent,
-stateful workflow per domain, not an AI service beside an orchestrator. Its
-deterministic nodes make lifecycle decisions: identity and policy validation,
+The **AI agent is the Domain Service Orchestrator (DSO)**. It is one persistent
+runtime hosting the domain workflows. Its non-generative nodes handle identity
+and policy validation,
 candidate verification, bargaining, reservations, commit authorization,
 verification, auditing, and learning. Three named nodes may conditionally call
 an LLM for grounded reasoning. The local controller alone changes the network.
@@ -50,6 +57,12 @@ nodes, interfaces, packet links, optical links, relationships, capacity,
 operational state, and approved configuration revisions. This is similar to a
 link-state database: every DSO can reason over the full packet-optical-packet
 graph, while the originating domain remains the only writer for its records.
+
+Replication is eventual: peers may temporarily hold different revisions. A
+matching digest identifies equal content, not proof that no newer state exists.
+Sharing the complete approved graph is an explicit disclosure assumption. Local
+databases preserve each operator's control authority, but do not hide its shared
+topology from peers.
 
 ```mermaid
 flowchart LR
@@ -170,19 +183,23 @@ The receiving DSO becomes the initiating DSO for the request. It creates a
 correlation ID and a versioned service contract. All affected DSOs then follow
 the same service lifecycle.
 
+The initial intake accepts a structured intent schema. An arbitrary natural-language
+request needs a separately specified translator and validated canonical output;
+the current three conditional LLM nodes do not include an intent translator.
+
 ```mermaid
 flowchart LR
     I[User intent] --> V[Validate user and policy]
     V --> G[Read current federated graph]
-    G --> S[Swarm discovers feasible paths\nand resource alternatives]
+    G --> S[Constrained path search\nwith optional swarm exploration]
     S --> C[DSOs create local candidates\nand signed cost quotes]
     C --> B[Game-theoretic bargaining]
     B --> R[Each DSO reserves locally\nthrough its MCP server]
     R -->|All receipts valid| X[Each DSO commits its\nown configuration]
     R -->|Reject, timeout, or stale plan| F[Release or compensate]
     X --> Q[Endpoint and border verification]
-    Q -->|SLA proven| A[Active service]
-    Q -->|SLA not proven| F
+    Q -->|Checks pass for observation window| A[Active service]
+    Q -->|Checks fail or evidence missing| F
 ```
 
 Packet A may offer a packet path, border attachment, and QoS profile. The
@@ -191,14 +208,19 @@ transponder configuration. Packet B offers its packet path and QoS profile.
 Every candidate must be feasible in the synchronized graph and accepted by the
 owning domain's policy before it can be negotiated.
 
+Graph connectivity is only one feasibility condition. The optical controller
+must validate the spectrum, transponder, and optical quality constraints modeled
+by the experiment. A later state change can invalidate an initially feasible plan.
+
 ## Swarm optimization and game theory
 
 Swarm optimization searches for useful alternatives. Bounded virtual scouts use
 the federated graph plus signed, time-decaying quality signals for capacity,
 latency, loss, jitter, availability, optical QoT/gOSNR, risk, and cost class.
-Ant Colony Optimization is appropriate for discrete path, spectrum, and
-configuration choices. Particle Swarm Optimization can optimize continuous
-parameters such as bandwidth shares or queue allocations.
+Ant Colony Optimization is an optional stochastic search method for discrete
+choices. Report its seeds and computational budget and compare it with simpler
+feasible-path search. Particle Swarm Optimization is a later option for continuous
+parameters. Neither method adds generative LLM nodes.
 
 Verified outcomes reinforce useful resources and old results decay. The swarm
 therefore answers: **which feasible options should be considered?**
@@ -209,6 +231,13 @@ capacity, opportunity, operational, energy, and risk cost. Each has a fallback,
 such as retaining its current service state or rejecting a new request. Weighted
 Nash bargaining selects a feasible contract only when it meets the SLA and
 budget and benefits every participating domain over its fallback.
+
+The recommended prototype shares signed, candidate-specific utility gains and
+agreed weights so peers can reproduce the bargaining calculation. Private cost
+coefficients remain local, but these disclosed gains still reveal information.
+If a domain does not permit that disclosure, a different agreement mechanism
+must be specified. Nash bargaining does not by itself establish truthful reporting
+or a Nash equilibrium.
 
 ```mermaid
 flowchart LR
@@ -230,12 +259,18 @@ After agreement, each DSO performs a local transaction through its Controller
 MCP Server. It validates and reserves its named resources, stores a durable
 receipt and rollback reference, then waits until all required peer reservation
 summaries are valid. Each DSO rechecks policy, contract revision, topology
-revision, configuration state, and reservation validity before committing.
+revision, configuration state, and reservation validity before committing. The
+controller must enforce the expected resource/configuration conditions when it
+accepts the operation; a DSO-side check followed by an unconditional write leaves
+a race. If an adapter cannot enforce this condition, document and evaluate the
+weaker guarantee.
 
-This is a distributed saga. If a reservation fails, expires, becomes stale, or
-the verified service does not meet its SLA, affected DSOs release resources or
-roll back their own local transactions. No DSO writes directly to a peer's
-controller.
+This is a distributed saga, not simultaneous physical activation. Partial
+completion and failed compensation are possible. Lost acknowledgements trigger
+receipt reconciliation before retry or compensation. DSOs release unused
+reservations, attempt supported rollback, and retain an explicit unresolved or
+degraded state when recovery cannot be verified. No DSO writes directly to a
+peer's controller. See the [protocol requirements](domain-agent-architecture.md#research-protocol-requirements).
 
 ## Continuous closed loops
 
@@ -260,8 +295,11 @@ Packet DSOs monitor packet loss, latency, jitter, queues, utilization, route
 state, and endpoint probes. The Optical DSO monitors spectrum, QoT/gOSNR,
 transponders, channels, and ROADMs. If a shared service is affected, remediation
 re-enters bargaining before a controller change. A short-lived coordination
-lease prevents the three loops from starting conflicting remediation workflows
-for the same incident.
+lease coordinates remediation conversations for the same incident. Conflict
+exclusion additionally requires durable coordination epochs and controller-side
+rejection of superseded epochs. During a partition, a DSO cannot assume that
+missing peer responses grant authority. The precise replacement and expiry rules
+must be specified and validated before claiming conflicting actions are prevented.
 
 ## Continual learning
 
@@ -280,6 +318,21 @@ heuristics, and negotiation ranking. It is controlled through three levels:
 Learning cannot create a new controller action, alter peer-owned configuration,
 weaken hard safety constraints, or bypass policy, bargaining, reservation,
 commit authorization, and verification.
+
+Learning remains an optional extension for the first paper. Compare it against
+fixed policies on held-out cases, and distinguish retrieval of past incidents
+from model training. A federation of DSOs does not imply federated model training.
+
+## Research validation
+
+The [journal evaluation plan](implementation-roadmap.md#journal-evaluation-plan)
+requires a baseline with the same federation, graph, algorithms, and controller
+tools but no LLM calls. Separate experiments compare context freshness checks,
+centralized orchestration, bargaining, and optional swarm search. Measure verified
+service success, SLA violation duration, recovery latency, invalid operations,
+unresolved transactions, communication overhead, and model cost. A successful
+three-domain demonstration establishes feasibility; it does not alone establish
+novelty, scalability, or a correctness guarantee.
 
 For schemas, LangGraph node definitions, message contracts, cost formulas, and
 all detailed diagrams, see the [domain-agent architecture](domain-agent-architecture.md).

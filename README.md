@@ -1,5 +1,9 @@
 # Inter-domain automated networking
 
+This repository documents the technical architecture and research design for an
+Elsevier *Computer Networks* journal paper on federated AI-driven inter-domain
+networking.
+
 This project defines three autonomous domain agents, each with its own local
 service-orchestrator capability, that establish and assure a network service
 crossing independently operated packet, optical, and packet networks:
@@ -43,6 +47,22 @@ and implementation milestones. The [LangGraph node catalogue](docs/langgraph-nod
 lists every workflow node and its execution method. The [implementation roadmap](docs/implementation-roadmap.md)
 turns the architecture into incremental, testable delivery phases.
 
+The [related-work and novelty assessment](docs/related-work-and-novelty.md)
+compares this design with research papers and networking specifications,
+identifies candidate contributions for the journal paper, and defines the
+evidence needed to substantiate them. The literature search is dated
+16 September 2026; proposed contributions are not claims of demonstrated results.
+
+The recommended paper focus is service negotiation and recovery across
+independently controlled packet and optical domains when state changes or an
+operation partially fails. The [research protocol requirements](docs/domain-agent-architecture.md#research-protocol-requirements)
+bind agreements to evidence, reservations, and controller execution conditions.
+The [evaluation plan](docs/implementation-roadmap.md#journal-evaluation-plan)
+compares the same federation with and without LLM assistance. Swarm optimization
+and continual learning are optional research extensions whose value must be
+measured separately. These are design recommendations, not implemented or
+experimentally established guarantees.
+
 ## Core rule
 
 Each agent's local service orchestrator may manage its local service lifecycle,
@@ -58,9 +78,11 @@ An authorized user of packet domain A requests connectivity from `server-a` to
 `server-b` with a specified bandwidth, latency, loss, availability, and
 deadline. Packet domain A asks its optical neighbor for a feasible transport
 envelope; the optical agent asks packet domain B for its egress envelope. The
-agents negotiate only with their adjacent domains, provision provisional local
-reservations, then either commit every domain's approved local action or let
-all reservations expire/roll back.
+agents negotiate only with their adjacent domains and obtain local reservations.
+Each controller checks the agreed execution conditions before accepting its
+local change. Failures can leave a partially applied service; the DSOs reconcile
+receipts, release unused reservations, and attempt compensation where supported.
+They report unresolved outcomes explicitly.
 
 The result is a service contract and a verifiable end-to-end outcome based on a
 shared, versioned view of the packet-optical-packet topology.
