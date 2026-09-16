@@ -210,6 +210,7 @@ The following A2A extensions define the federation payloads:
 | `service-contract/v1` | Intent-derived contracts, offers, counteroffers, acceptances, coordination leases, reservations, commits, rollbacks, and verification summaries. |
 | `swarm-optimization/v1` | `SWARM_QUALITY_SIGNAL`, `SWARM_CANDIDATE`, and `SWARM_FEEDBACK`. |
 | `continual-learning/v1` | Peer outcome summaries, evidence references, and signed learning releases/revocations. |
+| `knowledge-federation/v1` | Signed shared runbook, policy, incident-summary, and approved knowledge-release metadata for local RAG indexing. |
 
 The controller interfaces remain local to their owning DSO and are not A2A peer
 interfaces. A2A enables an agent to ask a peer to reason, reserve, accept, or
@@ -364,7 +365,7 @@ sequenceDiagram
     PA->>O: Request missing snapshot/deltas
     O-->>PA: Signed topology/configuration records
     PA->>PA: Verify origin, signature, sequence, expiry
-    PA->>PA: Apply atomically; calculate graph digest
+    PA->>PA: Apply atomically and calculate graph digest
     PA-->>O: TOPOLOGY_SYNC_ACK
     O->>PB: Repeat topology synchronization
     PA->>PB: Direct mesh synchronization
@@ -453,6 +454,8 @@ Every DSO database has these logical partitions:
 | Federated topology replica | Signed nodes, interfaces, links, relationships, and approved configuration records from all three domains, including the owner's own records | Owner writes; peer DSOs apply verified replicas only |
 | Shared contract replica | Signed service-contract revisions, offers, acceptances, incident coordination leases, reservation summaries, and verification summaries | The originating signer writes each record; every DSO verifies and stores it |
 | Swarm and learning replica | Signed quality signals, candidate summaries, verified feedback, and approved learning releases | The origin DSO writes; peers accept or reject after verification |
+| Vector RAG index | Locally embedded runbooks, policies, MCP tool documentation, change/incident records, approved learning releases, and accepted peer knowledge releases | Each DSO indexes its own authorized corpus locally |
+| GraphRAG projection | Federated topology/configuration graph enriched with service, path, reservation, evidence, incident, candidate, controller-receipt, and outcome relationships | Source records retain their owner; each DSO materializes its own queryable graph view |
 | Local audit journal | Full local evidence, policy decisions, controller request/response details, and immutable trace links | Its owning DSO only |
 
 The result is **logical sharing with physical separation**. For example, the
@@ -460,12 +463,126 @@ Optical DSO publishes a signed configuration record for a channel and every DSO
 stores the same read-only replica. Only the Optical DSO can revise that channel,
 ask its optical controller to reserve it, or commit a change.
 
+### Recommended concrete database profile
+
+Use this stack in every domain:
+
+| Store | Technology | Authoritative data |
+|---|---|---|
+| DSO system of record and vector RAG | PostgreSQL with `pgvector` | Service contracts, A2A journal/outbox, topology/configuration source records and replicas, reservations, controller receipts, policies, audit records, RAG chunks, embeddings, and provenance. |
+| Telemetry | PostgreSQL time-partitioned tables; TimescaleDB where sustained telemetry volume warrants it | Packet, optical, controller, and endpoint measurements. |
+| GraphRAG projection | Neo4j | Revision-bound topology plus service/path/resource/configuration/evidence/incident/candidate/reservation/outcome relationships. |
+| Evidence archive | Optional domain-local object storage | Large raw evidence such as PCAPs, snapshots, traces, and source documents; PostgreSQL stores digests and references. |
+
+PostgreSQL is the DSO's transactional system of record. `pgvector` keeps vector
+embeddings with the source/provenance fields that govern RAG retrieval; an HNSW
+index is the appropriate initial approximate-nearest-neighbor index. Neo4j is a
+separate read-optimized graph projection for GraphRAG traversal. A committed
+PostgreSQL outbox event materializes source changes into Neo4j. The materializer
+preserves source revision and digest, and `graphrag_subgraph_retrieval` rejects a
+projection that does not match the current graph/service decision.
+
+```mermaid
+flowchart LR
+    A2A[Verified A2A artifacts] --> PG[(PostgreSQL + pgvector\nDSO system of record and RAG)]
+    MCP[Controller MCP results\nand telemetry] --> PG
+    PG -->|committed outbox event| N[(Neo4j\nGraphRAG projection)]
+    O[(Optional domain-local\nobject storage)] --> PG
+    PG --> R[RAG context retrieval]
+    N --> GR[GraphRAG subgraph retrieval]
+    R --> C[Provenance-bound context]
+    GR --> C
+```
+
 Topology replicas converge eventually through origin sequence numbers, signed
 snapshots, deltas, and graph digests. Service-changing operations demand a
 stronger boundary: each DSO must have the same contract revision, valid current
 graph/configuration digest, and valid local reservation before commit. The
 distributed saga and signed receipts provide cross-domain coordination; they do
 not require a distributed ACID transaction or a shared database.
+
+## RAG and GraphRAG knowledge layer
+
+Each domain AI agent has a local **vector database** and a local **GraphRAG
+projection**. These are retrieval systems owned by the DSO's domain database
+boundary; they do not introduce a central knowledge service.
+
+```mermaid
+flowchart LR
+    Q[Intent, assurance event,\nor operator question] --> DSO[DSO retrieval workflow]
+    DSO --> V[(Vector DB\nsemantic RAG)]
+    DSO --> G[(Graph DB / GraphRAG\nrelationship traversal)]
+    V --> X[Context package with source IDs]
+    G --> X
+    X --> AI[AI reasoning / explanation]
+    AI --> VG[Deterministic grounding gate]
+    VG --> P[Policy and transaction workflow]
+```
+
+The vector database indexes unstructured or semi-structured material that is
+useful for semantic retrieval: operating procedures, network and service design
+documents, policy text, YANG/OpenConfig/T-API model documentation, Controller
+MCP tool descriptions, change records, incident reports, evidence summaries,
+and approved learning releases. Each chunk carries source ID, owner, schema or
+document version, authorization classification, issue/expiry time, and digest.
+
+The GraphRAG projection is a queryable knowledge graph rooted in the
+FederatedTopologyGraph. It adds service-to-path, path-to-resource,
+resource-to-configuration, observation-to-entity, incident-to-suspicion,
+candidate-to-action, reservation-to-resource, and controller-receipt-to-action
+relationships. It answers questions that require traversal rather than semantic
+similarity, for example:
+
+- Which active services cross this failed optical channel or packet link?
+- Which alternative paths satisfy the current QoS budget and avoid the incident?
+- Which configuration revisions, reservations, and controller changes produced
+  this measured degradation?
+
+RAG and GraphRAG work together in a retrieval workflow: resolve relevant graph
+entities from the current contract or incident; traverse a revision-bound,
+bounded subgraph; retrieve semantically relevant documents and evidence chunks;
+then give the AI agent a context package that cites every source. A deterministic
+grounding gate rejects unsupported citations, stale records, out-of-scope
+documents, and output that proposes an action outside the verified candidate
+set.
+
+Topology/configuration and service facts arrive through their existing signed
+A2A extensions and are materialized locally into the graph projection. A domain
+may share an approved knowledge release through `knowledge-federation/v1`; each
+receiving DSO verifies authorization, provenance, digest, and expiry before
+indexing it. Vector embeddings and private raw documents are not implicitly
+replicated merely because a topology record is shared.
+
+### Deterministic graph algorithms
+
+GraphRAG retrieves the relevant graph context; deterministic algorithms then
+answer the exact path and impact questions needed by the DSO. Run them against
+an in-memory or queryable graph snapshot bound to one verified graph revision,
+never against an unbounded live controller query.
+
+| Algorithm | Use in the DSO workflow |
+|---|---|
+| Breadth-first search (BFS) | Check whether source and destination remain reachable, calculate hop-based neighborhoods, and find services/resources immediately affected by a node, link, channel, or configuration incident. |
+| Depth-first search (DFS) | Enumerate bounded simple paths, detect cycles, and identify alternate topology branches. The DFS depth, candidate count, and visited-node budget are explicit policy limits. |
+| Dijkstra or constraint-based shortest path | Rank reachable paths by latency, cost, capacity, loss, risk, QoT, and configuration compatibility after BFS/DFS has established the feasible scope. |
+| K-shortest disjoint path search | Produce diverse primary/backup candidates that avoid a failed resource or shared-risk group. |
+
+```mermaid
+flowchart LR
+    G[Verified GraphRAG subgraph\nrevision and digest] --> B[BFS reachability\nand impact scope]
+    B --> D[Bounded DFS\nsimple-path enumeration]
+    D --> C[Constraint checks\ncapacity, QoS, configuration]
+    C --> R[Shortest-path and\ndisjoint-path ranking]
+    R --> S[Bounded swarm exploration]
+    S --> P[Verified local candidates]
+```
+
+For example, an optical-channel impairment first triggers BFS from the affected
+channel to identify active dependent services and adjacent packet attachments.
+Bounded DFS enumerates alternate end-to-end paths that avoid the impacted
+resource. Constraint-based ranking discards paths that cannot meet the SLA or
+configuration rules. Only then do swarm scouts and game-theoretic bargaining
+consider the remaining candidates.
 
 ## DSO LangGraph design
 
@@ -512,6 +629,12 @@ same bounded lifecycle in every domain.
 | `identity_and_entitlement_gate` | Authenticate the user or peer and verify tenant, endpoint, and service authority. |
 | `service_context_load` | Load the local service state, prior receipts, reservation state, peer lifecycle state, and current graph digest. |
 | `topology_freshness_gate` | Require the topology/configuration revisions referenced by the request to be present, valid, and not stale. |
+| `rag_context_retrieval` | Retrieve authorized, semantically relevant runbooks, policies, controller-tool documentation, incidents, and learning releases from the local vector database. |
+| `graphrag_subgraph_retrieval` | Traverse the revision-bound graph projection for relevant service, path, resource, configuration, evidence, and incident relationships. |
+| `retrieval_grounding_gate` | Bind context to its sources and reject stale, unauthorized, out-of-scope, or unsupported retrieval before AI reasoning. |
+| `graph_reachability_and_impact` | Run BFS over the verified graph snapshot to establish reachability and affected-resource/service scope. |
+| `bounded_path_enumeration` | Run policy-bounded DFS and disjoint-path search to produce diverse simple path alternatives. |
+| `constraint_path_ranking` | Apply deterministic capacity, SLA, risk, QoT, and configuration constraints before swarm exploration. |
 | `qos_budget_derivation` | Turn the end-to-end intent into local bandwidth, latency, loss, availability, and deadline contributions. |
 | `path_and_dependency_analysis` | Traverse the federated graph to identify the selected path, domain handoffs, shared-risk resources, and configuration dependencies. |
 | `swarm_state_refresh` | Read current signed swarm-quality signals for the graph entities and service class under consideration. |
@@ -535,7 +658,9 @@ same bounded lifecycle in every domain.
 flowchart LR
     E[Service event] --> I[Identity and context gates]
     I --> F[Topology freshness and QoS budget]
-    F --> D[Path and dependency analysis]
+    F --> K[RAG and GraphRAG\nprovenance-bound context]
+    K --> GA[BFS, bounded DFS,\nand constraint path ranking]
+    GA --> D[Path and dependency analysis]
     D --> S[Swarm exploration and aggregation]
     S --> C[Local candidates]
     C --> V[Evidence and policy verification]

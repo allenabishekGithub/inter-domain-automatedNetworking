@@ -26,7 +26,8 @@ explanation of the complete federation. The [domain-agent architecture](docs/dom
 contains the detailed operating model, DSO LangGraphs, topology/configuration
 federation, swarm optimization, game-theoretic negotiation and cost model,
 domain closed loops, continual learning, message protocol, safety boundaries,
-and implementation milestones.
+and implementation milestones. The [implementation roadmap](docs/implementation-roadmap.md)
+turns the architecture into incremental, testable delivery phases.
 
 ## Core rule
 

@@ -63,6 +63,72 @@ or delta records, validate owner identity, signatures, sequence numbers, and
 expiry, then apply the records atomically. Later node, link, configuration, and
 reservation updates propagate as signed deltas.
 
+### Recommended database stack per domain
+
+Each DSO deploys a small local database stack, not one shared federation
+database:
+
+| Store | Recommended technology | Responsibility |
+|---|---|---|
+| System of record and vector RAG | PostgreSQL with `pgvector` | ACID service contracts, A2A message journal, reservations, controller receipts, audit records, policies, configuration/source metadata, and embedded RAG chunks. |
+| Telemetry store | PostgreSQL time-partitioned tables; TimescaleDB where telemetry volume warrants it | Time-stamped packet, optical, controller, and service measurements. |
+| GraphRAG projection | Neo4j | Traversable multi-domain topology, service, resource, configuration, evidence, incident, candidate, reservation, and outcome relationships. |
+| Optional evidence archive | Domain-local object storage | Large raw artifacts such as PCAPs, optical traces, snapshots, and documents; PostgreSQL stores their digests and references. |
+
+`pgvector` is the vector database component for the initial deployment. It keeps
+RAG chunks and embeddings beside the contract and provenance records that govern
+their use. Neo4j is a separate read-optimized GraphRAG projection. PostgreSQL
+is authoritative; an outbox event updates Neo4j after a committed source change.
+The DSO refuses a GraphRAG result if its graph revision or source digest lags the
+current service/topology decision.
+
+```mermaid
+flowchart LR
+    A2A[Signed A2A records] --> PG[(PostgreSQL + pgvector\nauthoritative DSO state and RAG)]
+    MCP[MCP controller receipts\nand telemetry] --> PG
+    PG -->|transactional outbox| N[(Neo4j\nGraphRAG projection)]
+    OBJ[(Optional local\nobject storage)] --> PG
+    PG --> AI[Semantic RAG]
+    N --> AI
+```
+
+## RAG and GraphRAG knowledge layer
+
+Every AI agent has two local retrieval stores.
+
+- A **vector database** supports RAG over unstructured material: runbooks,
+  design documents, policy text, controller/MCP tool documentation, incident
+  reports, change records, and approved learning releases.
+- A **graph database or graph projection** supports GraphRAG over the federated
+  topology plus service, configuration, reservation, evidence, incident, and
+  outcome relationships.
+
+```mermaid
+flowchart LR
+    Q[Intent, incident, or operator question] --> R[AI agent retrieval node]
+    R --> V[(Local vector DB\nsemantic RAG)]
+    R --> G[(Local graph DB\nGraphRAG)]
+    V --> C[Provenance-bound context]
+    G --> C
+    C --> A[AI reasoning and candidate explanation]
+    A --> D[DSO deterministic verification]
+    D --> P[Policy, bargaining, reservation,\nMCP transaction, verification]
+```
+
+RAG answers semantic questions such as which operational procedure applies to a
+QoT alarm. GraphRAG answers relationship questions such as which active services
+traverse an impaired optical link, which packet paths remain connected, or which
+configuration revisions affect a candidate. The DSO binds retrieval results to
+their source IDs, graph/configuration revisions, and expiry. Retrieved text or
+AI output cannot itself authorize a controller change.
+
+The GraphRAG workflow also uses deterministic graph algorithms. BFS checks
+reachability, finds nearby impacted services/resources, and calculates hop-based
+neighborhoods. Bounded DFS enumerates simple end-to-end path alternatives and
+detects cycles. Constraint-aware shortest-path ranking then applies latency,
+capacity, QoS, risk, and configuration compatibility requirements. The swarm
+optimizer explores the resulting bounded feasible candidate set.
+
 ## A2A between domains, MCP inside a domain
 
 A2A is the mandatory protocol for every DSO-to-DSO interaction. It provides
