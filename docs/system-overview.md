@@ -8,15 +8,15 @@ over all three networks.
 Each domain runs the same autonomous control unit:
 
 ```text
-AI agent + Domain Service Orchestrator + domain database
+AI Domain Service Orchestrator + domain database
 + Controller MCP Server + local SDN controller
 ```
 
 ```mermaid
 flowchart LR
-    U[Authorized user] --> PA[Packet A\nAI agent + DSO]
-    PA <-->|A2A federation| O[Optical\nAI agent + DSO]
-    O <-->|A2A federation| PB[Packet B\nAI agent + DSO]
+    U[Authorized user] --> PA[Packet A\nAI DSO]
+    PA <-->|A2A federation| O[Optical\nAI DSO]
+    O <-->|A2A federation| PB[Packet B\nAI DSO]
     PA <-->|A2A federation| PB
 
     PA --> PM[Packet A\nController MCP Server]
@@ -28,11 +28,16 @@ flowchart LR
     BM --> BC[Packet B SDN controller]
 ```
 
-The AI agent reasons about requests, topology, evidence, and alternatives. The
-DSO makes deterministic lifecycle decisions: identity and policy validation,
+The **AI agent is the Domain Service Orchestrator (DSO)**. It is one persistent,
+stateful workflow per domain, not an AI service beside an orchestrator. Its
+deterministic nodes make lifecycle decisions: identity and policy validation,
 candidate verification, bargaining, reservations, commit authorization,
-verification, auditing, and learning. The local controller alone changes the
-network.
+verification, auditing, and learning. Three named nodes may conditionally call
+an LLM for grounded reasoning. The local controller alone changes the network.
+
+The [LangGraph node catalogue](langgraph-node-catalog.md) identifies the
+algorithm, policy, retrieval, protocol, MCP, or conditional LLM method used by
+every node.
 
 ## Shared understanding, local ownership
 
@@ -234,7 +239,9 @@ controller.
 
 ## Continuous closed loops
 
-Every DSO runs an independent MAPE-K closed loop:
+Every AI DSO runs an independent MAPE-K closed loop. It remains active through
+periodic scheduling and event-driven wakeups from telemetry, topology changes,
+peer A2A messages, reservation expiry, verification failures, and new intent:
 
 ```mermaid
 flowchart LR

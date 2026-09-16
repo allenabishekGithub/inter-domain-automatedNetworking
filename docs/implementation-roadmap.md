@@ -1,9 +1,10 @@
 # Implementation roadmap
 
-Build this as a sequence of deterministic federation capabilities. AI reasoning,
-swarm optimization, bargaining, and continual learning should consume proven
-state and transactions; they should not be prerequisites for the first
-cross-domain service.
+Build this as a sequence of AI DSO federation capabilities. Deterministic policy,
+graph, protocol, and controller-transaction nodes establish the first
+cross-domain service. Conditional LLM reasoning, swarm optimization, bargaining,
+and continual learning consume this proven state and never replace its safety
+gates.
 
 ```mermaid
 flowchart LR
@@ -12,14 +13,14 @@ flowchart LR
     P2 --> P3[3. A2A federation]
     P3 --> P4[4. Deterministic service saga]
     P4 --> P5[5. Closed-loop assurance]
-    P5 --> P6[6. RAG and GraphRAG]
+    P5 --> P6[6. RAG, GraphRAG, and safe LLM context]
     P6 --> P7[7. Swarm and bargaining]
     P7 --> P8[8. Continual learning]
 ```
 
 ## Technology baseline
 
-Use one deployable DSO service per domain. Python is a practical initial
+Use one deployable AI DSO service per domain. Python is a practical initial
 language because it supports the current reference platform's approach,
 Pydantic contracts, FastAPI APIs, LangGraph, data-science tooling, and the
 official Neo4j GraphRAG package.
@@ -27,7 +28,7 @@ official Neo4j GraphRAG package.
 Each domain has this local stack:
 
 ```text
-DSO service: FastAPI + LangGraph + A2A server/client + MCP client
+Domain Agent Runtime: FastAPI + LangGraph + A2A server/client + MCP client
 PostgreSQL + pgvector: source of truth, service state, audit, RAG
 Neo4j: GraphRAG projection
 TimescaleDB or partitioned PostgreSQL: telemetry
@@ -163,16 +164,20 @@ Populate `pgvector` with authorized runbooks, policies, controller-tool
 documentation, approved change records, incident reports, and learning releases.
 Materialize the topology/service/evidence knowledge graph in Neo4j. Add the
 `rag_context_retrieval`, `graphrag_subgraph_retrieval`, and
-`retrieval_grounding_gate` LangGraph nodes.
+`retrieval_grounding_gate` LangGraph nodes. Add the shared
+`reasoning_context_assembly` node before any conditional LLM call.
 
 Require every retrieved context item to carry provenance, authorization scope,
 source digest, and relevant graph/configuration revision. Evaluate retrieval on
 a fixed set of operational questions before it affects explanations or candidate
-ranking.
+ranking. The assembled LLM context must include the canonical intent or event,
+fresh evidence, feasible candidate set, peer state, hard constraints, and
+node-specific response schema. The LLM cannot call MCP or introduce a candidate.
 
 **Exit criterion:** The agent can answer bounded topology-impact and procedure
 questions with traceable sources, and the grounding gate rejects stale or
-unsupported context.
+unsupported context. An LLM timeout or invalid response follows a deterministic
+fallback without blocking the closed loop.
 
 ## Phase 7 — swarm optimization and game-theoretic bargaining
 

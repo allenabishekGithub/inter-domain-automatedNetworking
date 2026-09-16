@@ -7,7 +7,7 @@ crossing independently operated packet, optical, and packet networks:
 ```text
 client / server A
        |
- Packet A agent + DSO    <-->  Optical agent + DSO    <-->  Packet B agent + DSO
+ Packet A AI DSO         <-->  Optical AI DSO         <-->  Packet B AI DSO
        |                            |                            |
  controller A                 controller O                 controller B
        |                            |                            |
@@ -21,12 +21,26 @@ three agents: there is no central orchestrator or central topology database.
 Each agent holds a replica of the complete topology, node relationships, and
 approved configuration state contributed by every domain.
 
+```mermaid
+flowchart LR
+    U[User or trusted component] --> PA[Packet A AI DSO]
+    PA <-->|A2A| O[Optical AI DSO]
+    O <-->|A2A| PB[Packet B AI DSO]
+    PA --> PM[Packet A Controller MCP]
+    O --> OM[Optical Controller MCP]
+    PB --> BM[Packet B Controller MCP]
+    PM --> PC[Packet A controller]
+    OM --> OC[Optical controller]
+    BM --> BC[Packet B controller]
+```
+
 Start with the [system overview](docs/system-overview.md) for a first-read
 explanation of the complete federation. The [domain-agent architecture](docs/domain-agent-architecture.md)
 contains the detailed operating model, DSO LangGraphs, topology/configuration
 federation, swarm optimization, game-theoretic negotiation and cost model,
 domain closed loops, continual learning, message protocol, safety boundaries,
-and implementation milestones. The [implementation roadmap](docs/implementation-roadmap.md)
+and implementation milestones. The [LangGraph node catalogue](docs/langgraph-node-catalog.md)
+lists every workflow node and its execution method. The [implementation roadmap](docs/implementation-roadmap.md)
 turns the architecture into incremental, testable delivery phases.
 
 ## Core rule

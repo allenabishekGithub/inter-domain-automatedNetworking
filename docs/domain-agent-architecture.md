@@ -586,16 +586,179 @@ consider the remaining candidates.
 
 ## DSO LangGraph design
 
-Each DSO runs three LangGraphs over one durable local state store. Separating
-them keeps topology replication, service provisioning, and assurance/recovery
-as different event paths. They share the same `FederatedTopologyGraph`, but a
-topology update cannot cause a controller change by itself.
+Each DSO runs four LangGraphs over one durable local state store: topology
+federation, service lifecycle, assurance/recovery, and asynchronous continual
+learning. Together they contain 57 documented nodes: 8 topology-federation
+nodes, 29 service-lifecycle nodes, 7 assurance/recovery nodes, 12
+continual-learning nodes, and one shared reasoning-context node. They share the
+same `FederatedTopologyGraph`, but a topology update or learning result cannot
+cause a controller change by itself.
+
+The [LangGraph node catalogue](langgraph-node-catalog.md) gives the execution
+method, algorithm, backend, and LLM status for every documented node.
+
+### Unified Domain Agent Runtime
+
+The **AI agent is the DSO**: one deployable, persistent **Domain Agent Runtime**
+per domain. Its LangGraph runs deterministic lifecycle, policy, and execution
+nodes continuously. It conditionally invokes an LLM only from named reasoning
+nodes after deterministic grounding and policy gates. The LLM is a tool of the
+DSO, not a second agent or a separate control plane.
+
+```mermaid
+flowchart LR
+    E[Intent, A2A event, telemetry, or timer] --> P
+    subgraph DRT[Domain Agent Runtime]
+        P[AI DSO deterministic nodes\npolicy, state, graph, A2A, MCP authorization]
+        C[Reasoning context assembly]
+        G{LLM node required\nand allowed}
+        R[RAG and GraphRAG\ngrounded LLM call]
+        F[Deterministic result\nor fallback]
+        P --> C
+        C --> G
+        G -->|Yes| R
+        G -->|No| F
+        R --> P
+        F --> P
+    end
+    P -->|only after policy gates| M[Local Controller MCP Server]
+```
+
+Only three nodes optionally require a generative LLM. All other 54 nodes are
+deterministic code, structured retrieval, graph algorithms, protocol handling,
+or controller/database integration.
+
+The shared deterministic `reasoning_context_assembly` node builds the complete
+**decision-relevant** situation package before every LLM call. It includes the
+canonical user or component intent, service-contract and correlation state,
+authorized identity and scope, triggering event or incident, current topology
+and configuration revisions, GraphRAG subgraph, time-bound telemetry evidence,
+applicable policy and hard constraints, feasible candidate set with computed
+scores, peer offers and reservation state, uncertainty, provenance references,
+and the required structured response schema. It includes the complete context
+needed for the decision while filtering secrets, unrelated tenant data, and
+topology detail that the recipient is not authorized to receive.
+
+The AI DSO never waits indefinitely for an LLM. Before any LLM call, its
+deterministic nodes require an authorized request, current topology and
+configuration revisions, and the assembled provenance-bound context. A timeout,
+failure, unsupported answer, or policy refusal follows the documented
+deterministic fallback and keeps the closed loop running. No LLM response can
+invoke MCP, change a reservation, accept a peer contract, or commit a
+configuration without the subsequent deterministic nodes approving it.
+
+| Optional LLM node | LLM role | Deterministic fallback |
+|---|---|---|
+| `advisory_reasoning` | Explain evidence, rank verified candidates, or draft a counteroffer rationale. | Return no advice or use the fixed candidate score. |
+| `fault_and_impact_reasoning` | Summarize a graph/evidence-grounded probable cause and impact. | Use evidence thresholds and graph traversal rules. |
+| `hypothesis_generation` | Propose a bounded learning hypothesis from comparable traces. | Use templated hypotheses or end the learning job without a finding. |
+
+The LLM response must cite the supplied evidence and candidate IDs, state its
+confidence and assumptions, and use the node-specific structured schema. It
+cannot introduce a new controller action, topology fact, peer commitment, or
+candidate outside the assembled package.
+
+The following nodes are deterministic and do not contact a generative LLM:
+
+| Graph | Deterministic nodes |
+|---|---|
+| Topology federation | `topology_event_ingest`, `peer_identity_gate`, `topology_message_verifier`, `topology_reconciler`, `graph_apply`, `graph_integrity_gate`, `topology_impact_analysis`, `topology_ack_and_journal` |
+| Service lifecycle | `intent_intake_and_normalization`, `service_event_ingest`, `identity_and_entitlement_gate`, `service_context_load`, `topology_freshness_gate`, `rag_context_retrieval`, `graphrag_subgraph_retrieval`, `retrieval_grounding_gate`, `graph_reachability_and_impact`, `bounded_path_enumeration`, `constraint_path_ranking`, `qos_budget_derivation`, `path_and_dependency_analysis`, `swarm_state_refresh`, `swarm_candidate_exploration`, `swarm_candidate_aggregation`, `local_candidate_generation`, `candidate_verification`, `local_policy_selection`, `local_utility_evaluation`, `peer_contract_negotiation`, `bargaining_solution_gate`, `local_reservation`, `reservation_barrier`, `commit_authorization_gate`, `controller_transaction`, `service_verification`, `service_outcome_journal` |
+| Assurance and recovery | `assurance_event_ingest`, `evidence_normalization`, `service_health_evaluation`, `incident_creation_or_update`, `remediation_dispatch`, `assurance_trace_and_journal` |
+| Continual learning | `decision_trace_ingest`, `peer_outcome_correlation`, `comparable_trace_retrieval`, `novelty_gate`, `provenance_validator`, `experiment_planner`, `safe_experiment_runner`, `evaluation_gate`, `promotion_gate`, `publish_learning_release`, `reject_or_revoke` |
+| Shared reasoning utility | `reasoning_context_assembly` |
+
+Retrieval and integration nodes use explicit backends but remain deterministic:
+
+| Backend | Nodes that use it | Role |
+|---|---|---|
+| PostgreSQL | All nodes | Durable LangGraph state, A2A inbox/outbox, topology/configuration records, service contracts, reservations, receipts, audit trace, and learning jobs. |
+| `pgvector` | `rag_context_retrieval` | Semantic RAG over authorized documents and evidence chunks. Embedding generation may use a local or hosted embedding model; it is not generative reasoning. |
+| Neo4j GraphRAG projection | `graphrag_subgraph_retrieval`, `graph_reachability_and_impact`, `bounded_path_enumeration`, `constraint_path_ranking`, `path_and_dependency_analysis`, `topology_impact_analysis`, `fault_and_impact_reasoning` | Revision-bound topology, service, resource, configuration, evidence, incident, and outcome traversal. BFS, DFS, and path algorithms use the verified graph snapshot. |
+| A2A | All topology-federation nodes, `peer_contract_negotiation`, `reservation_barrier`, `service_verification`, `peer_outcome_correlation` | Agent Cards, signed peer artifacts, task/context correlation, topology synchronization, contracts, reservations, verification, and learning exchange. |
+| Controller MCP Server | `local_candidate_generation`, `local_reservation`, `commit_authorization_gate`, `controller_transaction`, `service_verification` | Read controller capabilities/state and perform approved validate, reserve, prepare, commit, rollback, and verify transactions. |
+| Telemetry store | `evidence_normalization`, `service_health_evaluation`, `fault_and_impact_reasoning`, `assurance_trace_and_journal` | Packet, optical, controller, border, and endpoint evidence for the closed loop. |
+
+### Node inventory
+
+**Topology federation (8)**
+
+- `topology_event_ingest`
+- `peer_identity_gate`
+- `topology_message_verifier`
+- `topology_reconciler`
+- `graph_apply`
+- `graph_integrity_gate`
+- `topology_impact_analysis`
+- `topology_ack_and_journal`
+
+**Service lifecycle (29)**
+
+- `intent_intake_and_normalization`
+- `service_event_ingest`
+- `identity_and_entitlement_gate`
+- `service_context_load`
+- `topology_freshness_gate`
+- `rag_context_retrieval`
+- `graphrag_subgraph_retrieval`
+- `retrieval_grounding_gate`
+- `graph_reachability_and_impact`
+- `bounded_path_enumeration`
+- `constraint_path_ranking`
+- `qos_budget_derivation`
+- `path_and_dependency_analysis`
+- `swarm_state_refresh`
+- `swarm_candidate_exploration`
+- `swarm_candidate_aggregation`
+- `local_candidate_generation`
+- `advisory_reasoning`
+- `candidate_verification`
+- `local_policy_selection`
+- `local_utility_evaluation`
+- `peer_contract_negotiation`
+- `bargaining_solution_gate`
+- `local_reservation`
+- `reservation_barrier`
+- `commit_authorization_gate`
+- `controller_transaction`
+- `service_verification`
+- `service_outcome_journal`
+
+**Assurance and recovery (7)**
+
+- `assurance_event_ingest`
+- `evidence_normalization`
+- `service_health_evaluation`
+- `incident_creation_or_update`
+- `fault_and_impact_reasoning`
+- `remediation_dispatch`
+- `assurance_trace_and_journal`
+
+**Continual learning (12)**
+
+- `decision_trace_ingest`
+- `peer_outcome_correlation`
+- `comparable_trace_retrieval`
+- `novelty_gate`
+- `hypothesis_generation`
+- `provenance_validator`
+- `experiment_planner`
+- `safe_experiment_runner`
+- `evaluation_gate`
+- `promotion_gate`
+- `publish_learning_release`
+- `reject_or_revoke`
+
+**Shared reasoning utility (1)**
+
+- `reasoning_context_assembly`
 
 ```mermaid
 flowchart LR
     T[Topology federation graph] --> G[(DSO durable state\nFederated Topology Graph\nservice and reservation journal)]
     S[Service lifecycle graph] --> G
     A[Assurance and recovery graph] --> G
+    L[Continual-learning graph] --> G
     G --> M[Local Controller MCP Server]
     M --> C[Local SDN controller]
     G <--> P[Peer DSOs]
@@ -619,19 +782,21 @@ delta. It is the agent equivalent of maintaining an OSPF link-state database.
 
 ### 2. Service lifecycle graph
 
-This graph runs when a local user submits intent or when a peer sends a service
-contract event. It replaces the single central Service Orchestrator with the
+This graph runs when a local user or trusted component submits intent, or when
+a peer sends a service contract event. It replaces the single central Service Orchestrator with the
 same bounded lifecycle in every domain.
 
 | Node | Responsibility |
 |---|---|
-| `service_event_ingest` | Accept a local intent or peer contract event and create/load the correlation-specific service record. |
+| `intent_intake_and_normalization` | Receive an intent from a user-facing northbound API or trusted local component, validate its schema and idempotency key, preserve the original request, translate it into the canonical intent model, and create a correlation-specific service record. It does not authorize the request, select a path, contact peers, or call a controller. |
+| `service_event_ingest` | Accept a signed peer contract, reservation, verification, or lifecycle event and load the correlation-specific service record. |
 | `identity_and_entitlement_gate` | Authenticate the user or peer and verify tenant, endpoint, and service authority. |
 | `service_context_load` | Load the local service state, prior receipts, reservation state, peer lifecycle state, and current graph digest. |
 | `topology_freshness_gate` | Require the topology/configuration revisions referenced by the request to be present, valid, and not stale. |
 | `rag_context_retrieval` | Retrieve authorized, semantically relevant runbooks, policies, controller-tool documentation, incidents, and learning releases from the local vector database. |
 | `graphrag_subgraph_retrieval` | Traverse the revision-bound graph projection for relevant service, path, resource, configuration, evidence, and incident relationships. |
 | `retrieval_grounding_gate` | Bind context to its sources and reject stale, unauthorized, out-of-scope, or unsupported retrieval before AI reasoning. |
+| `reasoning_context_assembly` | Build the complete authorized, revision-bound situation and intent package for a named LLM node, including evidence, constraints, feasible candidates, peer state, provenance, and response schema. |
 | `graph_reachability_and_impact` | Run BFS over the verified graph snapshot to establish reachability and affected-resource/service scope. |
 | `bounded_path_enumeration` | Run policy-bounded DFS and disjoint-path search to produce diverse simple path alternatives. |
 | `constraint_path_ranking` | Apply deterministic capacity, SLA, risk, QoT, and configuration constraints before swarm exploration. |
@@ -656,7 +821,10 @@ same bounded lifecycle in every domain.
 
 ```mermaid
 flowchart LR
-    E[Service event] --> I[Identity and context gates]
+    U[User or trusted component intent] --> N[Intent intake and normalization]
+    P[Signed peer service event] --> E[Service event ingest]
+    N --> I[Identity and context gates]
+    E --> I
     I --> F[Topology freshness and QoS budget]
     F --> K[RAG and GraphRAG\nprovenance-bound context]
     K --> GA[BFS, bounded DFS,\nand constraint path ranking]
