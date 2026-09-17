@@ -1,32 +1,32 @@
 # Reference packet–optical data plane
 
-The federation will reuse the data plane in `packet-network/` and
-`optical-network/` of **AgenticAI-packet-optical-qos-platform**. This is the
-baseline for the architecture, implementation roadmap, and executable journal
-experiments. The new work distributes orchestration across three AI DSOs; it
-does not require replacing the reference routers, optical line, or endpoints.
+This document specifies the packet–optical laboratory data plane reused by the
+architecture, implementation roadmap, and executable journal experiments. The
+new work distributes orchestration across three AI DSOs; it does not require
+replacing the reference routers, optical line, or endpoints.
 
-**Source inspected:** commit `9c3b7a70207511894d2e0e464b7fa76aade26c90`,
-17 September 2026. This document records a design decision based on source
-inspection. No lab was deployed or live behavior revalidated during this update.
-The reference's previous test results are not results for this federation.
+**Status:** testbed specification derived from inspection of the existing
+laboratory platform's source. No lab was deployed or live behavior revalidated
+for this document, and that platform's earlier test results are not results for
+this federation.
 
 ## Source of truth and reuse boundary
 
-| Reference source at the inspected commit | What is reused |
+| Reference component | What is reused |
 | --- | --- |
-| [Packet topology manifest](https://github.com/allenabishekGithub/AgenticAI-packet-optical-qos-platform/blob/9c3b7a70207511894d2e0e464b7fa76aade26c90/packet-network/topology.clab.yml) | Containerlab nodes, image, interfaces, addresses, and packet links. |
-| [Packet controller](https://github.com/allenabishekGithub/AgenticAI-packet-optical-qos-platform/blob/9c3b7a70207511894d2e0e464b7fa76aade26c90/packet-network/topology_manager.py) and [recovery procedures](https://github.com/allenabishekGithub/AgenticAI-packet-optical-qos-platform/blob/9c3b7a70207511894d2e0e464b7fa76aade26c90/packet-network/recovery.py) | Existing router configuration and named route-switch procedures, behind new domain-scoped controller adapters. |
-| [Traffic generator](https://github.com/allenabishekGithub/AgenticAI-packet-optical-qos-platform/blob/9c3b7a70207511894d2e0e464b7fa76aade26c90/packet-network/traffic_generator.py) | The shared `client-a` → `server-b` iperf3 UDP flow and receiver evidence. |
-| [Optical topology specification](https://github.com/allenabishekGithub/AgenticAI-packet-optical-qos-platform/blob/9c3b7a70207511894d2e0e464b7fa76aade26c90/optical-network/optical_topology_spec.py) and [builder](https://github.com/allenabishekGithub/AgenticAI-packet-optical-qos-platform/blob/9c3b7a70207511894d2e0e464b7fa76aade26c90/optical-network/topology_manager.py) | Two terminals, four ROADMs, Ethernet edge attachments, and the existing optical model. |
-| [Optical configuration client](https://github.com/allenabishekGithub/AgenticAI-packet-optical-qos-platform/blob/9c3b7a70207511894d2e0e464b7fa76aade26c90/optical-network/optical_config_client.py) and [packet bridge integration](https://github.com/allenabishekGithub/AgenticAI-packet-optical-qos-platform/blob/9c3b7a70207511894d2e0e464b7fa76aade26c90/optical-network/packet_network_bridge.py) | Fixed channel-1 configuration and attachment of packet traffic to Mininet-Optical. |
+| Packet topology manifest | Containerlab nodes, image, interfaces, addresses, and packet links. |
+| Packet controller and recovery procedures | Existing router configuration and named route-switch procedures, behind new domain-scoped controller adapters. |
+| Traffic generator | The shared `client-a` → `server-b` iperf3 UDP flow and receiver evidence. |
+| Optical topology specification and builder | Two terminals, four ROADMs, Ethernet edge attachments, and the existing optical model. |
+| Optical configuration client and packet bridge integration | Fixed channel-1 configuration and attachment of packet traffic to Mininet-Optical. |
 
-Keep these source files pinned when constructing the later testbed. Record the
-separately installed Mininet-Optical version, container image digests, controller
-adapter revision, and any local patches in each experiment manifest. A deliberate
-topology extension gets a different manifest and result label.
+Pin every reused component at a recorded revision when constructing the later
+testbed. Record the separately installed Mininet-Optical version, container
+image digests, controller adapter revision, and any local patches in each
+experiment manifest. A deliberate topology extension gets a different manifest
+and result label.
 
-The reference currently has **one packet controller managing both packet
+The baseline lab currently has **one packet controller managing both packet
 networks**, one shared UDP service, and a central service orchestrator with
 privileged recovery access. That control arrangement is not the federation's
 ownership model. Reuse the data plane and controller procedures; replace central

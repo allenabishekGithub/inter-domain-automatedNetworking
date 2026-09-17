@@ -796,6 +796,5 @@ available, and refresh the rapidly changing 2026 literature.
 
 Normalize the final BibTeX against publisher metadata, group conference/journal
 extensions, and record exactly which published versions supersede preprints.
-No matching public paper was verified for the earlier project name
-`agenticai-packet-optical qos platform`; do not cite that name as a published
-research paper without identifying its authors and publication record.
+Do not cite the earlier in-house laboratory platform as a published research
+paper; no matching public publication record was verified for it.

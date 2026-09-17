@@ -1,26 +1,32 @@
 # Experimental validation plan
 
-**Project:** Federated AI DSO orchestration across independently controlled packet–optical networks.
+**Project:** Sovereign AI domain agents establishing an end-to-end service across independently controlled packet–optical networks.
 **Target:** Elsevier *Computer Networks* journal paper.
 **Plan date:** 17 September 2026.
 **Status:** Proposed validation protocol. No experiment, measured result, or proven guarantee is asserted by this document.
 
 This plan specifies the testbed, experimental controls, procedures, measurements,
 analysis, and artifacts needed to evaluate the
-[system architecture](domain-agent-architecture.md). It implements the research
-priorities in the [roadmap](implementation-roadmap.md#journal-evaluation-plan)
-and addresses the [coordination vulnerabilities](system-overview.md#vulnerabilities-and-coordination-limitations).
-The [literature review](related-work-and-novelty.md) supplies the prior-work
+[system architecture](domain-agent-architecture.md). The
+[literature review](related-work-and-novelty.md) supplies the prior-work
 comparison; experimental success alone does not establish novelty.
 
-The architecture has 57 named workflow nodes, including three conditional
-generative-LLM nodes. Experiments exercise observable service behavior and
-protocol properties, rather than treating node count or successful graph
-execution as an outcome. This document does not request implementation of the
-testbed during the architecture-design session.
+**What this study sets out to demonstrate.** There is one AI DSO per networking
+domain and exactly one, each the sole authority inside its own borders
+([sovereign domain authority](domain-agent-architecture.md#sovereign-domain-authority)).
+The three agents reason with one another and autonomously establish a service
+that runs through all three domains, starting from a structured intent submitted
+to **any one** of them. The study evaluates that behavior and the conditions
+under which it correctly does not happen.
 
-**Selected data plane:** reuse `packet-network/` and `optical-network/` from
-AgenticAI-packet-optical-qos-platform. The [reference specification](reference-data-plane.md)
+The architecture has 57 named workflow nodes, including three conditional
+generative-LLM nodes. Experiments exercise observable service behavior, rather
+than treating node count or successful graph execution as an outcome. This
+document does not request implementation of the testbed during the
+architecture-design session.
+
+**Selected data plane:** reuse the `packet-network/` and `optical-network/`
+reference data plane. The [reference specification](reference-data-plane.md)
 pins the inspected source, exact topology, action support, and control adaptations.
 P1 uses that data plane; richer P0 fixtures and optional extensions must be
 reported separately. This plan does not claim that the federation adapters or
@@ -30,34 +36,41 @@ the experiments are already implemented.
 
 | ID | Research question | Evidence required | Claim boundary |
 | --- | --- | --- | --- |
-| RQ1 | Can independent packet and optical owners establish and maintain an end-to-end service through the proposed agreement/execution protocol? | Executable service provisioning, admission, recovery, and resource-release trials. | A successful tool call or simulated graph path alone is insufficient. |
-| RQ2 | Does binding agreements to evidence and controller conditions improve behavior under changing state and partial failure? | Matched protocol ablations, controlled state-change races, independent transaction checks, and service outcomes. | Existing reservations and consistency mechanisms are prior art; identify the additional mechanism precisely. |
-| RQ3 | What value do grounded, selectively invoked LLM nodes add? | The same federation without LLM calls; retrieval and reasoning ablations; quality, latency, and cost. | Improvements caused by controller checks must not be attributed to the model. |
-| RQ4 | Can concurrent domain assurance loops coordinate without conflicting service changes? | Simultaneous incidents, stale coordinator requests, partitions, and restart experiments. | A lease alone is not proof of exclusion; progress is conditional on the failure model. |
-| RQ5 | What are the performance and scaling costs of federation? | Load/domain-size sweeps, matched centralized or established distributed baseline, signaling/storage/compute measurements. | Three domains establish the core use case, not Internet-scale behavior. |
-| RQ6 | Do bargaining, swarm search, or learning provide additional value? | Separate comparisons with simpler methods under matched inputs and budgets. | These are conditional extensions; omit unsupported algorithmic superiority claims. |
+| RQ1 | Can three sovereign domain agents establish and sustain an end-to-end service across packet, optical, and packet domains from one structured intent, with no central orchestrator? | Executable provisioning, sustained traffic, verification, and teardown trials on the reference data plane. | A successful tool call or a simulated graph path alone is insufficient. |
+| RQ2 | Is the federation genuinely initiator-agnostic — can the intent arrive at any one of the three agents and produce the same service? | The same intent submitted to Packet A, Optical, and Packet B in turn, with the realized path and contract compared across runs. | Equivalent outcomes across initiators do not establish equivalent latency or overhead; report both. |
+| RQ3 | Do the agents reason and negotiate — composing QoS across heterogeneous domains, and refusing — rather than executing a fixed sequence? | Feasible and infeasible intents, offers and counteroffers, and owner veto including the optical refusal case. | A refusal is a valid outcome. Reproducing a negotiation does not establish truthful or strategy-proof reporting. |
+| RQ4 | Is the generative reasoning load-bearing, or is the deterministic path sufficient? | The same federation with all three LLM nodes disabled, plus retrieval ablations, under matched evidence and candidates. | Improvements caused by deterministic gates must not be attributed to the model. |
+| RQ5 | Do the agents sustain the service autonomously through a failure, and report truthfully when no repair exists? | Packet primary-path failure with the named backup action, and an optical cut with no alternate route. | Correct refusal and a truthful degraded state are successful protocol behavior, not service delivery. |
 
 State the primary hypothesis and practically meaningful effect size before
-confirmatory runs. For example: the proposed protocol reduces invalid resource
-activations under the specified race workload, with a measured provisioning-time
-trade-off. Do not predetermine that all performance metrics improve.
+confirmatory runs. Do not predetermine that all metrics improve, and do not
+treat an agent's refusal as an experimental failure.
 
-### 1.1 Required versus conditional scope
+### 1.1 Scope of this study
 
-**Core:** E01–E18 cover domain isolation, topology, feasibility, provisioning,
-agreement, concurrency, stale state, transport faults, partial execution,
-persistence, assurance, conservative coordination, partitions, retrieval, LLM
-effects, operating load, adapter semantics, and invalid evidence.
+**In scope (E01–E09):** sovereign domain authority and controller boundaries,
+topology federation, intent semantics and physical feasibility, negotiation and
+owner veto, provisioning and lifecycle, initiator-agnostic origination,
+closed-loop recovery, retrieval and decision-context quality, and the
+incremental value of generative reasoning.
 
-**Conditional:** E19–E24 are required only when the corresponding claim is made:
-economic superiority, swarm benefit, continual learning, dependency-scoped
-invalidation, automatic coordinator failover, or transfer to larger/hardware
-deployments. Basic bargaining validity is still core, even if comparative
-economic optimization is deferred.
+**Deliberately deferred.** The following are real properties of the architecture
+and are *not* evaluated here. They belong to a separate protocol-correctness
+study and must be declared as untested rather than implied:
 
-A core run may correctly defer an operation or return `UNRESOLVED` when the
-fault prevents safe completion. Report that result as reduced availability or
-incomplete recovery; do not count it as successful service delivery.
+| Deferred area | Why it is out of scope for this paper |
+| --- | --- |
+| Concurrent intents and atomic reservation under contention | Requires a multi-service resource model the fixed-channel baseline does not provide. |
+| State changes injected between agent reasoning and controller acceptance | A race-injection study in its own right; needs conditional-acceptance adapters that the baseline controller lacks. |
+| Message loss, duplication, expiry, and replay | Fault-protocol scope; the cooperative profile here assumes ordinary delivery. |
+| Partial commit, failed compensation, and uncertain application | Depends on transaction primitives that require separate adapter work. |
+| Process, database, and projection failure; partitions and coordinator replacement | Availability and consensus scope; one DSO per domain has no standby in this design. |
+| Load, scale beyond three domains, and hardware transfer | Three domains are the use case under study, not a scalability claim. |
+| Economic allocation quality, swarm search, and continual learning | Optional architectural extensions; each needs its own controlled comparison. |
+
+A run may correctly defer an operation or return `UNRESOLVED` when a fault
+prevents safe completion. Report that as reduced availability or incomplete
+recovery; do not count it as successful service delivery.
 
 ### 1.2 Publication scope profiles
 
@@ -229,9 +242,9 @@ capability coverage before running it:
 | Local transaction guarantees | Packet journal, preparation, rechecks, readback, supported compensation. | Multi-device writes are not atomic; external writers can bypass controller locks. Stronger acceptance/fencing must be implemented or declared unsupported. Optical transactions need their own capability profile. |
 | Provisioning and resource contention | Adopt/admit the existing transport, control the shared flow through its owners, and serialize conflicting route/contract updates. | Does not establish dynamic VPN/circuit provisioning or independent per-service bandwidth isolation. |
 | Fragmentation, tunable line resources, isolated services | Unsupported in the unchanged baseline. | P0 model tests, explicit capability-refusal cases, or a separately implemented extension; never count them as live P1 coverage. |
-| Large graphs and swarm benefit | At most four packet path combinations over one optical line. | Use exact enumeration here; larger search spaces require separately labeled fixtures. |
+| Search-space size | At most four packet path combinations over one optical line. | Use exact enumeration here; larger search spaces require separately labeled fixtures. |
 
-All core E01–E18 families remain relevant, but execute only supported P1 variants
+All core E01–E09 families remain relevant, but execute only supported P1 variants
 and explicitly report P0-only and unsupported cases. If a paper claim requires
 an unavailable primitive, implement it or narrow the claim before publication.
 
@@ -298,7 +311,6 @@ achieved utilization: methods that reject requests will realize different load.
 
 | Factor | Pilot values or construction | Use |
 | --- | --- | --- |
-| Domains | 3 core; 5, 10, 20 only for E24 scale extension. | Federation overhead and participating-path length. |
 | Nodes per packet domain | 4 in the reference; 8, 12, or 24 only in generated P0/extension variants. | Graph/query/candidate cost; preserve the fixed P1 baseline as its own dataset. |
 | Concurrent in-flight intents | 1, 5, 10, 25, 50, subject to measured host limits. | Contention and saturation; distinguish live services from pending requests. |
 | Offered load | Begin at 1 Mbit/s; after calibration use approximately 25%, 50%, 75%, 90%, and overload of measured sustainable forwarding rate. | Packet throughput/assurance; resource-admission capacity requires a separately validated resource model. |
@@ -311,8 +323,8 @@ achieved utilization: methods that reject requests will realize different load.
 | Context budget | For example 2k, 4k, 8k input tokens if supported by all compared methods. | Grounding efficiency; reserve identical output allowance. |
 
 Do not run the full Cartesian product. First validate W1 cases, then run matched
-single-factor sweeps, then preselect important interactions: load × stale state,
-partition × expiry, concurrency × recovery, and context freshness × LLM use.
+single-factor sweeps, then preselect important interactions: initiator ×
+recovery, optical margin × refusal, and context freshness × LLM use.
 Document which cells were run and why. Any reduced/fractional design must retain
 the contrasts needed for its claim.
 
@@ -339,13 +351,10 @@ report any separately tuned variants. A late result remains a deadline miss.
 | B0 | Proposed federated protocol with selective LLM reasoning and grounded RAG/GraphRAG; fixed learning and conventional path search initially. | Reference system under study. |
 | B1 | B0 with all three generative LLM nodes disabled and documented deterministic fallbacks. Same topology, retrieval access, protocol, candidates, tools, and policy. | Incremental value and cost of LLM assistance. |
 | B2 | Central ACTN-style orchestration with the same resources, adapters, feasibility rules, controller guards, and service constraints. | Coordination placement. The central coordinator requests local actions; domain controllers retain their authorization checks. |
-| B3 | A specified existing distributed orchestration implementation or clearly labeled adaptation from the related-work review. | Comparison with prior distributed approaches. Publish any changed assumptions or omitted features. |
-| B4 | Conventional multi-agent LLM workflow using the same models, tools, authorized evidence, and action gates, with a matched budget. | Selective reasoning/workflow structure. Do not create a deliberately unsafe straw baseline. |
-| O1 | Exact or exhaustive offline solution on tractable static instances. | Feasibility/selection reference, not a deployable online competitor or timing baseline. |
 
-B0 versus B1 is required for an AI-contribution claim. Include B2 or a suitable
-B3 as the main architecture comparison; use both where feasible. B4 is needed
-if claiming superiority to more general agentic orchestration. Document the
+B0 versus B1 is required: it is the only evidence that the generative reasoning
+is load-bearing (RQ4). B2 is recommended as the architecture comparison, showing
+what sovereign federation changes relative to central orchestration. Document the
 actual feature matrix so a baseline is not credited with functionality it lacks.
 
 ### 5.1 Controlled ablations
@@ -355,18 +364,11 @@ actual feature matrix so a baseline is not credited with functionality it lacks.
 | A1 | Document RAG only; graph facts still available to non-LLM feasibility checks. |
 | A2 | Graph context without additional revision/freshness filtering; retain local controller guards. |
 | A3 | Fixed structured context versus dynamically retrieved context under the same token limit. |
-| A4 | Conventional read-then-write controller adapter versus conditional acceptance, only in an isolated fault-injection testbed. Label this a mechanism ablation, not a safe deployment baseline. |
-| A5 | Whole-graph invalidation versus verified dependency-scoped invalidation; E22 only. |
-| A6 | Enable each of the three LLM nodes separately; learning stays off unless E21 is being studied. |
-| A7 | Greedy/fixed-price selection versus weighted Nash on the same feasible candidate set. |
-| A8 | K-shortest/constraint search versus ACO with the same feasibility checker and compute budget. |
-| A9 | Frozen knowledge/parameters versus evaluated memory or learning releases. |
+| A4 | Enable each of the three LLM nodes separately; learning stays off. |
 
-For the main stale-state analysis, cross LLM enabled/disabled with controller
-preconditions enabled/disabled in P0 or isolated P1. This separates model effects,
-protocol effects, and their interaction. Do not remove domain authorization to
-make an ablation fail. Run intentionally weakened mechanisms only on disposable
-lab resources, and restore the reference configuration between trials.
+Do not remove domain authorization to make an ablation fail. Run intentionally
+weakened mechanisms only on disposable lab resources, and restore the reference
+configuration between trials.
 
 Use matched evidence arrival traces when isolating decision logic. In natural
 deployment comparisons, allow architecture-induced propagation differences but
@@ -464,13 +466,16 @@ The following are target invariants, each evaluated against its explicit scope:
 | --- | --- |
 | I1 | A local configuration mutation requires that owner's authorization for the exact operation. |
 | I2 | A new shared-service activation requires matching acceptance and valid preparation/reservation evidence from every affected owner. |
-| I3 | Conditional local acceptance rejects violated resource/configuration preconditions and superseded authority installed at that controller. |
-| I4 | Replaying an operation key does not repeat its effect; a different payload cannot reuse the key. |
-| I5 | Reservations and applied allocations respect the declared capacity/conflict policy, including concurrent requests. |
-| I6 | A service is not reported verified without its required independent observations; unknown or partial outcomes remain visible. |
-| I7 | Replica ingestion preserves owner authority, version order, deletion, and access restrictions. |
-| I8 | Model/retrieval output cannot bypass a deterministic gate or invoke an unauthorized controller mutation. |
-| I9 | Recovery retains durable unresolved work and follows the specified compensation/coordination rules. |
+| I3 | Replaying an operation key does not repeat its effect; a different payload cannot reuse the key. |
+| I4 | Reservations and applied allocations respect the declared capacity/conflict policy. |
+| I5 | A service is not reported verified without its required independent observations; unknown or partial outcomes remain visible. |
+| I6 | Replica ingestion preserves owner authority, version order, deletion, and access restrictions. |
+| I7 | Model/retrieval output cannot bypass a deterministic gate or invoke an unauthorized controller mutation. |
+| I8 | Recovery retains durable unresolved work and follows the specified compensation rules. |
+
+Conditional controller acceptance under an injected state-change race was an
+invariant of the deferred protocol study and is not evaluated here; see the
+deferred-scope table in Section 1.1.
 
 An observed invariant violation blocks the corresponding claim until corrected
 and the affected suite rerun. Zero observed violations is necessary experimental
@@ -479,7 +484,7 @@ include their costs and failed cases.
 
 ## 7. Common execution procedure
 
-Apply this procedure to every experiment below unless a stated variant overrides it:
+Apply this procedure to every experiment in Section 8 unless a stated variant overrides it:
 
 1. Select the frozen manifest, variant, topology, workload trace, and seed tuple.
 2. Reset durable service/reservation state and model memory to the prescribed
@@ -522,16 +527,33 @@ sequenceDiagram
     V-->>H: Trial outcome and evidence references
 ```
 
-## 8. Detailed experiment catalogue
+## 8. Experiment catalogue
 
-Every experiment records the common manifest and trace fields above. Each
-procedure below specifies additional setup, stimuli, independent expectations,
-and analysis. A negative result is a research outcome; it must not be replaced
-by an easier scenario after examining the final test results.
+Nine experiment families cover the claims in Section 1. They run in the order
+below, which follows the paper's narrative: establish that the domains are
+genuinely sovereign, that they share a graph, that they understand the intent,
+that they negotiate it, that they deliver the service, that any one of them can
+originate it, that they keep it alive, and finally what the generative reasoning
+contributes.
+
+| ID | Family | Answers |
+| --- | --- | --- |
+| E01 | Domain authority, identities, and controller boundaries | RQ1, RQ3 |
+| E02 | Topology handshake, replication, and graph integrity | RQ1 |
+| E03 | Intent semantics, QoS composition, and physical feasibility | RQ1, RQ3 |
+| E04 | Negotiation, agreement, and owner veto | RQ3 |
+| E05 | Provisioning, sustained service, modification, and teardown | RQ1 |
+| E06 | Initiator-agnostic origination | RQ2 |
+| E07 | Closed-loop packet and optical recovery | RQ5 |
+| E08 | RAG, GraphRAG, and decision-context quality | RQ4 |
+| E09 | Incremental LLM value, fallback, and cost | RQ4 |
+
+Apply the common execution procedure in Section 7 to every family unless a
+stated variant overrides it.
 
 ### E01 — Domain authority, identities, and controller boundaries
 
-**Scope:** Core; RQ1; I1, I2, I8.
+**Scope:** Core; RQ1, RQ3; I1, I2, I7.
 
 **Setup:** Three domain stacks with distinct identities and policies. Construct
 one valid local request, one user outside its endpoint scope, one peer request
@@ -554,7 +576,7 @@ combination. Any unauthorized accepted mutation violates the core property.
 
 ### E02 — Topology handshake, replication, and graph integrity
 
-**Scope:** Core; RQ1, RQ2; I7.
+**Scope:** Core; RQ1; I6.
 
 **Setup:** A known graph manifest with per-owner revision streams. Start one
 DSO with an empty replica and another with an older snapshot.
@@ -578,7 +600,7 @@ of future freshness.
 
 ### E03 — Intent semantics, QoS composition, and physical feasibility
 
-**Scope:** Core; RQ1; I1, I5, I6.
+**Scope:** Core; RQ1, RQ3; I1, I4, I5.
 
 **Setup:** A labeled library of feasible and infeasible structured intents. Include
 unit mismatches, invalid endpoints, asymmetric paths, insufficient bandwidth,
@@ -608,14 +630,36 @@ candidate-set coverage, solver status, numeric tolerances, and unsupported model
 features. Report correlated failure assumptions; do not multiply availability
 probabilities without justification.
 
-### E04 — Provisioning, sustained service, modification, and teardown
+### E04 — Negotiation, agreement, and owner veto
 
-**Scope:** Core; RQ1, RQ5; I1–I6, I9.
+**Scope:** Core; RQ3; I1, I2, I4.
 
-**Setup:** Healthy reference topology. Use W1 first, then W2 competing intents
-and revisions for the shared flow. Test ingress from each permitted domain;
-the baseline endpoints remain `client-a` and `server-b`. An optical-domain
-user can request that service without adding a new optical-domain endpoint.
+**Setup:** Known candidate set with fixed costs, disclosed gains, budgets,
+disagreement utilities, and weights. Include positive gains for all, a zero or
+negative gain for one domain, no budget-feasible contract, and tied scores.
+
+**Procedure:** Submit offers/counteroffers, reject from each domain in turn, and
+deliver expired or mismatched acceptances. Recreate the two-packet-domains-approve,
+optical-domain-refuses example. Repeat with a different participating subset in
+a fixture with an unrelated domain or a domain-local request. Alter an offered
+allocation after signatures have been collected.
+
+**Expected:** Every affected owner accepts the exact allocation before activation.
+Unrelated owners have no veto. A two-out-of-three approval cannot authorize the
+optical resources. The agreed numerical objective and tie-break are reproducible;
+no positive-gain candidate means no Nash agreement under the stated rule.
+
+**Measure/report:** Correct agreements/rejections, participant-set correctness,
+budget adherence, rounds, expiry rate, and information disclosed. Prices/gains
+are attributed reports; this test does not establish honest strategic behavior.
+
+### E05 — Provisioning, sustained service, modification, and teardown
+
+**Scope:** Core; RQ1; I1–I5, I8.
+
+**Setup:** Healthy reference topology. Use W1 first, then W2 revisions for the
+shared flow. Ingress is from Packet A here; varying the originating domain is
+E06.
 
 **Procedure:** Establish the service, verify the realized path and QoS, and run
 traffic for its declared observation interval. Modify a supported route/contract
@@ -638,167 +682,47 @@ goodput, delay, loss, resource use before/after, and CPU/signaling/model cost.
 Show at least one complete trace and aggregate repeated results. A single trace
 is an illustration, not the statistical sample.
 
-### E05 — Bargaining validity, owner veto, and participant scope
+### E06 — Initiator-agnostic origination
 
-**Scope:** Core; RQ1; I1, I2, I5.
+**Scope:** Core; RQ2; I1, I2, I5.
 
-**Setup:** Known candidate set with fixed costs, disclosed gains, budgets,
-disagreement utilities, and weights. Include positive gains for all, a zero or
-negative gain for one domain, no budget-feasible contract, and tied scores.
+This is the experiment for the paper's central claim: the intent may arrive at
+any one of the three sovereign agents, and the federation establishes the same
+service regardless of which one received it.
 
-**Procedure:** Submit offers/counteroffers, reject from each domain in turn, and
-deliver expired or mismatched acceptances. Recreate the two-packet-domains-approve,
-optical-domain-refuses example. Repeat with a different participating subset in
-a fixture with an unrelated domain or a domain-local request. Alter an offered
-allocation after signatures have been collected.
+**Setup:** One structured intent for the baseline `client-a` → `server-b`
+service, byte-identical except for its submission endpoint and request ID. The
+baseline endpoints do not change: an optical-domain user can request that service
+without adding a new optical-domain endpoint. Prepare an authorized user in each
+of the three domains, and one user whose entitlement does not cover the request.
 
-**Expected:** Every affected owner accepts the exact allocation before activation.
-Unrelated owners have no veto. A two-out-of-three approval cannot authorize the
-optical resources. The agreed numerical objective and tie-break are reproducible;
-no positive-gain candidate means no Nash agreement under the stated rule.
+**Procedure:** Submit the intent to Packet A, then to the Optical DSO, then to
+Packet B, as separate trials on a reset fixture. For each trial record which DSO
+became the initiating DSO, the correlation ID owner, the message sequence, the
+per-owner acceptances, the realized path, and the verified outcome. Repeat each
+initiator with the same seeds. Then submit through the unentitled user at each
+domain, and submit an intent whose endpoints lie entirely within one domain.
 
-**Measure/report:** Correct agreements/rejections, participant-set correctness,
-budget adherence, rounds, expiry rate, and information disclosed. Prices/gains
-are attributed reports; this test does not establish honest strategic behavior.
+**Expected:** All three initiators reach the same realized path and an
+equivalent service contract; only the coordinating identity, message ordering,
+and signaling path differ. The initiating DSO owns the correlation ID and
+answers the user, but issues no instruction to a peer and holds no additional
+authority: every remote decision is still signed by its own owner. Relaying a
+peer's acceptance does not let the relay alter, withhold, or substitute for it.
+An unentitled user is rejected at its own domain without consulting peers. A
+single-domain request does not convene the other two owners.
 
-### E06 — Concurrent intents and atomic resource reservation
+**Measure/report:** Realized-path and contract equivalence across the three
+initiators; per-initiator provisioning latency, A2A message count and bytes, and
+number of negotiation rounds; participant-set correctness; and rejection
+correctness for the unentitled and single-domain cases. Report initiator-dependent
+differences in latency and overhead explicitly — equivalent outcomes do not imply
+equivalent cost, and the transit domain is expected to differ from the edge
+domains in signaling role.
 
-**Scope:** Core; RQ1, RQ2; I2–I5, I9.
+### E07 — Closed-loop packet and optical recovery
 
-**Setup:** In baseline P1, conflict two requests over the same packet-route
-resources or service revision, with compatible requests on distinct owned route
-sets as a control. These route holds are not per-service bandwidth reservations.
-Repeat for packet queues, optical spectrum/transponders, or other capacity
-bottlenecks only in a supporting P0 model or explicit extension.
-
-**Procedure:** Release requests at a common barrier from different ingress DSOs.
-Pause them after reading the same free-capacity snapshot, then allow both to
-reserve. Sweep concurrency and ordering. Retry a timed-out reservation with its
-original key; attempt reuse of that key with a different allocation. Release the
-winner and test progress of a later request.
-
-**Expected:** Local reservation acceptance serializes conflicting allocations
-according to the specified resource policy. Both requests cannot consume the same
-exclusive resource. Compatible requests need not block each other unnecessarily.
-Losers release provisional holds and terminate or retry within their contract.
-
-**Measure/report:** Over-allocation, leaked holds, admission fairness by ingress,
-starvation, queue time, completion rate, and controller contention. This is a
-resource-concurrency test, not evidence of fairness for every workload.
-
-### E07 — State changes between reasoning and execution
-
-**Scope:** Core; RQ2, RQ3; I2–I6, I8.
-
-**Setup:** A feasible agreed service depending on an optical resource at revision
-418. Enable deterministic hooks after retrieval, offer acceptance, preparation,
-DSO authorization, and immediately before controller acceptance.
-
-Revisions 418/419 are illustrative federation record revisions, not counters
-already exposed by the reference APIs. For P1, also change packet route/readiness
-conditions guarded by the existing recovery procedure. Distinguish controller
-lock-protected writes from direct-device external writes; the existing read-check-
-write sequence alone does not establish atomic acceptance against all writers.
-Optical invalidation can revoke its acceptance of the unchanged line; no optical
-reconfiguration is needed to test stale dependency handling.
-
-**Procedure:** At each hook, change a required resource/configuration condition
-to revision 419 while delaying the advertisement to another DSO. Attempt the old
-operation. Repeat for an unrelated graph change and for the contract's own expected
-reservation/application transitions. Cross B0/B1 with conditional acceptance
-enabled/disabled; label the disabled variant A4. Repeat with both fresh and delayed
-GraphRAG projections.
-
-**Expected:** Required invalid conditions are rejected at local acceptance even
-when the LLM or initiating DSO has obsolete information. Valid protected conditions
-and explicitly authorized self-transitions are handled according to the contract,
-without endless self-invalidation. Whole-graph checks may conservatively restart
-after unrelated changes; report this cost.
-
-**Measure/report:** Invalid acceptances, rejected stale attempts, unnecessary
-renegotiation, time to a new valid agreement, service disruption, and model calls.
-Attribute protection to the guard if it also works without the LLM. Preserve
-cases where late physical failure occurs after valid acceptance; they are a
-different problem from accepting already-invalid conditions.
-
-### E08 — Message faults, expiry, and replay
-
-**Scope:** Core; RQ2; I2–I4, I9.
-
-**Setup:** A2A/MCP transport proxies or equivalent controlled failure hooks. Define
-faults at application-message and underlying transport layers separately.
-
-**Procedure:** Drop or duplicate offers, acceptances, reservation summaries,
-commit requests, and acknowledgements individually; then use seeded random delay,
-loss, and reordering. Deliver stale messages after a newer contract or an expiry.
-Test boundary times on either side of reservation validity and the allowed clock
-error. Keep a targeted “accepted request, lost reply” case distinct from “request
-never arrived.”
-
-**Expected:** Deduplication and operation keys preserve one intended effect.
-Expired or mismatched approvals cannot be assembled into a current barrier.
-Unknown mutations are queried/reconciled, and missing acknowledgements never
-become implicit consent. Deadlines bound retries and resource holding.
-
-**Measure/report:** Event-delivery attempts, duplicate actual effects, expiry
-handling, unresolved outcomes, retry overhead, and eventual progress after
-communication restoration. Do not assume exactly-once message delivery.
-
-### E09 — Partial commit, failed compensation, and uncertain application
-
-**Scope:** Core; RQ2; I1–I6, I9.
-
-**Setup:** All participants have agreed and prepared. Use each domain as the
-failing participant in separate trials; rotate the order of local application.
-
-In baseline P1, apply packet actions only where supported, with Optical validating
-and retaining the line. Test partial packet recovery across A/B and within each
-multi-router transaction. A failed optical validation or lost optical receipt is
-not a failed optical configuration write. Optical mutation/rollback variants and
-collateral independent-service protection below require P0 or an extension.
-
-**Procedure:** Apply one segment, fail another before application, and observe
-the aggregate state. Repeat with a controller that applies the change but loses
-its receipt response, a delayed application after timeout, and compensation
-that fails or becomes invalid after a subsequent resource change. Restart the
-DSO while recovery is pending. Protect a pre-existing control service throughout.
-
-**Expected:** Partial application is never reported as verified end-to-end service.
-The recovery path queries actual state and attempts only permitted compensation.
-An operation already accepted under an old epoch is reconciled; installing a
-new epoch does not magically undo it. Unrecoverable cases remain visible and
-retain durable reconciliation tasks.
-
-**Measure/report:** Time in partial state, packet disruption, resource leaks,
-compensation attempts/success, unresolved counts, and unaffected-service damage.
-Successful compensation is a recovery result, not proof of atomic activation.
-
-### E10 — Process, database, and projection failure
-
-**Scope:** Core; RQ1, RQ2; I3–I7, I9.
-
-**Setup:** Persistent stores and explicit write/send boundaries. Establish known
-service, reservation, inbox/outbox, and projection states.
-
-**Procedure:** Stop and restart a DSO after durable state write but before A2A
-send, after receipt persistence but before acknowledgement, and during recovery.
-Interrupt database access or the projection worker. Rebuild Neo4j from source
-records. Test database restoration to a known snapshot only as a separately
-labeled stale-recovery scenario; normal restart must not discard durable epochs.
-
-**Expected:** Outbox/inbox replay does not duplicate controller effects; recovery
-tasks and authority state survive supported restart. Store unavailability defers
-dependent mutations rather than producing fabricated success. A reconstructed
-graph must pass version/integrity checks before use.
-
-**Measure/report:** Restart-to-ready time, lost or duplicate durable events,
-reconciliation workload, projection catch-up, degraded service interval, and
-control-plane availability. Separate storage-loss disasters from recoverable
-process crashes; do not claim both from one restart test.
-
-### E11 — Closed-loop packet and optical recovery
-
-**Scope:** Core; RQ1, RQ3, RQ4; I1–I6, I8, I9.
+**Scope:** Core; RQ5; I1–I5, I7, I8.
 
 **Setup:** The active shared UDP service on the reference data plane. Prepare
 the supported `p-a2` and `p-b2` backup actions and a separate case with no feasible
@@ -830,57 +754,9 @@ weaken the user's hard constraints or sacrifice an unrelated service.
 oscillation/action counts, recovery quality, collateral effects, and model cost.
 Show protocol recovery separately from any immediate fast reroute in the data plane.
 
-### E12 — Concurrent incidents and conservative coordinator handling
+### E08 — RAG, GraphRAG, and decision-context quality
 
-**Scope:** Core; RQ4; I1–I4, I9. Automatic failover is E23.
-
-**Setup:** Two or three DSOs receive evidence of the same shared-service failure.
-Also create distinct incidents that share a constrained resource. Use the frozen
-incident-correlation and coordination-grant rules.
-
-**Procedure:** Vary alarm ordering and delay. Submit incompatible proposed repairs,
-duplicate incident IDs, and delayed requests from a superseded epoch. Stop the
-coordinator and deliver timeouts to peers. Test restart with the current durable
-epoch and an explicitly rejected stale epoch.
-
-**Expected:** Incident deduplication does not suppress distinct real faults.
-Required approvals precede a shared mutation. Controllers reject superseded
-authority they have installed. In the conservative profile, coordinator loss
-defers a new shared change until authority and outstanding operations are resolved;
-timeout alone does not elect an authorized replacement.
-
-**Measure/report:** Conflicting accepted actions, duplicate repairs, incident
-merge/split errors, waiting time, and deferred services. This core experiment
-validates bounded behavior under coordinator loss, not automatic availability
-through every partition.
-
-### E13 — Partitions, delayed approval, and reconnection
-
-**Scope:** Core; RQ2, RQ4; I1–I4, I7, I9.
-
-**Setup:** Distinguish an A2A-only partition, an isolated controller, and a
-data-plane cut. Keep the experiment driver and measurement path reachable.
-
-**Procedure:** Partition before agreement, during reservation collection, after
-one local application, and during an active service. Test asymmetric reachability
-as well as complete peer isolation. Use durations below and above reservation/
-coordination expiry. Restore communication while replaying delayed messages and
-new topology revisions.
-
-**Expected:** Peers do not convert missing consent into approval or remove an
-unreachable resource owner from an existing contract to bypass it. Reconnection
-causes reconciliation before new dependent changes. Existing traffic may continue
-if the data plane is intact; monitoring and scoped protection remain distinct
-from new shared-service authorization.
-
-**Measure/report:** Deferred/rejected requests, service continuity, unresolved
-transactions, stale-message rejection, resource cleanup, and convergence after
-reconnection. Report the availability cost of waiting for required owners. A
-safe deferral is not counted as successful provisioning or recovery.
-
-### E14 — RAG, GraphRAG, and decision-context quality
-
-**Scope:** Core for the retrieval contribution; RQ2, RQ3; I7, I8.
+**Scope:** Core; RQ4; I6, I7.
 
 **Setup:** Versioned runbooks, policies, incident traces, and graph fixtures with
 ground-truth evidence IDs and required dependency sets. Include relevant, irrelevant,
@@ -904,14 +780,14 @@ unsupported claims, diagnosis/ranking quality, tokens, and latency. Have blinded
 reviewers adjudicate ambiguous semantic answers with a published rubric; retain
 disagreements. Better retrieval scores alone do not establish better service outcomes.
 
-### E15 — Incremental LLM value, fallback, and cost
+### E09 — Incremental LLM value, fallback, and cost
 
-**Scope:** Core for the agentic contribution; RQ3; I1, I8.
+**Scope:** Core; RQ4; I1, I7.
 
 **Setup:** Identical B0/B1 protocol, evidence, candidates, and controller limits.
 Use ordinary cases and evidence-rich ambiguous cases specified before observing
 model outputs. Keep learning frozen. Separate diagnosis from candidate-ranking
-effects using A6.
+effects using A4.
 
 **Procedure:** Run paired workloads with LLM enabled/disabled, then each permitted
 reasoning node independently. Inject response timeout, provider error, malformed
@@ -930,271 +806,27 @@ overhead. Report no benefit or a disadvantage if observed. Hosted pricing is
 captured with date and billing units at run time; local inference reports hardware,
 runtime, and energy assumptions separately. Include failed/retried calls in cost.
 
-### E16 — Load, performance limits, and three-domain scalability
-
-**Scope:** Core; RQ5; I3–I6.
-
-**Setup:** Fixed three-owner reference topology, one shared flow, a pinned machine
-allocation, and W2 competing request/revision traces. Hold retrieval/model
-parameters constant. Distinguish increasing control-request concurrency from
-increasing independently isolated live services. Packet-node-size and multi-service
-variants require separately labeled P0 fixtures or executable extensions.
-
-**Procedure:** Sweep offered load and in-flight requests, first without faults,
-then with a fixed rate of state changes. Run B0/B1 and B2 or B3. Increase load
-until the declared limit or saturation; use a fixed-duration or fixed-arrival
-open-loop workload so a slow method cannot hide load by generating fewer requests.
-Separately measure cold start, warm steady state, and database/index growth.
-
-**Expected:** Capacity conflicts remain correctly controlled under load, and
-overload produces attributable rejection/backpressure rather than fabricated
-success. No performance pass is presumed; identify the first saturated component.
-
-**Measure/report:** Offered versus completed rate, deadline misses, success/blocking,
-median/tail latency with sample counts, queue lengths, replica lag, CPU/memory,
-storage, MCP/A2A overhead, and model quota effects. Latency among successes must
-be accompanied by failure/deadline rates. E24 is required for larger federation claims.
-
-### E17 — Controller semantics and heterogeneous adapters
-
-**Scope:** Core for every adapter used; RQ1, RQ2; I1–I6, I9.
-
-**Setup:** Capability profiles for the packet and optical controllers, including
-conditional acceptance, protected reservation, apply/readback delay, transaction
-query, compensation, and fencing support. Use deterministic fixtures to expose
-each supported and unsupported behavior.
-
-Start with the [reference capability table](reference-data-plane.md#initial-action-and-capability-profile).
-Test scoped packet inventory, backend authorization, recovery journal durability,
-and MCP-to-HTTP procedure mapping. Check that Optical advertises fixed-line
-validation without claiming alternate-path or spectrum transactions. Record
-which preconditions/epochs are enforced by new adapter code and which remain
-unsupported. Repeat packet-side checks for A and B; source support for an action
-is not evidence that this federation has exercised it live.
-
-**Procedure:** Exercise the same service contract against adapters with immediate
-versus asynchronous application, delayed readback, explicit rejection, unsupported
-rollback, and conditional-update support. Separate the result for an atomic
-check-and-accept primitive from an adapter that only performs read-then-write.
-Inject a change at the primitive boundary as in E07.
-
-**Expected:** The DSO distinguishes acknowledged, accepted, applied, and verified
-states. Unsupported features lead to documented capability refusal or a declared
-weaker profile, never an implied guarantee. Cross-domain handoff mismatches must
-be caught before declaring end-to-end success.
-
-**Measure/report:** Per-adapter semantic coverage, invalid transitions, application
-and observation latency, unresolved operations, and supported recovery paths.
-An MCP wrapper alone does not establish interoperability or transaction semantics.
-
-### E18 — Invalid evidence and model-output containment
-
-**Scope:** Core bounded negative tests; RQ2, RQ3; I1, I7, I8.
-
-**Setup:** Authorized retrieval fixtures containing a misleading instruction,
-incorrect graph reference, expired policy text, or wrong-unit telemetry. Add
-tenant-scoped canary records that the requesting context must not receive. These
-are controlled robustness cases, not an exhaustive adversarial security evaluation.
-
-**Procedure:** Present the misleading material through its ordinary retrieval or
-telemetry path. Feed invalid model outputs at the schema boundary. Attempt to
-use a quoted runbook instruction as controller authority and to cite evidence
-outside the assembled context. Inspect prompts, artifacts, policy decisions,
-and actual controller effects.
-
-**Expected:** Retrieved content is treated as evidence, not permission to change
-the workflow or invoke tools. Access filters exclude unauthorized records, and
-deterministic gates reject invalid actions even if an LLM recommends them.
-
-**Measure/report:** Canary exposure, invalid action proposals, rejected proposals,
-unauthorized effects, fallback results, and the exact tested surfaces. Passing
-these fixtures does not establish general prompt-injection resistance, Byzantine
-tolerance, or privacy of the deliberately shared topology.
-
-### E19 — Economic allocation and bargaining quality
-
-**Scope:** Conditional on an economic-improvement claim; RQ6. E05 remains mandatory.
-
-**Setup:** Fixed feasible candidate sets with documented resource/cost units,
-settlements, gains, positive weights, and disagreement values. Include symmetric
-owners, scarce optical resources, unequal costs, budget pressure, and no mutually
-beneficial contract.
-
-The unchanged topology has at most four packet path combinations over one optical
-line, further restricted by controller action preconditions. Enumerate the
-actually executable candidates exactly. Scarcity/settlement values are declared
-experimental models, not measured carrier prices or native wavelength markets.
-
-**Procedure:** Compare fixed/greedy acceptance and weighted Nash selection on
-identical candidates. Enumerate the objective optimum for small cases; use a
-bounded solver for larger cases with reported status. Sweep bargaining weights,
-scarcity, and utility normalization without allowing LLM-generated coefficients.
-Repeat with noisy cost estimates as a sensitivity study, distinct from malicious
-misreporting or mechanism-design analysis.
-
-**Expected:** Every selected agreement remains feasible, authorized, within budget,
-and individually rational under the declared rule. Weights and tie-breaks are
-reproducible. No-agreement outcomes are retained rather than forcing a score for
-zero/negative gains.
-
-**Measure/report:** Per-domain utility gains, surplus distribution, price/resource
-cost, blocking, score gap to the reference, negotiation rounds, and computation.
-Do not claim Nash equilibrium, strategy-proofness, or fair commercial settlement
-solely from the selected objective.
-
-### E20 — Swarm search and path/resource candidate quality
-
-**Scope:** Conditional on a swarm-benefit claim; RQ6.
-
-**Setup:** Freeze utility selection and controller checks. Specify whether ACO
-only ranks a fixed candidate pool or constructs new path/resource combinations.
-If it only ranks a fixed pool, compare with direct scoring of that pool; do not
-claim wider search coverage. Include sparse/dense and fragmented-spectrum fixtures.
-
-The reference topology is a small correctness example with at most four packet
-path combinations; exact enumeration is the primary baseline there. Sparse/dense
-or fragmented-spectrum search spaces are P0 or explicit extensions. Do not claim
-swarm superiority from the fixed line, or present a larger generated topology as
-the unchanged reference data plane.
-
-**Procedure:** Compare constrained K-shortest search, a simple randomized search,
-and ACO. Match wall-clock budget and also report candidate-evaluation counts;
-hardware-dependent time and search effort are not interchangeable. Repeat ACO
-seeds, colony sizes, iteration budgets, and quality-decay settings. After a topology
-change, test stale pheromone invalidation. Use an exact small-instance reference.
-
-**Expected:** Every returned candidate passes the same independent feasibility
-checks. Stochastic exploration cannot widen the action allowlist or reuse an
-invalid resource. Termination respects the service deadline.
-
-**Measure/report:** Best feasible objective versus time, coverage/diversity,
-optimality gap, time to first feasible option, variability, state/messaging cost,
-and final service outcomes. PSO is a separate conditional sub-study only if a
-clearly specified continuous decision variable is implemented.
-
-### E21 — Continual learning and transfer of bounded releases
-
-**Scope:** Conditional on a learning-benefit claim; RQ6; I1, I8, I9.
-
-**Setup:** Separate training/development/held-out episodes by time, topology, and
-incident family. Freeze a no-learning control. Distinguish retrieval of incident
-memory, calibration updates, candidate-ranking changes, and model training as
-different treatments. Use independent seeded learning histories across replicas.
-
-**Procedure:** Replay terminal traces, propose/evaluate a release, and run it first
-in shadow mode. Promote only through the documented L0/L1/L2 rule. Test stale,
-revoked, out-of-scope, and insufficient-evidence releases; then introduce a held-out
-distribution shift. Exchange signed peer releases and verify recipient-local
-acceptance. Test that unresolved transactions do not become mislabeled successes
-in the training data.
-
-**Expected:** Promotion cannot weaken hard constraints, grant execution authority,
-or write peer-owned state. Revocation restores the declared fallback. Test data
-do not enter memory or tuning before their scheduled evaluation.
-
-**Measure/report:** Prediction/calibration error, downstream service outcomes,
-sample efficiency, regressions, adaptation time, release acceptance/revocation,
-and training/retrieval cost. A distributed agent federation is not evidence of
-federated model training.
-
-### E22 — Whole-graph versus dependency-scoped invalidation
-
-**Scope:** Conditional on a new dependency-validation mechanism; RQ2.
-
-**Setup:** Identical controllers and agreement rules, differing only in the
-decision validity scope. Independently label the full set of relevant resource,
-configuration, shared-risk, policy, and handoff dependencies for each small case.
-
-**Procedure:** Change a used resource, a shared dependency, an unrelated resource,
-and an apparently unrelated node that changes a hidden shared constraint. Include
-the contract's own expected reservation/application transitions. Sweep background
-graph churn while holding affected dependencies fixed, then reverse the condition.
-
-**Expected:** Dependency-scoped acceptance ignores only proven irrelevant changes.
-Omitted dependencies must not permit invalid execution. Whole-graph invalidation
-may reject more often but is evaluated fairly under the same workload. If dependency
-closure cannot be established, retain conservative invalidation.
-
-**Measure/report:** Necessary and unnecessary renegotiations, unsafe omissions,
-completeness/size of dependency sets, query/validation cost, provisioning/recovery
-time, and relative availability. The contribution requires both reduced unnecessary
-work and validated dependency coverage, not just fewer rejected operations.
-
-### E23 — Automatic coordinator replacement and replicated authority
-
-**Scope:** Conditional on automatic failover or stronger coordination availability;
-RQ4. E12/E13 cover the conservative core behavior.
-
-**Setup:** Fully specify the grant/election protocol, membership, epoch ordering,
-persistence, clock assumptions, controller fencing, and treatment of in-flight
-accepted operations. If using a consensus library, pin it and state its actual
-failure assumptions. Do not implement unspecified majority voting by analogy.
-
-**Procedure:** Crash the coordinator before/after grant persistence and before/
-after local acceptance. Partition it from a prospective replacement, delay old
-requests until after the new epoch, restart it with persisted state, and test
-simultaneous replacement proposals. Inject storage/clock faults only within the
-claimed model, labeling out-of-model stress separately.
-
-**Expected:** An authorized replacement acts only after the protocol's required
-grants and controller conditions. Old accepted operations are reconciled before
-incompatible new ones. Quorum agreement on coordinator metadata never overrides
-an affected domain's service veto or creates atomic physical activation.
-
-**Measure/report:** Conflicting accepted actions, failover/deferral time, durable
-grant consistency, discarded stale requests, unresolved prior operations, and
-availability after restoration. A timeout without demonstrated fencing and
-replacement semantics does not support this claim.
-
-### E24 — Larger federations and hardware/model transfer
-
-**Scope:** Conditional on broader scale or real-controller/hardware claims;
-RQ1, RQ5. Report its two branches separately.
-
-Any added nodes, alternate optical paths, isolated services, or controller/device
-substitutions get a new topology/capability manifest. Retain the original P1
-dataset for comparison and list every difference from the reused data plane.
-
-**Scale branch:** Repeat representative E04, E06, E07, E11, and E13 cases at 5,
-10, and 20 domains, or a declared achievable subset. Vary total domain count
-independently from service path length and number of unrelated members. Measure
-full-mesh topology replication overhead, per-service participants, storage/lag,
-agreement time, and recovery. Model independent authorities even if hosts are shared;
-record host saturation and avoid attributing it solely to the protocol.
-
-**Transfer branch:** Re-run a frozen subset on a real packet/optical controller or
-hardware profile. Calibrate timing, resource/QoT models, and readback semantics.
-Compare predicted feasibility and service behavior with observations; quantify
-model error and unsupported operations. Use the same intent class where physically
-possible and report any changed conditions rather than claiming identical tests.
-
-**Expected:** Prior core invariants remain applicable within supported capabilities.
-Passing scaled simulation does not demonstrate real operator deployment; a single
-hardware link does not validate the whole simulated federation.
-
-**Measure/report:** Scale curves, saturation limits, messages/bytes per owner,
-prediction error, controller semantic differences, and outcomes by profile.
-
 ## 9. Coverage and staged execution
 
 | Stage | Experiments | Gate before proceeding |
 | --- | --- | --- |
 | S0: specification and calibration | Freeze Section 2; validate topology, metrics, controllers, and checkers. | Timing/resource observations are trustworthy; limitations are explicit. |
-| S1: deterministic functional validation | E01–E06 and E17 with B1. | Correct service/negative-case outcomes and no unresolved invariant violations in the exercised scope. |
-| S2: failure and recovery validation | E07–E13 with B1; bounded evidence negatives in E18. | Traces distinguish valid acceptance, unknown/partial states, compensation, and safe deferral. |
-| S3: grounded reasoning evaluation | E14, E15, E18, then paired B0/B1 runs from E04/E07/E11. | Model influence and fallback are measurable without bypassing gates. |
-| S4: comparative journal dataset | E16 and selected crossed fault/load cells with B0/B1 and B2 or B3. | Frozen parameters, adequate independent samples, complete failures/cost reporting. |
-| S5: claim-dependent extensions | E19–E24 as applicable. | Each additional claim has its own controlled comparison and scope statement. |
+| S1: sovereignty and shared state | E01, E02. | Each domain authorizes only its own operations, no peer can mutate another's controller, and replicas converge to the independently known graph. |
+| S2: intent, negotiation, and service | E03, E04, E05 with B0. | Feasible intents become verified services; infeasible ones are refused with an attributable reason; the optical veto holds against a two-domain majority. |
+| S3: the central claim | E06 with B0. | The same intent submitted to each of the three agents yields the same realized path and an equivalent contract. |
+| S4: autonomy under failure | E07 with B0. | Packet recovery uses the named backup action and verifies fresh receiver evidence; the optical cut produces a truthful degraded outcome, not a fabricated reroute. |
+| S5: what the reasoning contributes | E08, E09, then paired B0/B1 reruns of E05 and E07. | Model influence and fallback are measurable without bypassing any gate. |
+| S6: architecture comparison | B2 against the S2–S4 cells, if claimed. | Matched information, resources, and failure scenarios. |
 
-The core suite tests all nine target invariants. Publish a coverage matrix linking
-each executed case to its invariants, nodes exercised, controller capability,
-baseline, and failure location. Unexecuted cells remain marked `NOT RUN` or
-`OUT OF SCOPE`; a planned experiment is not a passed experiment.
+Publish a coverage matrix linking each executed case to its invariants, nodes
+exercised, controller capability, baseline, and failure location. Unexecuted
+cells remain marked `NOT RUN` or `OUT OF SCOPE`; a planned experiment is not a
+passed experiment. The deferred areas in Section 1.1 are reported as
+`OUT OF SCOPE`, not as passing.
 
-For a bounded first paper, prioritize a strong E07/E09 protocol result and an
-honest E15 LLM comparison, supported by the core functional and assurance cases.
-If LLM assistance adds no measurable benefit, report that result and reconsider
-the emphasis on agentic intelligence in the title and conclusions.
+Run S5 early enough to act on it. If the B0/B1 comparison shows the generative
+nodes change nothing, report that result and remove the agentic emphasis from
+the title and conclusions rather than reframing the evidence.
 
 ## 10. Statistical design and interpretation
 
@@ -1208,7 +840,7 @@ independent replications of an orchestration experiment.
 
 Pair methods on the same topology, request arrivals, traffic, external failures,
 and observation horizon. Use separate recorded seeds for topology generation,
-traffic, message faults, swarm search, and model sampling where the provider
+traffic, injected link failures, and model sampling where the provider
 supports it. A shared numeric seed does not ensure common conditions if methods
 consume random values in different orders; pre-generate exogenous traces.
 
@@ -1297,31 +929,9 @@ Record each hypothesis as `SUPPORTED WITHIN SCOPE`, `NOT SUPPORTED`, or
 Do not convert a negative result into a new post-hoc primary hypothesis without
 marking the analysis and validating it on new held-out data.
 
-## 11. Optional protocol analysis and model checking
+## 11. Reproducibility package and result schemas
 
-Experiments establish behavior on tested executions. If claiming a safety property
-over all executions of a specified model, supply a state-machine argument or
-formal analysis in addition to measurements. This is especially relevant to
-conditional acceptance, idempotency, and automatic coordinator replacement.
-
-A tractable initial model can include three owners, two competing services,
-bounded resource capacities, two contract revisions, duplicate/reordered messages,
-durable versus volatile state, and a small number of epochs. Model reservation
-expiry, accepted-but-unapplied operations, uncertain receipts, and failed
-compensation explicitly. Specify whether time is logical or real and what clock
-bounds the model assumes.
-
-Check I1–I9 where represented, and conditional progress under eventual delivery,
-fair scheduling, available resources, and recoverable participants. Do not encode
-successful compensation as an assumption and then claim to have proved it under
-arbitrary failure. Publish bounds, invariants, counterexamples, and model/code
-mapping. Replay discovered counterexamples as concrete fault schedules in E06–E13
-or E23. A bounded search is not an unbounded proof, and a model property does not
-automatically hold for an adapter with weaker semantics.
-
-## 12. Reproducibility package and result schemas
-
-### 12.1 Proposed artifact layout
+### 11.1 Proposed artifact layout
 
 The following is a planned layout, not a claim that these files already exist:
 
@@ -1351,9 +961,9 @@ and configuration generation once implemented, including required hardware,
 expected duration, model access requirements, and a reduced smoke-test profile.
 Do not provide invented commands as if a runner already exists.
 
-### 12.2 Illustrative run manifest
+### 11.2 Illustrative run manifest
 
-This example is a design template for a P0 fixture, not an executed result. Replace
+This example is a design template for an E07 recovery run, not an executed result. Replace
 unresolved version fields before final runs; the validation tool should reject
 unresolved fields in a frozen manifest.
 
@@ -1361,39 +971,38 @@ unresolved fields in a frozen manifest.
 {
   "schema_version": "experimental-run/v1",
   "status": "PLANNED",
-  "run_id": "e07-b1-p0-seed0042",
+  "run_id": "e07-b0-p1-seed0042",
   "experiment_id": "E07",
-  "variant_id": "B1",
-  "profile": "P0",
-  "topology_id": "packet-qos-four-roadm-channel1-9c3b7a7",
-  "reference_data_plane_commit": "9c3b7a70207511894d2e0e464b7fa76aade26c90",
+  "variant_id": "B0",
+  "profile": "P1",
+  "topology_id": "packet-qos-four-roadm-channel1-v1",
+  "data_plane_revision": "<recorded testbed revision>",
   "participants": ["packet-a", "optical-o", "packet-b"],
   "workload_id": "single-feasible-service-v1",
   "seeds": {"topology": 11, "traffic": 42, "faults": 73, "search": 104},
-  "conditional_acceptance": true,
-  "controller_semantics": "P0 simulated conditional acceptance; not a reference-controller guarantee",
-  "llm_nodes_enabled": [],
+  "initiating_dso": "packet-a",
+  "controller_semantics": "scoped packet adapter over the named backup-route procedure",
+  "llm_nodes_enabled": ["advisory_reasoning", "fault_and_impact_reasoning"],
   "learning_enabled": false,
   "fault": {
-    "target_domain": "optical-o",
-    "trigger": "after_dso_authorization_before_controller_acceptance",
-    "change": "invalidate_reserved_candidate_condition",
+    "target_domain": "packet-a",
+    "trigger": "primary_link_down",
+    "change": "p-a1 primary path failure; p-a2 backup available",
     "advertisement_delay_ms": 2000
   },
   "observation_horizon_s": 300,
-  "expected_invariants": ["I1", "I2", "I3", "I4", "I5", "I6", "I8"],
+  "expected_invariants": ["I1", "I2", "I3", "I4", "I5", "I7", "I8"],
   "versions": {"source_commit": null, "container_digest": null},
   "results": null
 }
 ```
 
 The example's 300-second horizon and delay are candidate fixture values; calibrate
-and freeze them with the rest of the protocol. If the resource is protected
-against external invalidation, the fault hook must model a permitted physical
-failure or use the corresponding unprotected fixture, rather than silently
+and freeze them with the rest of the protocol. The fault hook must model a
+permitted physical failure on disposable lab resources rather than silently
 breaking the stated reservation semantics.
 
-### 12.3 Required summary fields
+### 11.3 Required summary fields
 
 Each result summary records trial status, offered/eligible/verified request counts,
 independent outcome labels, invariant violations, trigger coverage, duration and
@@ -1408,7 +1017,7 @@ restrictions, and provide a replayable recorded-response mode for protocol
 reproduction. Recorded responses can reproduce execution logic but do not replace
 live-model evaluation of accuracy, variance, latency, or price.
 
-### 12.4 Run exclusions and changes
+### 11.4 Run exclusions and changes
 
 Predeclare harness-invalid reasons, such as corrupted probe capture or an
 experiment-driver crash before the workload was submitted. Preserve excluded
@@ -1421,7 +1030,7 @@ and rerun the affected matched comparison; do not mix favorable runs from differ
 implementations. Preserve all operator interventions as events and classify an
 intervened trial separately from autonomous recovery.
 
-## 13. Figures, tables, and paper presentation
+## 12. Figures, tables, and paper presentation
 
 The final paper should select figures supporting its actual findings. The full
 artifact can retain the remaining diagnostics.
@@ -1437,7 +1046,6 @@ artifact can retain the remaining diagnostics.
 | Fault robustness matrix | Fault location/type versus outcome and invariant status, including negative and unexecuted cells. |
 | Mechanism ablation plot | Protocol guard × LLM effects, retrieval variants, and component costs with matched populations. |
 | Load/scale plots | Success/blocking together with latency, signaling, replica lag, CPU/memory, and saturation limits. |
-| Economic/search/learning plots | Only for E19–E21 claims; include domain outcomes, search effort, held-out learning results, and overhead. |
 | Limitations table | Modeled versus measured behavior, unsupported adapters, trust assumptions, and untested failure classes. |
 
 Use empirical uncertainty rather than decorative error bars. Label axis units,
@@ -1446,7 +1054,7 @@ source run IDs and analysis-script version. Do not hide invariant violations
 inside an average success rate or present hypothetical figures as experimental
 results.
 
-## 14. Threats to validity and mitigation
+## 13. Threats to validity and mitigation
 
 | Threat | Mitigation and remaining limit |
 | --- | --- |
@@ -1465,31 +1073,38 @@ results.
 | Full graph sharing mistaken for privacy | State the deliberate disclosure assumption and distinguish authorized sharing from accidental leakage. |
 | Fixed trusted owners generalized to malicious federation | Bound the trust model; controlled negative fixtures do not establish Byzantine tolerance or incentive compatibility. |
 | Researcher repairs or selective reruns inflate success | Log interventions, freeze exclusions, retain failed versions, and rerun matched sets after fixes. |
+| Deferred failure behavior read as demonstrated robustness | The areas in Section 1.1 are untested here. State them in the paper's limitations; a study that does not inject races, message faults, or partitions says nothing about them. |
+| One sovereign agent per domain read as a highly available design | A domain whose single DSO is down has no decision-maker and no standby. Declare this assumption rather than implying continuous availability. |
 
-## 15. Claim-to-evidence release criteria
+## 14. Claim-to-evidence release criteria
 
 These are internal research criteria for defensible statements, not a promise
 of journal acceptance.
 
 | Proposed statement | Minimum evidence before making it |
 | --- | --- |
-| The PoC establishes cross-domain packet–optical services | E01–E06/E17 passed in the stated profile, with independent end-to-end measurements and explicit optical fidelity. |
-| The protocol handles changing state and partial failure | E07–E10/E13 show correct invalidation, reconciliation, and truthful unresolved outcomes; state the tested fault model. |
-| Local assurance is coordinated | E11/E12 show bounded concurrent behavior. Include E23 before claiming automatic coordinator replacement. |
-| LLM assistance improves the system | E14/E15 and paired B0/B1 service experiments show an attributable, practically meaningful effect with uncertainty and cost. |
-| The federation improves on established orchestration | A fair B2/B3 comparison supports the named outcome and trade-offs under specified information/failure assumptions. |
-| The mechanism is scalable | E16 and, for larger owner counts, E24 identify a measured operating range and saturation limits. |
-| Bargaining, swarm search, or learning improves outcomes | The matching E19, E20, or E21 comparison supports the claim separately. |
-| Dependency-scoped execution is a contribution | E22 supports complete dependency validation and a measured advantage over conservative invalidation. |
+| Each domain agent is sovereign over its own network | E01 shows no peer-initiated mutation succeeds, no shared privileged backend remains, and an owner can refuse while all other agents approve. |
+| The three agents share a consistent multi-domain view | E02 shows authorized ordered ingestion, convergence to the independently known graph, and rejection of stale projections. |
+| The agents reason about and negotiate the service | E03 and E04 show correct feasible/infeasible classification, offers and counteroffers, and an owner veto that a two-domain majority cannot override. |
+| The federation autonomously establishes an end-to-end packet–optical service | E05 passes in the stated profile with independent end-to-end measurements and explicit optical fidelity. |
+| Any one of the agents can originate the intent | E06 shows equivalent realized paths and contracts across all three initiators, with initiator-dependent latency and overhead reported. |
+| The service is sustained autonomously through failure | E07 shows verified packet recovery through the named backup action and a truthful degraded outcome for the optical cut. |
+| Generative reasoning improves the system | E08/E09 and paired B0/B1 service runs show an attributable, practically meaningful effect with uncertainty and cost. |
+| Sovereign federation compares favorably with central orchestration | A fair B2 comparison supports the named outcome and trade-offs under specified information assumptions. |
 | A property is guaranteed | A precise property, assumptions, implementation capability mapping, and adequate proof/analysis support the guarantee; finite experiments alone are insufficient. |
+
+Do not claim any deferred property from Section 1.1. In particular, this study
+does not establish behavior under concurrent intents, injected reasoning/execution
+races, message faults, partial commit, partitions, coordinator replacement, or
+scale beyond three domains.
 
 Before submission, confirm that the experimental results establish a substantive
 difference from the closest prior work, not merely the presence of A2A, MCP,
-GraphRAG, Nash bargaining, or a saga. Include the precise contribution, matched
+GraphRAG, or one agent per domain. Include the precise contribution, matched
 comparison, reproducibility artifacts, limitations, and negative outcomes in the
 paper. Refresh publication metadata and the literature comparison at submission.
 
-## 16. Method and comparison references
+## 15. Method and comparison references
 
 Use the [annotated related-work catalogue](related-work-and-novelty.md) for full
 context and access limitations. The following sources anchor comparisons and
@@ -1497,9 +1112,7 @@ measurement choices without substituting for our experimental evidence:
 
 - [NSI Connection Service v2.1](https://ogf.org/documents/GFD.237.pdf): established multi-domain reservation and lifecycle semantics.
 - [ACTN, RFC 8453](https://www.rfc-editor.org/rfc/rfc8453.html): transport-orchestration architecture context for B2.
-- [Distributed federated service chaining](https://doi.org/10.1016/j.comnet.2022.109044): a relevant distributed orchestration comparison family for B3.
 - [EDAIR](https://doi.org/10.1109/NOMS57970.2025.11073742): domain-agent intent resolution; obtain full implementation details before claiming reproduction.
-- [Confucius](https://doi.org/10.1145/3718958.3750537): structured multi-agent networking workflows relevant to B4.
 - [Abstractions for Network Update](https://www.cs.princeton.edu/~dpw/papers/network-update-sigcomm12.pdf): forwarding correctness during updates; service compensation is a different property.
 - [NetConfEval](https://doi.org/10.1145/3656296), [Cornetto](https://arxiv.org/abs/2604.22513), and [NetConfArena](https://arxiv.org/abs/2608.23179): component/task evaluation precedents; they do not replace cross-domain lifecycle experiments.
 

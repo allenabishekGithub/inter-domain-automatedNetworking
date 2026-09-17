@@ -52,8 +52,8 @@ and network namespace. A shared development CA can issue the three local mTLS
 identities; production uses each operator's own identity provider and trust
 policy.
 
-Reuse the [reference packet–optical data plane](reference-data-plane.md) from
-`AgenticAI-packet-optical-qos-platform/packet-network` and `optical-network`.
+Reuse the [reference packet–optical data plane](reference-data-plane.md) and
+its `packet-network` and `optical-network` components.
 Keep its Containerlab topology, SR Linux configurations, Mininet-Optical line,
 bridge attachments, endpoint addresses, and initial UDP profile. Pin the source
 commit and installed optical dependencies. The reference shared packet controller
@@ -321,7 +321,7 @@ Capability gaps discovered in P0 must remain explicit until verified in P1.
 ## Journal evaluation plan
 
 The [detailed experimental validation plan](experimental-validation.md) expands
-this summary into testbed specifications, 24 experiment families, procedures,
+this summary into testbed specifications, nine experiment families, procedures,
 independent outcome checks, statistical analysis, and reproducibility requirements.
 Use that plan to define and freeze the final study configuration before runs.
 

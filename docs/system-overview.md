@@ -12,6 +12,14 @@ Existing work already covers many individual components; see the
 [literature assessment](related-work-and-novelty.md). The behaviors below are
 proposed requirements, not experimentally verified guarantees.
 
+**One AI DSO per networking domain, and exactly one** — each the sole authority
+inside its own borders, with no central orchestrator above the three. Only the
+owning DSO commands its controller, every affected owner must consent before a
+shared service activates, and any owner may refuse. The
+[sovereign domain authority](domain-agent-architecture.md#sovereign-domain-authority)
+rules state the principle and its three deliberate limits: full topology
+disclosure between peers, relaying without authority, and no standby DSO.
+
 Each domain runs the same autonomous control unit:
 
 ```text
@@ -48,8 +56,8 @@ every node.
 
 ## Reused packet–optical data plane
 
-Use the existing `packet-network/` and `optical-network/` data plane from
-**AgenticAI-packet-optical-qos-platform**. The
+Use the existing `packet-network/` and `optical-network/` reference data
+plane. The
 [reference data-plane specification](reference-data-plane.md) pins the source
 and gives the complete node/interface map. Packet A owns `pe-a1`, `p-a1`,
 `p-a2`, and `gw-a`; Packet B owns `gw-b`, `p-b1`, `p-b2`, and `pe-b1`.

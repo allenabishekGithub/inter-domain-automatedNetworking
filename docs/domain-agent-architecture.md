@@ -36,14 +36,58 @@ Full topology disclosure is an explicit federation assumption. Separate database
 and credentials preserve local authority; they do not make shared topology or
 approved configuration confidential from peers.
 
-This takes the useful parts of the local `AgenticAI-packet-optical-qos-platform`
-reference—scoped agents, typed candidate messages, direct agent-to-agent
+This takes the useful parts of the existing laboratory platform—scoped
+agents, typed candidate messages, direct agent-to-agent
 negotiation, freshness checks, and controller safety gates—while distributing
 the central service-orchestrator responsibilities across the three domains.
 The reference packet controller currently manages both packet networks; the
 federation requires independently scoped controller instances and credentials.
 The shared reference UDP flow also needs explicit sender/receiver ownership.
 Neither separation is supplied simply by running three DSO processes.
+
+## Sovereign domain authority
+
+**One AI DSO per networking domain, and exactly one.** Each DSO is the sole
+decision-making authority inside its own domain: one king per kingdom. There is
+no emperor over the three, and no council that can outvote a king inside his own
+borders.
+
+Four rules define that sovereignty:
+
+| Rule | Consequence |
+| --- | --- |
+| Only the owning DSO may ask its own controller to reserve, commit, or roll back | No DSO ever calls a peer's controller or holds a peer's credentials. |
+| A shared service activates only with explicit signed consent from every affected owner | A two-of-three majority cannot authorize the third domain's resources. Silence is not consent. |
+| The initiating DSO convenes; it does not command | It owns the correlation ID and answers the user. Every remote decision remains local to the DSO that signed it. |
+| Any owner may refuse | A refusal is a valid protocol outcome, not a fault to be worked around. |
+
+Sovereignty is about **control**, not secrecy. Three boundaries of the metaphor
+are deliberate design decisions, and each must be stated plainly in any paper
+built on this architecture rather than left for a reader to discover.
+
+**Full disclosure between kingdoms.** Every DSO holds a replica of the complete
+approved topology of all three domains. Kings do not normally exchange complete
+maps of their territory, and production inter-operator practice abstracts
+topology rather than publishing it. This federation deliberately trades that
+confidentiality for a shared graph that all three can reason over. Each operator
+remains sovereign over what it will *do*; it is transparent about what it *has*.
+
+**A relay is not a regent.** Service negotiation follows data-plane adjacency,
+so Packet A reaches Packet B through the Optical DSO. Carrying correspondence
+must never confer authority over its contents: relayed acceptances are verified
+against the signing owner's identity end to end, never trusted on the relay's
+word, and the Optical DSO cannot alter, withhold consent on behalf of, or
+substitute its own decision for a peer's. The direct Packet A–Packet B control
+session exists for topology synchronization and liveness, not for contract
+exchange that bypasses the transit owner.
+
+**One king, no regent.** A single DSO per domain means that domain has no
+standby decision-maker. Restart is handled — durable state, unresolved work
+preserved across restarts — but a DSO that stays down leaves its domain with no
+authority to grant new agreements, and no peer may act in its place. Shared-service
+changes that need its consent defer until it returns. Domain-level DSO
+high availability is outside the current design and must be declared as an
+assumption, separately from the recovery-coordinator replacement rules.
 
 ## Architecture
 

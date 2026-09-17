@@ -18,12 +18,16 @@ client / server A
        +---------- customer service path ------------------------> server B
 ```
 
-The agents collaborate on a user intent, but each operator retains control of
-its credentials, policy, and network controller. The service-orchestrator
-capabilities and the multi-domain topology database are federated across the
-three agents: there is no central orchestrator or central topology database.
-Each agent holds a replica of the complete topology, node relationships, and
-approved configuration state contributed by every domain.
+There is **one AI DSO per networking domain, and exactly one**: each is the sole
+decision-making authority inside its own borders — one king per kingdom, with no
+emperor above them. The agents collaborate on a user intent, but each operator
+retains control of its credentials, policy, and network controller. Any owner may
+refuse, and no majority can authorize another domain's resources.
+
+The service-orchestrator capabilities and the multi-domain topology database are
+federated across the three agents: there is no central orchestrator and no
+central topology database. Each agent holds a replica of the complete topology,
+node relationships, and approved configuration state contributed by every domain.
 
 ```mermaid
 flowchart LR
@@ -58,8 +62,9 @@ documents that integration; it does not deploy the lab.
 
 The [experimental validation plan](docs/experimental-validation.md) specifies
 the journal study in detail: testbed profiles, workloads, matched baselines,
-24 experiment families, independent checks, metrics, statistical analysis,
-reproducibility artifacts, and the evidence required for each paper claim.
+nine experiment families, independent checks, metrics, statistical analysis,
+reproducibility artifacts, and the evidence required for each paper claim. It
+also records what the study deliberately does not test.
 
 The [related-work and novelty assessment](docs/related-work-and-novelty.md)
 compares this design with research papers and networking specifications,
@@ -67,15 +72,18 @@ identifies candidate contributions for the journal paper, and defines the
 evidence needed to substantiate them. The literature search is dated
 16 September 2026; proposed contributions are not claims of demonstrated results.
 
-The recommended paper focus is service negotiation and recovery across
-independently controlled packet and optical domains when state changes or an
-operation partially fails. The [research protocol requirements](docs/domain-agent-architecture.md#research-protocol-requirements)
+The paper focus is sovereign domain agents reasoning with one another to
+autonomously establish a service that runs through all three domains, from an
+intent submitted to any one of them. The
+[research protocol requirements](docs/domain-agent-architecture.md#research-protocol-requirements)
 bind agreements to evidence, reservations, and controller execution conditions.
 The [evaluation plan](docs/implementation-roadmap.md#journal-evaluation-plan)
-compares the same federation with and without LLM assistance. Swarm optimization
-and continual learning are optional research extensions whose value must be
-measured separately. These are design recommendations, not implemented or
-experimentally established guarantees.
+compares the same federation with and without LLM assistance. Behavior under
+injected races, message faults, partitions, and coordinator replacement is a
+separate protocol study and is explicitly out of scope. Swarm optimization and
+continual learning are optional extensions whose value must be measured
+separately. These are design recommendations, not implemented or experimentally
+established guarantees.
 
 ## Core rule
 
