@@ -1,0 +1,9 @@
+.venv/
+.runtime/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Containerlab writes per-node state next to the topology file.
+packet-network/clab-packet-qos/
+packet-network/.*.clab.yml.bak

@@ -54,14 +54,14 @@ The [LangGraph node catalogue](langgraph-node-catalog.md) identifies the
 algorithm, policy, retrieval, protocol, MCP, or conditional LLM method used by
 every node.
 
-## Reused packet–optical data plane
+## The packet–optical data plane
 
-Use the existing `packet-network/` and `optical-network/` reference data
-plane. The
-[reference data-plane specification](reference-data-plane.md) pins the source
-and gives the complete node/interface map. Packet A owns `pe-a1`, `p-a1`,
-`p-a2`, and `gw-a`; Packet B owns `gw-b`, `p-b1`, `p-b2`, and `pe-b1`.
-The optical path connects `t-client` through `r1`–`r4` to `t-server` on channel 1.
+The data plane is implemented in this repository, in `packet-network/` and
+`optical-network/`, and deploys with `sudo scripts/service-up.sh`. The
+[data-plane specification](data-plane.md) gives the complete node and interface
+map. Packet A owns `pe-a1`, `p-a1`, `p-a2`, and `gw-a`; Packet B owns `gw-b`,
+`p-b1`, `p-b2`, and `pe-b1`. The optical path connects `t-client` through
+`r1`–`r4` to `t-server` on channel 1.
 
 ```mermaid
 flowchart LR
@@ -73,15 +73,17 @@ flowchart LR
     B --> S["server-b"]
 ```
 
-The reference uses one packet controller for both packet domains. The target
-federation requires two scoped controller instances with separate identities,
-inventories, journals, and local MCP endpoints. This is control integration work;
-the baseline data-plane topology remains the same. A trusted lab bootstrap sets
-up the shared emulation environment without becoming the service orchestrator.
+Packet operations already carry the domain that owns them and refuse a router
+outside that scope. What the federation still needs is separate identities,
+credentials, journals and local MCP endpoints per domain: scoping inside one
+package is a correctness guard, not isolation between operators, and a run on
+this shared emulation host must be reported as scoped control rather than as
+independent control. A trusted lab bootstrap sets up the shared environment
+without becoming the service orchestrator.
 
-The initial service is one shared iperf3 UDP flow, with two packet path options
-per packet domain and one fixed optical line. Packet recovery uses the existing
-named backup-route actions. Optical participation validates and retains that
+The initial service is one iperf3 UDP flow, with two packet path options per
+packet domain and one fixed optical line. Packet recovery uses each domain's
+named backup-path action. Optical participation validates and retains that
 line or refuses a request; there is no baseline optical reroute, multi-service
 bandwidth isolation, or arbitrary spectrum allocation. These limits also govern
 the [journal experiments](experimental-validation.md#3-testbed-and-independent-measurement).
@@ -213,7 +215,7 @@ The target Controller MCP Server contract provides typed tools such as `get_topo
 them to routing, VPN, QoS, and traffic-engineering APIs. The Optical MCP server
 maps them to transport, transponder, ROADM, spectrum, channel, and QoT APIs where
 supported. These are architectural capabilities, not a claim that every reference
-API already exists. The [baseline capability mapping](reference-data-plane.md#initial-action-and-capability-profile)
+API already exists. The [baseline capability mapping](data-plane.md#action-and-capability-profile)
 limits the first integration to the actual packet recovery procedures and fixed
 optical transport; missing transaction semantics need explicit adapter work.
 

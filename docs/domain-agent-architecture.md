@@ -11,11 +11,11 @@ This is a proposed architecture for an Elsevier *Computer Networks* research
 paper. The [literature assessment](related-work-and-novelty.md) motivates the
 protocol requirements below; it does not establish novelty or measured results.
 
-The selected data plane is the reference platform's **`packet-network/` and
-`optical-network/`**, with eight SR Linux routers, two traffic endpoints, and
+The data plane is implemented in this repository, in **`packet-network/`** and
+**`optical-network/`**, with eight SR Linux routers, two traffic endpoints, and
 the fixed four-ROADM Mininet-Optical line. The
-[reference data-plane specification](reference-data-plane.md) records the exact
-topology, pinned source, ownership, and controller adaptations. The capability
+[data-plane specification](data-plane.md) records the exact topology,
+addressing, ownership boundary and capability limits. The capability
 table below describes the broader architecture; the initial executable profile
 is limited to the reference's named packet-route recovery and fixed channel-1
 optical transport. Unsupported functions must not be offered as executable actions.
@@ -36,14 +36,14 @@ Full topology disclosure is an explicit federation assumption. Separate database
 and credentials preserve local authority; they do not make shared topology or
 approved configuration confidential from peers.
 
-This takes the useful parts of the existing laboratory platform—scoped
-agents, typed candidate messages, direct agent-to-agent
-negotiation, freshness checks, and controller safety gates—while distributing
-the central service-orchestrator responsibilities across the three domains.
-The reference packet controller currently manages both packet networks; the
-federation requires independently scoped controller instances and credentials.
-The shared reference UDP flow also needs explicit sender/receiver ownership.
-Neither separation is supplied simply by running three DSO processes.
+The design keeps the mechanisms that make automated control safe—scoped
+agents, typed candidate messages, direct agent-to-agent negotiation, freshness
+checks, and controller safety gates—while placing service-orchestration
+authority inside each domain rather than above all three.
+The data plane already scopes each operation to its owning domain and splits
+sender and receiver ownership between the two packet domains. Independent
+credentials, journals and identities per domain are separate work, and none of
+it is supplied simply by running three DSO processes.
 
 ## Sovereign domain authority
 
@@ -154,9 +154,9 @@ Every DSO implements the same bounded capabilities, scoped to its operator:
 | Execution | Ask its own controller to reserve, commit, or roll back a named local operation | Never call a peer's controller |
 | Assurance | Collect local and border evidence and evaluate its QoS contribution | Send signed status/evidence summaries to the initiating DSO |
 
-This gives every agent the useful lifecycle and assurance capabilities of the
-reference platform's Service Orchestrator without giving any one instance
-another domain's controller credentials or unilateral execution authority. Each
+This gives every agent a complete service lifecycle and assurance capability
+for its own domain, without giving any one of them another domain's controller
+credentials or unilateral execution authority. Each
 DSO persists its own service record and a full **Federated Topology Graph**.
 The common replicated view is the signed topology/configuration graph,
 `ServiceContract`, and lifecycle events, so all three can agree whether the
@@ -307,7 +307,7 @@ flowchart LR
 
 The target Controller MCP Server contract exposes typed tools rather than a
 generic shell or unbounded configuration channel. This is an adapter contract
-to implement, not an inventory of the reference MCP servers' existing tools:
+to implement, not an inventory of tools that already exist:
 
 | MCP tool | Purpose |
 |---|---|
@@ -326,13 +326,14 @@ controller-native models. The Optical MCP Server maps them to its transport,
 transponder, ROADM, channel, spectrum, and QoT APIs, such as typed T-API,
 OpenConfig optical models, or controller-native models.
 
-For the selected data plane, map packet mutations to
-`pn1_activate_p_a2_backup_path` or `pn2_activate_p_b2_backup_path` through the
-owning domain's controller. Reuse its prepare/commit/rollback/finalize procedures
-and journal, with typed MCP wrappers and domain authorization added. The Optical
+For this data plane, map a packet mutation to the owning domain's named
+backup-path action — `path backup` or `path primary`, scoped to `packet-a` or
+`packet-b`. That action checks its preconditions and reads each write back, but
+it is not a transaction: prepare/commit/rollback, durable receipts, idempotency
+and conditional acceptance are what the MCP wrapper has to add. The Optical
 DSO initially observes and validates the existing line; fixed-channel setup is
 a bootstrap operation, and no alternate lightpath or native spectrum reservation
-is provided. See the [capability profile](reference-data-plane.md#initial-action-and-capability-profile)
+is provided. See the [capability profile](data-plane.md#action-and-capability-profile)
 for the distinction between source support and required new protocol primitives.
 
 The AI agent can therefore cause a network configuration change through MCP,
@@ -541,7 +542,7 @@ flowchart LR
 ```
 
 This overview groups alternatives and the ROADM chain for readability. The
-[exact baseline diagram](reference-data-plane.md#exact-baseline-topology) expands
+[exact baseline diagram](data-plane.md#topology-and-ownership) expands
 all 20 entities and packet links. Replicate the individual nodes and typed
 relationships, not a single synthetic node named “p-a1 or p-a2.”
 
@@ -1342,11 +1343,13 @@ flowchart LR
     D -->|No| C[Counteroffer, alternate swarm path, or reject]
 ```
 
-The reference platform's Max-Sum DCOP remains useful for searching candidate
-combinations and checking pairwise compatibility. It assumes a common global
-utility, so it should be used before bargaining as the feasibility/option
+A Max-Sum DCOP is a useful way to search candidate combinations and check
+pairwise compatibility, and it is worth considering here. It assumes a common
+global utility, so it belongs before bargaining, as the feasibility and option
 enumeration mechanism. Nash bargaining is the agreement mechanism for separate
-owners with different utilities.
+owners with different utilities. On the four-candidate baseline, neither
+mechanism can be distinguished from exact enumeration; both need a larger,
+separately labelled fixture before their contribution can be measured.
 
 ## Swarm optimization layer
 

@@ -1,0 +1,128 @@
+# Containerlab definition of the two packet domains.
+#
+# Node addresses, interfaces and routes are NOT configured here -- only the
+# wiring and the two plain-Linux endpoints. Router configuration is pushed over
+# gNMI from inventory.py via `main.py configure`, so the inventory stays the
+# single source of truth for the service plane.
+#
+# gw-a and gw-b do not have a direct link. Each terminates on a transparent L2
+# bridge container (opt-a / opt-b) that the optical line plugs into at runtime,
+# so packets between the two packet domains have to cross the optical network.
+
+name: packet-qos
+
+mgmt:
+  network: packet-qos-mgmt
+  ipv4-subnet: 172.31.255.0/24
+
+topology:
+  nodes:
+
+    # ----------------------------------------------------------------- Packet A
+    client-a:
+      kind: linux
+      image: alpine:3.20
+      mgmt-ipv4: 172.31.255.101
+      exec:
+        - apk add --no-cache iperf3
+        - ip addr add 10.10.0.2/24 dev eth1
+        - ip route replace default via 10.10.0.1
+
+    pe-a1:
+      kind: nokia_srlinux
+      type: ixr-d3l
+      image: ghcr.io/nokia/srlinux:24.10.1
+      mgmt-ipv4: 172.31.255.11
+    p-a1:
+      kind: nokia_srlinux
+      type: ixr-d3l
+      image: ghcr.io/nokia/srlinux:24.10.1
+      mgmt-ipv4: 172.31.255.12
+    p-a2:
+      kind: nokia_srlinux
+      type: ixr-d3l
+      image: ghcr.io/nokia/srlinux:24.10.1
+      mgmt-ipv4: 172.31.255.13
+    gw-a:
+      kind: nokia_srlinux
+      type: ixr-d3l
+      image: ghcr.io/nokia/srlinux:24.10.1
+      mgmt-ipv4: 172.31.255.14
+
+    # ------------------------------------------------------- Optical attachment
+    # eth1 is wired to the gateway at deploy time. eth2 does not exist yet: the
+    # optical network adds it after it starts, by moving one end of a veth pair
+    # into this container and enslaving it to br0. Until that happens the bridge
+    # has a single port and the two packet domains cannot reach each other.
+    opt-a:
+      kind: linux
+      image: alpine:3.20
+      mgmt-ipv4: 172.31.255.104
+      exec:
+        - apk add --no-cache iproute2
+        - ip link add name br0 type bridge
+        - ip link set br0 up
+        - ip link set eth1 master br0
+        - ip link set eth1 up
+
+    opt-b:
+      kind: linux
+      image: alpine:3.20
+      mgmt-ipv4: 172.31.255.105
+      exec:
+        - apk add --no-cache iproute2
+        - ip link add name br0 type bridge
+        - ip link set br0 up
+        - ip link set eth1 master br0
+        - ip link set eth1 up
+
+    # ----------------------------------------------------------------- Packet B
+    gw-b:
+      kind: nokia_srlinux
+      type: ixr-d3l
+      image: ghcr.io/nokia/srlinux:24.10.1
+      mgmt-ipv4: 172.31.255.24
+    p-b1:
+      kind: nokia_srlinux
+      type: ixr-d3l
+      image: ghcr.io/nokia/srlinux:24.10.1
+      mgmt-ipv4: 172.31.255.23
+    p-b2:
+      kind: nokia_srlinux
+      type: ixr-d3l
+      image: ghcr.io/nokia/srlinux:24.10.1
+      mgmt-ipv4: 172.31.255.22
+    pe-b1:
+      kind: nokia_srlinux
+      type: ixr-d3l
+      image: ghcr.io/nokia/srlinux:24.10.1
+      mgmt-ipv4: 172.31.255.21
+
+    server-b:
+      kind: linux
+      image: alpine:3.20
+      mgmt-ipv4: 172.31.255.102
+      exec:
+        - apk add --no-cache iperf3
+        - ip addr add 10.20.0.2/24 dev eth1
+        - ip route replace default via 10.20.0.1
+
+  links:
+    # Packet A: client, then a primary and a backup core branch to the gateway.
+    - endpoints: ["client-a:eth1", "pe-a1:e1-1"]
+    - endpoints: ["pe-a1:e1-2", "p-a1:e1-1"]
+    - endpoints: ["pe-a1:e1-3", "p-a2:e1-1"]
+    - endpoints: ["p-a1:e1-2", "gw-a:e1-1"]
+    - endpoints: ["p-a2:e1-2", "gw-a:e1-2"]
+
+    # Border: each gateway meets its own attachment bridge. There is no
+    # opt-a -- opt-b shortcut; the optical network supplies that span.
+    - endpoints: ["gw-a:e1-3", "opt-a:eth1"]
+    - endpoints: ["gw-b:e1-1", "opt-b:eth1"]
+
+    # Packet B: mirror image of Packet A.
+    - endpoints: ["gw-b:e1-2", "p-b1:e1-1"]
+    - endpoints: ["gw-b:e1-3", "p-b2:e1-1"]
+    - endpoints: ["p-b1:e1-2", "pe-b1:e1-1"]
+    - endpoints: ["p-b2:e1-2", "pe-b1:e1-2"]
+    - endpoints: ["pe-b1:e1-3", "server-b:eth1"]

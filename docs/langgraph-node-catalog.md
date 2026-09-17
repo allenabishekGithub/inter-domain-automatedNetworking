@@ -9,7 +9,7 @@ integration. These methods are not all deterministic: ACO is stochastic, retriev
 may use learned embeddings, and external calls observe changing state. Three
 conditional LLM nodes plus 54 other nodes retain the total of **57**.
 
-All nodes operate over the [reused reference data plane](reference-data-plane.md).
+All nodes operate over the [packet–optical data plane](data-plane.md) in this repository.
 This does not add nodes: capabilities determine permitted workflow branches.
 `local_candidate_generation` and `candidate_verification` admit only the
 reference's supported packet actions or retention of the fixed optical line.

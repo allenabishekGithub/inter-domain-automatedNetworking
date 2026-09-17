@@ -26,7 +26,7 @@ document does not request implementation of the testbed during the
 architecture-design session.
 
 **Selected data plane:** reuse the `packet-network/` and `optical-network/`
-reference data plane. The [reference specification](reference-data-plane.md)
+reference data plane. The [reference specification](data-plane.md)
 pins the inspected source, exact topology, action support, and control adaptations.
 P1 uses that data plane; richer P0 fixtures and optional extensions must be
 reported separately. This plan does not claim that the federation adapters or
@@ -116,13 +116,18 @@ MCP credentials, controller adapter, and telemetry scope. Separate containers,
 VMs, or hosts are acceptable if the isolation and shared-host limitations are
 reported. Administrative separation in the lab does not imply three real operators.
 
-The reference currently has a single packet controller for both packet networks.
-Before testing independent control, reuse its code behind two inventory-scoped
-instances with separate credentials, journals, and MCP endpoints. Retain one
-Optical controller. Exercise wrong-domain requests at both MCP and backend API
-boundaries. A run with the original shared privileged packet controller must be
-labeled as a weaker control-isolation profile. Lab bootstrap may create shared
-namespaces and bridges; runtime DSOs must not receive lab-wide lifecycle powers.
+The packet package already refuses an operation naming a router outside the
+domain it was scoped to, but that check runs in the caller and both domains are
+driven from one host with one set of device credentials. Before testing
+independent control, run two instances with separate credentials, journals and
+MCP endpoints, and enforce ownership below the tool layer rather than above it.
+Retain one Optical controller. Exercise wrong-domain requests at the MCP
+boundary, at the adapter beneath it, and directly against the devices — the
+container runtime that drives this lab is root-equivalent, so a test that only
+probes the tool layer measures the guard rather than the boundary. A run
+without per-domain credentials must be labelled a scoped-control profile, not
+an isolation result. Lab bootstrap may create shared namespaces and bridges;
+runtime DSOs must not receive lab-wide lifecycle powers.
 
 The experimental driver can submit intents, schedule faults, collect evidence,
 and reset fixtures. It must not select service paths, supply hidden network
@@ -157,7 +162,7 @@ optical cut could accidentally disconnect every controller and confound recovery
 
 ### 3.2 Reference topology
 
-Use the pinned source files in the [reference data-plane specification](reference-data-plane.md)
+Use the pinned source files in the [reference data-plane specification](data-plane.md)
 as the source for experiment construction. Preserve their names, links,
 interfaces, addresses, and configuration in the baseline manifest:
 

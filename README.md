@@ -51,14 +51,29 @@ and implementation milestones. The [LangGraph node catalogue](docs/langgraph-nod
 lists every workflow node and its execution method. The [implementation roadmap](docs/implementation-roadmap.md)
 turns the architecture into incremental, testable delivery phases.
 
-The data plane is reused from the reference platform's **`packet-network/` and
-`optical-network/` directories**: eight SR Linux routers across the two packet
-domains, a four-ROADM Mininet-Optical line on channel 1, and the `client-a` →
-`server-b` UDP service. The [reference data-plane specification](docs/reference-data-plane.md)
-records the pinned source, exact topology, controller ownership, and capability
-limits. Its shared packet controller must be adapted into two independently
-scoped controller instances for this federation. This repository currently
-documents that integration; it does not deploy the lab.
+The data plane is implemented here, in **[`packet-network/`](packet-network)**
+and **[`optical-network/`](optical-network)**: eight SR Linux routers across the
+two packet domains, a four-ROADM Mininet-Optical line on channel 1, and the
+`client-a` → `server-b` UDP service. On a prepared machine it deploys with one
+command:
+
+```bash
+sudo scripts/service-up.sh
+```
+
+Starting from a fresh Ubuntu VM, work through the
+[installation guide](docs/installation.md) first: it covers Docker,
+Containerlab, Mininet, Open vSwitch and Mininet-Optical, including the three
+edits those upstream projects need to build on Ubuntu 24.04.
+
+The [data-plane specification](docs/data-plane.md) records the exact topology,
+addressing, ownership boundary and capability limits the experiments pin
+against. Operations are already scoped per domain: Packet A's tooling cannot
+address Packet B's routers, each domain switches only its own service path, and
+Packet A drives the sender while Packet B drives the receiver. The DSO
+federation above that data plane — A2A, signed contracts, per-domain Controller
+MCP servers, reservations, epochs — is documented here but not yet built; see
+the [implementation roadmap](docs/implementation-roadmap.md).
 
 The [experimental validation plan](docs/experimental-validation.md) specifies
 the journal study in detail: testbed profiles, workloads, matched baselines,

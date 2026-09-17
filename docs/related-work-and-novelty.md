@@ -796,5 +796,6 @@ available, and refresh the rapidly changing 2026 literature.
 
 Normalize the final BibTeX against publisher metadata, group conference/journal
 extensions, and record exactly which published versions supersede preprints.
-Do not cite the earlier in-house laboratory platform as a published research
-paper; no matching public publication record was verified for it.
+Cite only work with a verified publication record; an internal engineering
+artifact is not a citable paper, and this repository's own data plane is
+described in its documentation rather than cited.

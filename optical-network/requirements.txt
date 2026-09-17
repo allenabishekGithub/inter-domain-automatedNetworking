@@ -1,0 +1,4 @@
+# Client-side tooling for the optical line. Mininet and the optical emulator
+# are installed separately and are only needed by `main.py start`; see README.md.
+requests>=2.31
+pytest>=8.0

@@ -1,0 +1,4 @@
+# Packet domain tooling. Containerlab, Docker and the node images are external
+# prerequisites; see README.md.
+pygnmi>=0.8.13
+pytest>=8.0

@@ -32,9 +32,9 @@ flowchart LR
 ## Technology baseline
 
 Use one deployable AI DSO service per domain. Python is a practical initial
-language because it supports the current reference platform's approach,
-Pydantic contracts, FastAPI APIs, LangGraph, data-science tooling, and the
-official Neo4j GraphRAG package.
+language because the data plane in this repository is written in it, and
+because it supports Pydantic contracts, FastAPI APIs, LangGraph, data-science
+tooling, and the official Neo4j GraphRAG package.
 
 Each domain has this local stack:
 
@@ -52,13 +52,15 @@ and network namespace. A shared development CA can issue the three local mTLS
 identities; production uses each operator's own identity provider and trust
 policy.
 
-Reuse the [reference packet–optical data plane](reference-data-plane.md) and
-its `packet-network` and `optical-network` components.
-Keep its Containerlab topology, SR Linux configurations, Mininet-Optical line,
-bridge attachments, endpoint addresses, and initial UDP profile. Pin the source
-commit and installed optical dependencies. The reference shared packet controller
-must become two inventory-scoped controller instances; creating three DSO
-containers alone does not provide controller isolation.
+Use this repository's [packet–optical data plane](data-plane.md) and its
+`packet-network` and `optical-network` components, deployed with
+`sudo scripts/service-up.sh`.
+Keep its Containerlab topology, SR Linux configuration, Mininet-Optical line,
+bridge attachments, endpoint addresses, and initial UDP profile. Pin the
+repository commit and the installed optical dependencies. Its operations are
+already scoped per domain; giving each domain its own credentials, journal and
+endpoint binding is still to do, and creating three DSO containers alone does
+not provide controller isolation.
 
 ## Phase 0 — contracts and laboratory model
 
@@ -113,19 +115,23 @@ rebuild its local GraphRAG projection from PostgreSQL records.
 ## Phase 2 — local Controller MCP Server and transaction safety
 
 Build one Controller MCP Server for each domain. Begin with fake controllers
-for protocol tests, using the same inventory and capability limits. Then reuse
-the reference packet controller and optical API behind scoped adapters. Give
+for protocol tests, using the same inventory and capability limits. Then put
+the packet package and the optical control API behind scoped adapters. Give
 the two packet instances separate router credentials, inventory allowlists,
 journals, and endpoint bindings; enforce ownership below the MCP tool layer.
+The data plane's own scoping check runs in the caller, so it guards against a
+mistake rather than against a peer, and an adapter must not treat it as the
+authorization boundary.
 Exclude global deploy/destroy/configure-all and bridge lifecycle operations from
 runtime domain tools. Keep these operations in trusted lab bootstrap.
 
-Wrap the existing packet recovery HTTP procedures as local typed MCP tools.
-Replace the reference central-SO mutation authorization with domain-specific
-authorization. Separate sender control in Packet A from receiver control in
-Packet B, or explicitly keep a fixed measurement flow in the experiment driver.
-The controller's SQLite journal can remain a separate receipt store per packet
-instance; DSO PostgreSQL remains the domain's orchestration source of truth.
+Wrap each domain's named backup-path action as a local typed MCP tool, and add
+the transaction semantics the data plane does not have: durable receipts,
+idempotency keys, prepare/commit/rollback and conditional acceptance. Sender
+control in Packet A and receiver control in Packet B are already separate; keep
+them that way, or explicitly keep a fixed measurement flow in the experiment
+driver. A per-instance receipt store is fine; DSO PostgreSQL remains the
+domain's orchestration source of truth.
 The optical API provides observation and fixed configuration, not the complete
 reservation/transaction sequence below; advertise that limitation and implement
 durable adapter receipts before relying on them.
@@ -219,9 +225,9 @@ action-rate limits. Bind incident coordination to durable epochs and require
 controller-side rejection of superseded requests. Specify how participants grant
 and replace a coordinator; a timeout lease alone is not evidence of exclusion.
 
-The initial recovery catalog contains the reference
-`pn1_activate_p_a2_backup_path` and `pn2_activate_p_b2_backup_path` actions with
-their supported compensation. Packet QoS-profile mutation and optical rerouting
+The initial recovery catalogue contains each packet domain's named
+backup-path action and its return to primary, with the compensation each
+supports. Packet QoS-profile mutation and optical rerouting
 are not baseline actions. Route shared-service repairs through the Phase 4 saga;
 unchanged participants validate and retain their segments. An optical cut must
 exercise detection, refusal/escalation, and reconciliation after fault repair.
