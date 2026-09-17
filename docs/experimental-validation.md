@@ -19,6 +19,13 @@ protocol properties, rather than treating node count or successful graph
 execution as an outcome. This document does not request implementation of the
 testbed during the architecture-design session.
 
+**Selected data plane:** reuse `packet-network/` and `optical-network/` from
+AgenticAI-packet-optical-qos-platform. The [reference specification](reference-data-plane.md)
+pins the inspected source, exact topology, action support, and control adaptations.
+P1 uses that data plane; richer P0 fixtures and optional extensions must be
+reported separately. This plan does not claim that the federation adapters or
+the experiments are already implemented.
+
 ## 1. Research questions and claims
 
 | ID | Research question | Evidence required | Claim boundary |
@@ -57,7 +64,7 @@ incomplete recovery; do not count it as successful service delivery.
 | Profile | Required capability | Permitted interpretation |
 | --- | --- | --- |
 | P0: protocol simulator | Fake controllers, explicit state machines, resource and fault models. | Validate protocol logic within the model. No measured physical packet/optical service claim. |
-| P1: executable packet PoC with modeled optical transport | Packet forwarding/probes, controller-backed mutations, optical resource/QoT model, mapped optical changes affecting the forwarding path. | Measured emulated packet behavior with explicitly modeled optical feasibility. Recommended first paper profile. |
+| P1: reused SR Linux / Mininet-Optical PoC | The pinned `packet-qos` topology, eight SR Linux routers, a fixed four-ROADM optical line on channel 1, the shared UDP flow, and scoped controller adapters. | Measured emulated packet behavior through the reference optical data plane, with modeled optical quality. No alternate optical route or per-service bandwidth isolation. Recommended first paper profile. |
 | P2: controller or optical hardware extension | Selected actual controller/device operations and calibrated observations. | Hardware/controller-specific findings only for the exercised capabilities. |
 
 Report results by profile. Do not pool synthetic controller timing with hardware
@@ -96,6 +103,14 @@ MCP credentials, controller adapter, and telemetry scope. Separate containers,
 VMs, or hosts are acceptable if the isolation and shared-host limitations are
 reported. Administrative separation in the lab does not imply three real operators.
 
+The reference currently has a single packet controller for both packet networks.
+Before testing independent control, reuse its code behind two inventory-scoped
+instances with separate credentials, journals, and MCP endpoints. Retain one
+Optical controller. Exercise wrong-domain requests at both MCP and backend API
+boundaries. A run with the original shared privileged packet controller must be
+labeled as a weaker control-isolation profile. Lab bootstrap may create shared
+namespaces and bridges; runtime DSOs must not receive lab-wide lifecycle powers.
+
 The experimental driver can submit intents, schedule faults, collect evidence,
 and reset fixtures. It must not select service paths, supply hidden network
 truth to an agent, decide bargaining outcomes, or repair the service during a
@@ -113,7 +128,7 @@ flowchart TB
     O --> MO["Optical MCP and controller"]
     B --> MB["Packet B MCP and controller"]
     MA --> PA["Packet A forwarding"]
-    MO --> OT["Optical model or hardware"]
+    MO --> OT["Fixed Mininet-Optical line"]
     MB --> PB["Packet B forwarding"]
     PA --- OT
     OT --- PB
@@ -129,20 +144,41 @@ optical cut could accidentally disconnect every controller and confound recovery
 
 ### 3.2 Reference topology
 
-Use an explicit manifest rather than a hand-drawn diagram as the source for
-experiment construction. A proposed small reference topology is:
+Use the pinned source files in the [reference data-plane specification](reference-data-plane.md)
+as the source for experiment construction. Preserve their names, links,
+interfaces, addresses, and configuration in the baseline manifest:
 
 | Domain | Resources | Alternatives and dependencies |
 | --- | --- | --- |
-| Packet A | Six forwarding nodes A1–A6; at least two attached traffic endpoints. | Paths A1–A2–A4–A6 and A1–A3–A5–A6; A6 is an optical attachment. Add shared-link variants separately. |
-| Optical O | Six optical switching nodes O1–O6, endpoint transponder resources, spectrum slots, and impairment parameters. | Routes O1–O2–O3–O6 and O1–O4–O5–O6. Explicitly identify shared fibers, transponders, and shared-risk groups. |
-| Packet B | Six forwarding nodes B1–B6; at least two attached endpoints. | Paths B1–B2–B4–B6 and B1–B3–B5–B6; B1 is an optical attachment. |
-| Handoffs | A6–O1 and O6–B1 with typed endpoint ownership. | Model encapsulation, MTU, port capacity, direction, and client/line adaptation. |
+| Packet A | `client-a`; routers `pe-a1`, `p-a1`, `p-a2`, `gw-a`; attachment bridge `opt-a`. | Primary `pe-a1–p-a1–gw-a`, backup `pe-a1–p-a2–gw-a`. |
+| Optical O | `clientEdge`, `t-client`, `r1`, `r2`, `r3`, `r4`, `t-server`, `serverEdge`. | One fixed terminal/ROADM line, channel 1; no alternate optical route. |
+| Packet B | Attachment bridge `opt-b`; routers `gw-b`, `p-b1`, `p-b2`, `pe-b1`; `server-b`. | Primary `gw-b–p-b1–pe-b1`, backup `gw-b–p-b2–pe-b1`. |
+| Handoffs | `opt-a–clientEdge` and `serverEdge–opt-b`, joined by the reference bridge integration. | Preserve the L2 attachments and transparent transit between `gw-a` and `gw-b`; there is no direct packet bypass. |
 
-This example has 18 forwarding/optical switching nodes, excluding servers and
-separately modeled transponders. Preserve exact counts in the manifest. A
-topological alternate sharing the failed transponder is not a valid protected
-path; include this negative case.
+This is eight packet routers, four ROADMs, two terminals, two optical Ethernet
+edges, two packet bridges, and two traffic endpoints: **20 named entities**.
+Count typed interfaces/channels separately. The service is `client-a`
+(`10.10.0.2`) → `server-b` (`10.20.0.2`), with gateway transit addresses
+`10.10.4.1/30` and `10.10.4.2/30`. A different packet branch still uses the same
+optical line and cannot protect against its failure.
+
+```mermaid
+flowchart LR
+    C["client-a"] --> A["pe-a1"]
+    A --> A1["p-a1"]
+    A --> A2["p-a2"]
+    A1 --> GA["gw-a"]
+    A2 --> GA
+    GA --> OA["opt-a and clientEdge"]
+    OA --> O["t-client, r1, r2, r3, r4, t-server"]
+    O --> OB["serverEdge and opt-b"]
+    OB --> GB["gw-b"]
+    GB --> B1["p-b1"]
+    GB --> B2["p-b2"]
+    B1 --> B["pe-b1"]
+    B2 --> B
+    B --> S["server-b"]
+```
 
 For the larger-domain extension, use chains and meshes with variable participating
 path lengths. Include unrelated domains so approval scope and topology-replication
@@ -151,35 +187,55 @@ count simultaneously without recording the confounding change.
 
 ### 3.3 Packet and optical fidelity
 
-Packet experiments must apply actual forwarding/QoS changes in the emulated or
-physical data plane and use endpoint traffic. A controller returning a success
-object without altering traffic behavior only qualifies as P0.
+P1 forwarding trials must use endpoint traffic and apply the actual named
+packet-route changes through the scoped controllers. Read back routes and
+independently verify the traversed branch and optical transit. An acknowledgement
+without observed forwarding behavior is insufficient evidence of service recovery.
 
-For optical experiments, distinguish:
+Mininet-Optical is the baseline optical backend. Preserve its 50-metre span
+segments, amplifier settings, terminal launch power, zero modeled ROADM insertion
+loss, and fixed channel-1 configuration. Pin the separately installed library
+version as well as the repository commit. These are simplified lab parameters,
+not a calibrated long-haul model or evidence of line-rate optical performance.
 
-- **Resource feasibility:** path continuity, spectrum contiguity/continuity,
-  guard bands, supported conversion/regeneration points, compatible endpoints,
-  transponders, and directional capacity.
-- **Physical feasibility:** the impairments and QoT thresholds actually modeled
-  or measured. Record span parameters, amplifiers, launch-power assumptions,
-  channel loading, modulation/reach constraints, and margin conventions.
-- **Enforcement:** how a selected lightpath changes the transport carrying packet
-  traffic. Record circuit-to-packet-link mappings and update delays.
+Separate three observations: graph/port/channel continuity, modeled OSNR/gOSNR
+and monitor coverage, and packet outcomes at the receiver. Demonstrate any claimed
+coupling between a modeled quality change and packet delivery. A low-gOSNR fixture
+alone cannot be called measured packet loss. An optical connectivity fault must
+actually interrupt the mapped transit path before it counts as a data-plane cut.
 
-A possible physical-model backend is the
-[GNPy optical route planning library](https://gnpy.readthedocs.io/en/master/).
-Pin the release and equipment/topology inputs. Calibrate against reference cases
-or measurements where available; agreement between two calls to the same model
-is not independent physical validation. A synthetic QoT threshold fixture is
-useful for a boundary test but must not be labeled measured optical performance.
+Spectrum fragmentation, multiple wavelengths, regeneration/modulation selection,
+and alternate optical paths are not baseline capabilities. Model them in P0 or
+add a versioned extension before evaluating them as executable actions. An
+optional [GNPy model](https://gnpy.readthedocs.io/en/master/) may provide an additional
+comparison in such a profile; it does not replace the selected Mininet-Optical
+data plane or independently validate it just by repeating its assumptions.
 
-Choose optical line rates from the modeled equipment profile. Lower-rate packet
-clients may share a higher-rate optical circuit: account for both client bandwidth
-and line/spectrum occupancy. If packet traffic is rate-scaled for host capacity,
-publish the scale factor and mapping. Do not scale optical physics or claim
-line-rate throughput from a lower-rate emulator.
+The initial flow has no per-service queue, policer, or isolated optical allocation.
+Its configured offered rate is not reserved bandwidth. Publish host calibration
+and any rate scaling; do not infer circuit line rate from the UDP traffic rate.
 
-### 3.4 Independent checkers
+### 3.4 Capability coverage before experiment execution
+
+The catalogue below is a research suite, not a statement that all its resource
+types already exist in the reference. Record each experiment's profile and
+capability coverage before running it:
+
+| Subject | Same-data-plane P1 coverage | Additional work or limitation |
+| --- | --- | --- |
+| Packet recovery | Existing PN1 and PN2 named backup-route procedures. | Add domain-scoped control and typed MCP mutation wrappers; independently validate both and joint recovery. |
+| Optical participation | Observe and validate the fixed line; retain or refuse its use. | No alternate lightpath; failure may correctly require escalation. |
+| A2A, DSO stores, signed agreements, freshness, epochs | New federation control layer around the existing data plane. | Implement and validate these mechanisms; do not attribute them to reference code. |
+| Local transaction guarantees | Packet journal, preparation, rechecks, readback, supported compensation. | Multi-device writes are not atomic; external writers can bypass controller locks. Stronger acceptance/fencing must be implemented or declared unsupported. Optical transactions need their own capability profile. |
+| Provisioning and resource contention | Adopt/admit the existing transport, control the shared flow through its owners, and serialize conflicting route/contract updates. | Does not establish dynamic VPN/circuit provisioning or independent per-service bandwidth isolation. |
+| Fragmentation, tunable line resources, isolated services | Unsupported in the unchanged baseline. | P0 model tests, explicit capability-refusal cases, or a separately implemented extension; never count them as live P1 coverage. |
+| Large graphs and swarm benefit | At most four packet path combinations over one optical line. | Use exact enumeration here; larger search spaces require separately labeled fixtures. |
+
+All core E01–E18 families remain relevant, but execute only supported P1 variants
+and explicitly report P0-only and unsupported cases. If a paper claim requires
+an unavailable primitive, implement it or narrow the claim before publication.
+
+### 3.5 Independent checkers
 
 | Checker | Evidence it uses | Independence requirement |
 | --- | --- | --- |
@@ -209,19 +265,22 @@ eligibility, bandwidth, delay metric and limit, loss metric and limit, service
 lifetime, provisioning deadline, tenant policy, price ceiling, and currency.
 Record whether QoS targets apply per direction or bidirectionally.
 
-Suggested executable packet clients request 100, 250, or 500 Mbit/s on a lab
-profile with 1 Gbit/s packet links, subject to calibration. Use relaxed, tight-but-
-feasible, and impossible latency/budget cases derived from the independently
-computed topology floor. For example, define delay limits relative to the
-unloaded path delay rather than inventing a universally feasible 10 ms limit.
+Start with the reference `client-a` → `server-b` UDP stream: **1 Mbit/s offered
+load**, port `5201`, 1400-byte UDP payload. Optional pilot rates such as 5 or
+10 Mbit/s require host/receiver calibration; no 1 Gbit/s link capacity is assumed
+from an interface name. Use relaxed, tight-but-feasible, and impossible targets
+derived from measured unloaded delay and independently checked limits. Fresh
+receiver intervals establish delivered rate/loss; sender output alone does not.
+Report unsupported guaranteed-bandwidth intents as unsupported rather than
+equating the iperf3 rate setting with a network reservation.
 
 Use three workload sets:
 
 | Set | Construction | Purpose |
 | --- | --- | --- |
 | W1: controlled cases | One service or a known small set; exact feasibility and expected outcome. | Correctness and fault attribution. |
-| W2: synthetic demand | Seeded endpoint selection, request classes, interarrival/holding times, and external traffic. | Throughput, blocking, concurrent intent, and cost comparisons. |
-| W3: held-out stress | Different topology seeds, demand bursts, fault placements, and evidence combinations from development. | Generalization and robustness. |
+| W2: synthetic demand | Seeded request classes, arrivals, and revisions/competing requests for the baseline flow. Multiple endpoints and independent services only in declared P0/extension profiles. | Control throughput, conflict handling, blocking, and cost; service-capacity claims need actual isolation support. |
+| W3: held-out stress | Held-out demand bursts, fault placements, and evidence combinations on the baseline; different topology seeds only in separate profiles. | Generalization and robustness within the declared topology family. |
 
 Include feasible requests, infeasible resource requests, policy refusals, exhausted
 budgets, and conflicting simultaneous intents. A proposed diagnostic mix is
@@ -240,15 +299,15 @@ achieved utilization: methods that reject requests will realize different load.
 | Factor | Pilot values or construction | Use |
 | --- | --- | --- |
 | Domains | 3 core; 5, 10, 20 only for E24 scale extension. | Federation overhead and participating-path length. |
-| Nodes per packet domain | 6 reference; 12 and 24 generated variants. | Graph/query/candidate cost without changing owner count. |
+| Nodes per packet domain | 4 in the reference; 8, 12, or 24 only in generated P0/extension variants. | Graph/query/candidate cost; preserve the fixed P1 baseline as its own dataset. |
 | Concurrent in-flight intents | 1, 5, 10, 25, 50, subject to measured host limits. | Contention and saturation; distinguish live services from pending requests. |
-| Offered load | Approximately 25%, 50%, 75%, 90%, and overload of the defined reference capacity. | Admission/assurance trade-offs. |
+| Offered load | Begin at 1 Mbit/s; after calibration use approximately 25%, 50%, 75%, 90%, and overload of measured sustainable forwarding rate. | Packet throughput/assurance; resource-admission capacity requires a separately validated resource model. |
 | Added A2A one-way delay | 0, 10, 50, 100 ms plus a separately defined jitter distribution. | Negotiation and replica lag; report actual observed delay. |
 | Message loss/duplication | 0%, 1%, 5% seeded random faults plus exact targeted drops. | Transport robustness; separate packet loss from application-message faults. |
 | Projection/advertisement delay | 0, 0.5, 2, 5 s or equivalent multiples of the telemetry interval. | Stale evidence and unnecessary retries. |
 | State-change timing | Before offer, after acceptance, after preparation, immediately before local acceptance, after application. | Dependency validity and recovery. |
 | Failure duration | Shorter than, near, and longer than reservation/coordination expiry. | Boundary behavior rather than arbitrary timing only. |
-| Optical margin | Valid reference cases well above, near, and below the configured threshold. | QoT admission and repair; report actual model units and uncertainty. |
+| Optical margin | Modeled reference cases above, near, and below the configured threshold, with deliberate perturbations logged. | QoT validation/refusal; report model units, coverage, uncertainty, and whether packet behavior changes. No baseline optical reroute. |
 | Context budget | For example 2k, 4k, 8k input tokens if supported by all compared methods. | Grounding efficiency; reserve identical output allowance. |
 
 Do not run the full Cartesian product. First validate W1 cases, then run matched
@@ -526,6 +585,13 @@ unit mismatches, invalid endpoints, asymmetric paths, insufficient bandwidth,
 unsupported encapsulation/MTU, optical spectrum fragmentation, unavailable
 transponders, and above/below-threshold QoT reference cases.
 
+In baseline P1, enumerate the supported packet branches over the one optical
+line and test fresh evidence, endpoint reachability, route readiness, and
+capability refusal. Fragmentation and configurable-transponder cases require
+P0 resource models or a declared extension; an unsupported action must be rejected
+without inventing a successful allocation. Changing packet branches cannot bypass
+the failed shared optical line.
+
 **Procedure:** Validate and normalize each intent, enumerate small-instance
 reference allocations, and compare agent candidates and controller checks with
 the reference. Exercise values just below, at, and above each configured limit,
@@ -546,20 +612,26 @@ probabilities without justification.
 
 **Scope:** Core; RQ1, RQ5; I1–I6, I9.
 
-**Setup:** Healthy reference topology and enough resources. Use W1 first, then
-multiple service classes in W2. Test intent ingress from each permitted domain,
-including endpoint attachment on an optical-domain client only if modeled.
+**Setup:** Healthy reference topology. Use W1 first, then W2 competing intents
+and revisions for the shared flow. Test ingress from each permitted domain;
+the baseline endpoints remain `client-a` and `server-b`. An optical-domain
+user can request that service without adding a new optical-domain endpoint.
 
 **Procedure:** Establish the service, verify the realized path and QoS, and run
-traffic for its declared observation interval. Modify bandwidth or policy using
-a new contract revision; release the service or let its lifetime expire. Repeat
+traffic for its declared observation interval. Modify a supported route/contract
+condition or the declared traffic offered rate using a new revision; release the
+service or let its lifetime expire. Offered-rate changes test endpoint control,
+not network bandwidth reservation. Repeat
 the same request ID to test request deduplication, and submit a genuinely new
 request with similar content to verify it is not accidentally deduplicated.
 
 **Expected:** Each accepted lifecycle change has attributable local operations,
-matching receipts, and independent verification. Teardown removes only the
-service's resources; shared transport allocations remain while other services
-legitimately use them. Untouched services remain within their contract.
+matching receipts, and independent verification. Initial P1 admission adopts
+the preconfigured transport; it is not dynamic VPN or optical-circuit creation.
+An unchanged optical or packet segment needs evidence and acceptance, not a
+fabricated write. Release clears owned service state/holds and stops only owned
+traffic as appropriate; it must not destroy the shared lab or fixed optical line.
+Collateral-service isolation is evaluated only in a declared multi-service extension.
 
 **Measure/report:** Lifecycle success, provisioning/modification/release time,
 goodput, delay, loss, resource use before/after, and CPU/signaling/model cost.
@@ -593,9 +665,11 @@ are attributed reports; this test does not establish honest strategic behavior.
 
 **Scope:** Core; RQ1, RQ2; I2–I5, I9.
 
-**Setup:** A bottleneck with enough capacity for one of two conflicting requests,
-plus compatible requests using distinct resources. Repeat for packet queues,
-optical spectrum/transponders, and a shared physical-risk resource where relevant.
+**Setup:** In baseline P1, conflict two requests over the same packet-route
+resources or service revision, with compatible requests on distinct owned route
+sets as a control. These route holds are not per-service bandwidth reservations.
+Repeat for packet queues, optical spectrum/transponders, or other capacity
+bottlenecks only in a supporting P0 model or explicit extension.
 
 **Procedure:** Release requests at a common barrier from different ingress DSOs.
 Pause them after reading the same free-capacity snapshot, then allow both to
@@ -619,6 +693,14 @@ resource-concurrency test, not evidence of fairness for every workload.
 **Setup:** A feasible agreed service depending on an optical resource at revision
 418. Enable deterministic hooks after retrieval, offer acceptance, preparation,
 DSO authorization, and immediately before controller acceptance.
+
+Revisions 418/419 are illustrative federation record revisions, not counters
+already exposed by the reference APIs. For P1, also change packet route/readiness
+conditions guarded by the existing recovery procedure. Distinguish controller
+lock-protected writes from direct-device external writes; the existing read-check-
+write sequence alone does not establish atomic acceptance against all writers.
+Optical invalidation can revoke its acceptance of the unchanged line; no optical
+reconfiguration is needed to test stale dependency handling.
 
 **Procedure:** At each hook, change a required resource/configuration condition
 to revision 419 while delaying the advertisement to another DSO. Attempt the old
@@ -669,6 +751,12 @@ communication restoration. Do not assume exactly-once message delivery.
 **Setup:** All participants have agreed and prepared. Use each domain as the
 failing participant in separate trials; rotate the order of local application.
 
+In baseline P1, apply packet actions only where supported, with Optical validating
+and retaining the line. Test partial packet recovery across A/B and within each
+multi-router transaction. A failed optical validation or lost optical receipt is
+not a failed optical configuration write. Optical mutation/rollback variants and
+collateral independent-service protection below require P0 or an extension.
+
 **Procedure:** Apply one segment, fail another before application, and observe
 the aggregate state. Repeat with a controller that applies the change but loses
 its receipt response, a delayed application after timeout, and compensation
@@ -712,15 +800,26 @@ process crashes; do not claim both from one restart test.
 
 **Scope:** Core; RQ1, RQ3, RQ4; I1–I6, I8, I9.
 
-**Setup:** Active measured services plus unaffected controls. Prepare a valid
-alternative path and a separate case with no feasible recovery. Freeze existing
-data-plane protection behavior so its effect can be separated from DSO action.
+**Setup:** The active shared UDP service on the reference data plane. Prepare
+the supported `p-a2` and `p-b2` backup actions and a separate case with no feasible
+recovery. Record existing protection/static-route behavior so its effect can be
+separated from DSO action. Independent unaffected-service controls require an
+explicit extension; unchanged resources can still be checked in the baseline.
 
-**Procedure:** Inject packet congestion, a packet link failure, optical capacity
-withdrawal, or modeled/measured QoT degradation independently. Cross B0/B1 and the
-main architecture baseline with the same fault and telemetry traces. Require
-shared-service repairs to re-enter agreement/execution. Repeat near health
-thresholds to exercise hysteresis and cooldown.
+**Procedure:** Inject a primary packet link failure in A, B, and both domains,
+then an optical transit cut as separate trials. Cross B0/B1 and the main
+architecture baseline with matched fault/telemetry traces. Packet repairs must
+re-enter agreement and use the named backup actions; verify fresh receiver
+samples and path readback before finalizing. Congestion or modeled QoT changes
+are separate perturbations whose actual packet effects must be measured. A
+congestion alarm alone may not satisfy the reference action's primary-degraded
+precondition. Repeat near health thresholds to exercise hysteresis and cooldown.
+
+There is no alternate optical route: for the optical cut, expect diagnosis,
+refusal/escalation, and truthful degraded state. The driver may restore the
+injected fault at a predeclared time; label subsequent recovery as reconciliation
+after fault removal, not autonomous optical restoration. Wider optical recovery
+procedures belong to P0 or a separately implemented extension.
 
 **Expected:** The loop diagnoses or falls back, finds only feasible repairs, and
 verifies recovery. It reports a degraded/no-feasible-repair outcome when required.
@@ -835,9 +934,11 @@ runtime, and energy assumptions separately. Include failed/retried calls in cost
 
 **Scope:** Core; RQ5; I3–I6.
 
-**Setup:** Fixed three-owner topology with controlled packet-node-size variants.
-Use a pinned machine allocation and W2 traces; hold retrieval/model parameters
-constant. Include services retained long enough to create resource pressure.
+**Setup:** Fixed three-owner reference topology, one shared flow, a pinned machine
+allocation, and W2 competing request/revision traces. Hold retrieval/model
+parameters constant. Distinguish increasing control-request concurrency from
+increasing independently isolated live services. Packet-node-size and multi-service
+variants require separately labeled P0 fixtures or executable extensions.
 
 **Procedure:** Sweep offered load and in-flight requests, first without faults,
 then with a fixed rate of state changes. Run B0/B1 and B2 or B3. Increase load
@@ -862,6 +963,14 @@ be accompanied by failure/deadline rates. E24 is required for larger federation 
 conditional acceptance, protected reservation, apply/readback delay, transaction
 query, compensation, and fencing support. Use deterministic fixtures to expose
 each supported and unsupported behavior.
+
+Start with the [reference capability table](reference-data-plane.md#initial-action-and-capability-profile).
+Test scoped packet inventory, backend authorization, recovery journal durability,
+and MCP-to-HTTP procedure mapping. Check that Optical advertises fixed-line
+validation without claiming alternate-path or spectrum transactions. Record
+which preconditions/epochs are enforced by new adapter code and which remain
+unsupported. Repeat packet-side checks for A and B; source support for an action
+is not evidence that this federation has exercised it live.
 
 **Procedure:** Exercise the same service contract against adapters with immediate
 versus asynchronous application, delayed readback, explicit rejection, unsupported
@@ -911,6 +1020,11 @@ settlements, gains, positive weights, and disagreement values. Include symmetric
 owners, scarce optical resources, unequal costs, budget pressure, and no mutually
 beneficial contract.
 
+The unchanged topology has at most four packet path combinations over one optical
+line, further restricted by controller action preconditions. Enumerate the
+actually executable candidates exactly. Scarcity/settlement values are declared
+experimental models, not measured carrier prices or native wavelength markets.
+
 **Procedure:** Compare fixed/greedy acceptance and weighted Nash selection on
 identical candidates. Enumerate the objective optimum for small cases; use a
 bounded solver for larger cases with reported status. Sweep bargaining weights,
@@ -936,6 +1050,12 @@ solely from the selected objective.
 only ranks a fixed candidate pool or constructs new path/resource combinations.
 If it only ranks a fixed pool, compare with direct scoring of that pool; do not
 claim wider search coverage. Include sparse/dense and fragmented-spectrum fixtures.
+
+The reference topology is a small correctness example with at most four packet
+path combinations; exact enumeration is the primary baseline there. Sparse/dense
+or fragmented-spectrum search spaces are P0 or explicit extensions. Do not claim
+swarm superiority from the fixed line, or present a larger generated topology as
+the unchanged reference data plane.
 
 **Procedure:** Compare constrained K-shortest search, a simple randomized search,
 and ACO. Match wall-clock budget and also report candidate-evaluation counts;
@@ -1030,6 +1150,10 @@ replacement semantics does not support this claim.
 
 **Scope:** Conditional on broader scale or real-controller/hardware claims;
 RQ1, RQ5. Report its two branches separately.
+
+Any added nodes, alternate optical paths, isolated services, or controller/device
+substitutions get a new topology/capability manifest. Retain the original P1
+dataset for comparison and list every difference from the reused data plane.
 
 **Scale branch:** Repeat representative E04, E06, E07, E11, and E13 cases at 5,
 10, and 20 domains, or a declared achievable subset. Vary total domain count
@@ -1241,11 +1365,13 @@ unresolved fields in a frozen manifest.
   "experiment_id": "E07",
   "variant_id": "B1",
   "profile": "P0",
-  "topology_id": "three-domain-two-route-v1",
+  "topology_id": "packet-qos-four-roadm-channel1-9c3b7a7",
+  "reference_data_plane_commit": "9c3b7a70207511894d2e0e464b7fa76aade26c90",
   "participants": ["packet-a", "optical-o", "packet-b"],
   "workload_id": "single-feasible-service-v1",
   "seeds": {"topology": 11, "traffic": 42, "faults": 73, "search": 104},
   "conditional_acceptance": true,
+  "controller_semantics": "P0 simulated conditional acceptance; not a reference-controller guarantee",
   "llm_nodes_enabled": [],
   "learning_enabled": false,
   "fault": {
@@ -1325,6 +1451,8 @@ results.
 | Threat | Mitigation and remaining limit |
 | --- | --- |
 | Shared host bottlenecks masquerade as federation overhead | Pin resources, calibrate forwarding/model throughput, record contention, and repeat selected cells with distributed placement where feasible. |
+| Shared reference controller mistaken for independent ownership | Implement and test scoped inventories, credentials, journals, MCP/API authorization, and runtime tool restrictions; label any retained shared backend. |
+| One flow and fixed line generalized to arbitrary service provisioning | Separate admission/route recovery from VPN, bandwidth isolation, and wavelength allocation; report unsupported cases and extension datasets explicitly. |
 | Optical simulation presented as physical validation | Separate P0/P1/P2 results, publish impairment/resource models, and quantify available calibration error. |
 | Planner and checker share the same bug | Independent formulations, reference fixtures, source-state inspection, and endpoint observations; state any remaining common dependencies. |
 | Unfair baseline information or tuning | Match authorized evidence, tools, policies, compute/model budgets, and development effort; disclose intentional differences. |

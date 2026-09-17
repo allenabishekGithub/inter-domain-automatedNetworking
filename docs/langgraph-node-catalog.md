@@ -9,6 +9,16 @@ integration. These methods are not all deterministic: ACO is stochastic, retriev
 may use learned embeddings, and external calls observe changing state. Three
 conditional LLM nodes plus 54 other nodes retain the total of **57**.
 
+All nodes operate over the [reused reference data plane](reference-data-plane.md).
+This does not add nodes: capabilities determine permitted workflow branches.
+`local_candidate_generation` and `candidate_verification` admit only the
+reference's supported packet actions or retention of the fixed optical line.
+`local_reservation` and `controller_transaction` need scoped MCP adapters around
+the existing packet recovery procedures; the listed generic transaction tools
+are a target contract, not existing reference tool names. Optical observation
+and acceptance of an unchanged segment must not be reported as an optical
+configuration write. `service_verification` requires fresh receiver evidence.
+
 ```mermaid
 flowchart LR
     E[Intent, peer event, telemetry, or timer] --> T[Topology federation]

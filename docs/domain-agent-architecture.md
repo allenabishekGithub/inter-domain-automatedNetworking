@@ -11,6 +11,15 @@ This is a proposed architecture for an Elsevier *Computer Networks* research
 paper. The [literature assessment](related-work-and-novelty.md) motivates the
 protocol requirements below; it does not establish novelty or measured results.
 
+The selected data plane is the reference platform's **`packet-network/` and
+`optical-network/`**, with eight SR Linux routers, two traffic endpoints, and
+the fixed four-ROADM Mininet-Optical line. The
+[reference data-plane specification](reference-data-plane.md) records the exact
+topology, pinned source, ownership, and controller adaptations. The capability
+table below describes the broader architecture; the initial executable profile
+is limited to the reference's named packet-route recovery and fixed channel-1
+optical transport. Unsupported functions must not be offered as executable actions.
+
 | Domain | AI DSO owns | Local controller owns |
 |---|---|---|
 | Packet A | Local ingress/egress view, packet-path candidates, QoS contribution, policy and local approval | Router, VPN/SR/MPLS/EVPN, queue and shaping changes |
@@ -31,6 +40,10 @@ This takes the useful parts of the local `AgenticAI-packet-optical-qos-platform`
 reference—scoped agents, typed candidate messages, direct agent-to-agent
 negotiation, freshness checks, and controller safety gates—while distributing
 the central service-orchestrator responsibilities across the three domains.
+The reference packet controller currently manages both packet networks; the
+federation requires independently scoped controller instances and credentials.
+The shared reference UDP flow also needs explicit sender/receiver ownership.
+Neither separation is supplied simply by running three DSO processes.
 
 ## Architecture
 
@@ -248,8 +261,9 @@ flowchart LR
     DSO -->|signed A2A topology or service update| PEER[Peer DSOs]
 ```
 
-The Controller MCP Server exposes typed tools rather than a generic shell or
-unbounded configuration channel:
+The target Controller MCP Server contract exposes typed tools rather than a
+generic shell or unbounded configuration channel. This is an adapter contract
+to implement, not an inventory of the reference MCP servers' existing tools:
 
 | MCP tool | Purpose |
 |---|---|
@@ -267,6 +281,15 @@ VPN, QoS, interface, and traffic-engineering APIs, such as typed OpenConfig or
 controller-native models. The Optical MCP Server maps them to its transport,
 transponder, ROADM, channel, spectrum, and QoT APIs, such as typed T-API,
 OpenConfig optical models, or controller-native models.
+
+For the selected data plane, map packet mutations to
+`pn1_activate_p_a2_backup_path` or `pn2_activate_p_b2_backup_path` through the
+owning domain's controller. Reuse its prepare/commit/rollback/finalize procedures
+and journal, with typed MCP wrappers and domain authorization added. The Optical
+DSO initially observes and validates the existing line; fixed-channel setup is
+a bootstrap operation, and no alternate lightpath or native spectrum reservation
+is provided. See the [capability profile](reference-data-plane.md#initial-action-and-capability-profile)
+for the distinction between source support and required new protocol primitives.
 
 The AI agent can therefore cause a network configuration change through MCP,
 but only through this transaction path:
@@ -457,18 +480,26 @@ replicate it as read-only reasoning state.
 ```mermaid
 flowchart LR
     subgraph PA[Packet A contribution]
-        PA1[server-a] --- PA2[PE-A] --- PA3[GW-A]
+        PA1["client-a"] --- PA2["pe-a1"] --- PA3["p-a1 or p-a2"]
+        PA3 --- PA4["gw-a"] --- PA5["opt-a"]
     end
     subgraph OD[Optical contribution]
-        O1[Transponder A] --- O2[ROADM chain] --- O3[Transponder B]
+        O1["clientEdge"] --- O2["t-client"] --- O3["r1 through r4"]
+        O3 --- O4["t-server"] --- O5["serverEdge"]
     end
     subgraph PB[Packet B contribution]
-        PB1[GW-B] --- PB2[PE-B] --- PB3[server-b]
+        PB1["opt-b"] --- PB2["gw-b"] --- PB3["p-b1 or p-b2"]
+        PB3 --- PB4["pe-b1"] --- PB5["server-b"]
     end
-    PA3 --- O1
-    O3 --- PB1
-    PA1 -. service attachment .-> PB3
+    PA5 --- O1
+    O5 --- PB1
+    PA1 -. service attachment .-> PB5
 ```
+
+This overview groups alternatives and the ROADM chain for readability. The
+[exact baseline diagram](reference-data-plane.md#exact-baseline-topology) expands
+all 20 entities and packet links. Replicate the individual nodes and typed
+relationships, not a single synthetic node named “p-a1 or p-a2.”
 
 ### Handshake and synchronization
 
@@ -1244,11 +1275,15 @@ individual-rationality condition. In a research demo, set the currency to
 `service-credit`, configure fixed rates in each domain, and record the quote in
 the service contract; no payment system is required.
 
-For example, a two-hour 1 Gbps request might produce these service-credit
+As an illustrative economic model for a future capacity-allocation profile,
+a two-hour 1 Gbps request might produce these service-credit
 quotes: Packet A costs 14 credits and quotes 16, Optical costs 52 and quotes
 58 because it reserves scarce spectrum/transponder capacity, and Packet B costs
 13 and quotes 16. The end-to-end quoted price is 90 credits. A user budget below
 90 forces the DSOs to negotiate a cheaper feasible path or reject the request.
+These values are not measurements or supported spectrum reservations in the
+fixed-channel UDP baseline; its quotes must be tied to the actual actions and
+explicit experimental cost assumptions.
 
 ```mermaid
 flowchart LR
@@ -1365,24 +1400,32 @@ rollback. No controller reservation or commit follows an incomplete agreement.
 ## Intent and service contract
 
 An intent should state the desired outcome, never a path or a device command.
-For example:
+For the reused data plane, an illustrative structured intent is:
 
 ```json
 {
   "intent_id": "intent-01J...",
   "tenant_id": "customer-42",
-  "source": {"domain": "packet-a", "endpoint": "server-a"},
+  "source": {"domain": "packet-a", "endpoint": "client-a"},
   "destination": {"domain": "packet-b", "endpoint": "server-b"},
-  "service_type": "l3vpn",
+  "service_type": "udp_connectivity",
+  "traffic_profile": {"offered_load_mbps": 1, "udp_payload_bytes": 1400},
   "qos": {
-    "minimum_bandwidth_mbps": 1000,
+    "minimum_bandwidth_mbps": 0.9,
     "maximum_latency_ms": 20,
-    "maximum_packet_loss_ratio": 0.0001,
-    "availability_target": 0.9999
+    "maximum_packet_loss_ratio": 0.01
   },
-  "deadline": "2026-09-16T14:30:00Z"
+  "deadline": "2026-09-18T14:30:00Z"
 }
 ```
+
+These are proposed schema fields and illustrative pilot targets, not measured
+results. Define the delay metric/direction, measurement window, and future
+deadline in the frozen experiment profile. The minimum bandwidth here is a
+receiver-throughput objective, not a dedicated bandwidth reservation; offered
+load is controlled at the sender. L3VPN creation, guaranteed bandwidth isolation,
+and availability guarantees require additional capabilities and evidence before
+the baseline can accept such intents.
 
 The initiating DSO authenticates the user, checks entitlement for its own
 domain, then converts the intent into a versioned `ServiceContract`. A contract

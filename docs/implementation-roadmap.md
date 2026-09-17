@@ -52,6 +52,14 @@ and network namespace. A shared development CA can issue the three local mTLS
 identities; production uses each operator's own identity provider and trust
 policy.
 
+Reuse the [reference packet–optical data plane](reference-data-plane.md) from
+`AgenticAI-packet-optical-qos-platform/packet-network` and `optical-network`.
+Keep its Containerlab topology, SR Linux configurations, Mininet-Optical line,
+bridge attachments, endpoint addresses, and initial UDP profile. Pin the source
+commit and installed optical dependencies. The reference shared packet controller
+must become two inventory-scoped controller instances; creating three DSO
+containers alone does not provide controller isolation.
+
 ## Phase 0 — contracts and laboratory model
 
 Define versioned Pydantic/JSON Schema models before building services:
@@ -76,10 +84,13 @@ delayed, duplicated, reordered, or lost messages. Specify restart persistence,
 clock/lease assumptions, and peer rules for replacing a coordinator. Select the
 properties to check before designing fault experiments.
 
-Create one small deterministic topology: Packet A → Optical → Packet B, two
-candidate packet paths in each packet domain, and at least two optical resource
-options. Supply fixed telemetry fixtures for healthy, Packet A failure, Optical
-QoT degradation, Packet B failure, and a stale topology revision.
+Derive the deterministic fixture from the selected reference manifests: four
+routers per packet domain, two packet paths per domain, two optical terminals,
+four ROADMs, and one fixed channel. Preserve the bridge/edge attachments and
+`client-a`/`server-b` addresses. Supply fixtures for healthy operation, Packet A
+failure, optical unavailability or modeled QoT degradation, Packet B failure,
+and a stale topology revision. An optical failure has no alternate optical route
+in this fixture. Additional resource options require a separately labeled extension.
 
 **Exit criterion:** Message structure and canonical digests are validated by
 schema checks; authorization, feasibility, and state-transition rules have
@@ -91,7 +102,8 @@ Create three DSO services: `packet-a-dso`, `optical-dso`, and `packet-b-dso`.
 Each gets its own PostgreSQL database, database migrations, immutable audit
 journal, outbox/inbox tables, and configuration for its own domain identity.
 
-Implement local topology/configuration ingestion from static fixtures first.
+Implement local topology/configuration ingestion from the pinned reference
+topology and configuration fixtures first.
 Materialize the records into PostgreSQL and Neo4j, preserving source domain,
 revision, digest, expiry, and ownership. Do not use an LLM in this phase.
 
@@ -100,9 +112,23 @@ rebuild its local GraphRAG projection from PostgreSQL records.
 
 ## Phase 2 — local Controller MCP Server and transaction safety
 
-Build one Controller MCP Server for each simulated domain. Begin with a fake
-SDN controller that implements only typed, named operations; later replace its
-adapter with the real packet or optical controller API.
+Build one Controller MCP Server for each domain. Begin with fake controllers
+for protocol tests, using the same inventory and capability limits. Then reuse
+the reference packet controller and optical API behind scoped adapters. Give
+the two packet instances separate router credentials, inventory allowlists,
+journals, and endpoint bindings; enforce ownership below the MCP tool layer.
+Exclude global deploy/destroy/configure-all and bridge lifecycle operations from
+runtime domain tools. Keep these operations in trusted lab bootstrap.
+
+Wrap the existing packet recovery HTTP procedures as local typed MCP tools.
+Replace the reference central-SO mutation authorization with domain-specific
+authorization. Separate sender control in Packet A from receiver control in
+Packet B, or explicitly keep a fixed measurement flow in the experiment driver.
+The controller's SQLite journal can remain a separate receipt store per packet
+instance; DSO PostgreSQL remains the domain's orchestration source of truth.
+The optical API provides observation and fixed configuration, not the complete
+reservation/transaction sequence below; advertise that limitation and implement
+durable adapter receipts before relying on them.
 
 Implement this transaction sequence:
 
@@ -193,10 +219,12 @@ action-rate limits. Bind incident coordination to durable epochs and require
 controller-side rejection of superseded requests. Specify how participants grant
 and replace a coordinator; a timeout lease alone is not evidence of exclusion.
 
-The initial recovery catalog should contain only named, reversible actions, such
-as switching Packet A to a prevalidated alternate path or changing a packet QoS
-profile. Route every shared-service remediation through the Phase 4 service
-saga.
+The initial recovery catalog contains the reference
+`pn1_activate_p_a2_backup_path` and `pn2_activate_p_b2_backup_path` actions with
+their supported compensation. Packet QoS-profile mutation and optical rerouting
+are not baseline actions. Route shared-service repairs through the Phase 4 saga;
+unchanged participants validate and retain their segments. An optical cut must
+exercise detection, refusal/escalation, and reconciliation after fault repair.
 
 **Exit criterion:** Inject Packet A, Optical, Packet B, joint, stale-state, and
 agent-outage scenarios. Record SLA violation duration, recovery success,
@@ -281,12 +309,14 @@ different mechanism and is not implied.
 
 ## Recommended first demonstration
 
-The first end-to-end demonstration should use no paid model provider and no live
-network hardware. It should show one intent from Packet A to Packet B, A2A graph
-convergence, an approved three-domain service contract, reservations and MCP
-commits, endpoint verification, an injected failure, closed-loop recovery, and
-a complete auditable trace. This validates the federation before optimization
-or learning adds complexity.
+First exercise the protocol in P0 using fixtures derived from the reference
+topology. Then demonstrate P1 on the same Containerlab SR Linux and
+Mininet-Optical data plane, without physical network hardware or a paid model
+requirement. Use one `client-a` → `server-b` intent, A2A graph convergence, owner
+acceptances, supported local transactions, fresh receiver verification, and a
+primary packet-path fault followed by its named backup action. Record a complete
+trace. Include an optical failure that correctly reports unavailable restoration.
+Capability gaps discovered in P0 must remain explicit until verified in P1.
 
 ## Journal evaluation plan
 
@@ -320,7 +350,11 @@ and without LLM advice to avoid attributing its effects to the model.
 
 ### Experiment matrix and measurements
 
-Begin with three packet–optical–packet domains. Vary domains, nodes per domain,
+Begin with the exact three-domain reference data plane and its one shared UDP
+flow. Multiple pending intents exercise control contention, not independent
+service isolation. Additional nodes, optical paths, or simultaneous isolated
+services belong to separately identified simulator or data-plane extensions.
+Within those declared profiles, vary domains, nodes per domain,
 concurrent intents, load, advertisement delay, controller delay, and change rate.
 Counts such as 5, 10, and 20 domains are proposed experiment points, not claimed
 supported scale. Record whether packet forwarding is emulated, optical behavior

@@ -46,6 +46,38 @@ The [LangGraph node catalogue](langgraph-node-catalog.md) identifies the
 algorithm, policy, retrieval, protocol, MCP, or conditional LLM method used by
 every node.
 
+## Reused packet–optical data plane
+
+Use the existing `packet-network/` and `optical-network/` data plane from
+**AgenticAI-packet-optical-qos-platform**. The
+[reference data-plane specification](reference-data-plane.md) pins the source
+and gives the complete node/interface map. Packet A owns `pe-a1`, `p-a1`,
+`p-a2`, and `gw-a`; Packet B owns `gw-b`, `p-b1`, `p-b2`, and `pe-b1`.
+The optical path connects `t-client` through `r1`–`r4` to `t-server` on channel 1.
+
+```mermaid
+flowchart LR
+    C["client-a"] --> A["Packet A: primary p-a1 or backup p-a2"]
+    A --> X["gw-a and opt-a attachment"]
+    X --> O["Mininet-Optical: two terminals and four ROADMs"]
+    O --> Y["opt-b attachment and gw-b"]
+    Y --> B["Packet B: primary p-b1 or backup p-b2"]
+    B --> S["server-b"]
+```
+
+The reference uses one packet controller for both packet domains. The target
+federation requires two scoped controller instances with separate identities,
+inventories, journals, and local MCP endpoints. This is control integration work;
+the baseline data-plane topology remains the same. A trusted lab bootstrap sets
+up the shared emulation environment without becoming the service orchestrator.
+
+The initial service is one shared iperf3 UDP flow, with two packet path options
+per packet domain and one fixed optical line. Packet recovery uses the existing
+named backup-route actions. Optical participation validates and retains that
+line or refuses a request; there is no baseline optical reroute, multi-service
+bandwidth isolation, or arbitrary spectrum allocation. These limits also govern
+the [journal experiments](experimental-validation.md#3-testbed-and-independent-measurement).
+
 ## Shared understanding, local ownership
 
 Each DSO has its own physical database. It is authoritative for that domain's
@@ -167,17 +199,23 @@ flowchart LR
     PB -->|MCP tools| BM[Packet B Controller MCP Server]
 ```
 
-The Controller MCP Server provides typed tools such as `get_topology`,
+The target Controller MCP Server contract provides typed tools such as `get_topology`,
 `get_telemetry`, `validate_change`, `reserve_resources`, `prepare_change`,
 `commit_change`, `rollback_change`, and `verify_change`. Packet MCP servers map
 them to routing, VPN, QoS, and traffic-engineering APIs. The Optical MCP server
-maps them to transport, transponder, ROADM, spectrum, channel, and QoT APIs.
+maps them to transport, transponder, ROADM, spectrum, channel, and QoT APIs where
+supported. These are architectural capabilities, not a claim that every reference
+API already exists. The [baseline capability mapping](reference-data-plane.md#initial-action-and-capability-profile)
+limits the first integration to the actual packet recovery procedures and fixed
+optical transport; missing transaction semantics need explicit adapter work.
 
 ## Creating a cross-domain service
 
 An authorized user can submit an intent to any DSO. For example, a request may
-ask to connect `server-a` in Packet A to `server-b` in Packet B at 1 Gbps, with
-latency, loss, availability, deadline, and maximum-cost requirements.
+ask to connect `client-a` in Packet A to `server-b` in Packet B with latency,
+loss, availability, deadline, and maximum-cost requirements. Start with the
+reference 1 Mbit/s UDP offered load and calibrated measurement targets; offered
+load is not an enforced bandwidth reservation.
 
 The receiving DSO becomes the initiating DSO for the request. It creates a
 correlation ID and a versioned service contract. All affected DSOs then follow
@@ -202,9 +240,12 @@ flowchart LR
     Q -->|Checks fail or evidence missing| F
 ```
 
-Packet A may offer a packet path, border attachment, and QoS profile. The
-Optical DSO may offer a transport route, wavelength/spectrum allocation, and
-transponder configuration. Packet B offers its packet path and QoS profile.
+For this baseline, Packet A offers its supported packet path and border
+attachment, Optical validates the existing channel-1 transport, and Packet B
+offers its supported packet path and receiver readiness. A domain whose segment
+already satisfies the contract can retain it without a configuration write.
+Richer QoS profiles, wavelength allocation, and transponder changes are future
+capabilities that must be advertised and implemented before use.
 Every candidate must be feasible in the synchronized graph and accepted by the
 owning domain's policy before it can be negotiated.
 

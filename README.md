@@ -47,6 +47,15 @@ and implementation milestones. The [LangGraph node catalogue](docs/langgraph-nod
 lists every workflow node and its execution method. The [implementation roadmap](docs/implementation-roadmap.md)
 turns the architecture into incremental, testable delivery phases.
 
+The data plane is reused from the reference platform's **`packet-network/` and
+`optical-network/` directories**: eight SR Linux routers across the two packet
+domains, a four-ROADM Mininet-Optical line on channel 1, and the `client-a` →
+`server-b` UDP service. The [reference data-plane specification](docs/reference-data-plane.md)
+records the pinned source, exact topology, controller ownership, and capability
+limits. Its shared packet controller must be adapted into two independently
+scoped controller instances for this federation. This repository currently
+documents that integration; it does not deploy the lab.
+
 The [experimental validation plan](docs/experimental-validation.md) specifies
 the journal study in detail: testbed profiles, workloads, matched baselines,
 24 experiment families, independent checks, metrics, statistical analysis,
@@ -79,11 +88,14 @@ negotiated contract.
 
 ## First target scenario
 
-An authorized user of packet domain A requests connectivity from `server-a` to
-`server-b` with a specified bandwidth, latency, loss, availability, and
-deadline. Packet domain A asks its optical neighbor for a feasible transport
-envelope; the optical agent asks packet domain B for its egress envelope. The
-agents negotiate only with their adjacent domains and obtain local reservations.
+An authorized user of packet domain A requests connectivity from `client-a`
+(`10.10.0.2`) to `server-b` (`10.20.0.2`) with specified service objectives and a
+deadline. The initial traffic profile uses the reference 1 Mbit/s offered load;
+this does not establish reserved bandwidth. Packet domain A asks its optical
+neighbor for a feasible transport envelope; the optical agent asks packet domain
+B for its egress envelope. The agents negotiate through A2A and obtain the
+local holds supported by the declared controller profile. Unchanged segments
+contribute acceptance and fresh evidence without artificial configuration writes.
 Each controller checks the agreed execution conditions before accepting its
 local change. Failures can leave a partially applied service; the DSOs reconcile
 receipts, release unused reservations, and attempt compensation where supported.
@@ -91,3 +103,7 @@ They report unresolved outcomes explicitly.
 
 The result is a service contract and a verifiable end-to-end outcome based on a
 shared, versioned view of the packet-optical-packet topology.
+
+The first recovery changes Packet A or Packet B to its existing backup packet
+path while retaining the fixed optical line. An unavailable optical line has
+no alternate route in this baseline and must be reported accordingly.
