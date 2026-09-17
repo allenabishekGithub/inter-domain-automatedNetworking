@@ -102,6 +102,14 @@ federation above that data plane — A2A, signed contracts, per-domain Controlle
 MCP servers, reservations, epochs — is documented here but not yet built; see
 the [implementation roadmap](docs/implementation-roadmap.md).
 
+The [known issues and follow-up register](docs/known-issues.md) records the
+consequential findings from the 17 September 2026 repository assessment:
+recovery when a router is unreachable, telemetry and receiver-evidence gaps,
+lifecycle scoping and failure reporting, partial changes, optical retries and
+health checks, and CLI consistency. Each open item includes source references
+and the evidence needed to close it. The passing unit suite does not replace
+the live integration checks listed there.
+
 The [experimental validation plan](docs/experimental-validation.md) specifies
 the journal study in detail: testbed profiles, workloads, matched baselines,
 nine experiment families, independent checks, metrics, statistical analysis,

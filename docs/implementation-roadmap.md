@@ -16,6 +16,14 @@ contributions that still require comparison and validation. Swarm optimization
 and learning remain optional extensions rather than prerequisites for the core
 paper experiment.
 
+Track the current fixture's consequential gaps in the
+[known issues and follow-up register](known-issues.md). Address F1–F5 before
+using automated fixture output as experiment evidence; carry F6–F10 and C1 into
+the controller-adapter and assurance phases. C2 and C3 cover the reproducible
+live run and documentation/scope alignment needed before freezing the study.
+The register separates reproduced local behavior from source-review risks and
+specifies the verification required to close each item.
+
 ```mermaid
 flowchart LR
     P0[0. Contracts and lab] --> P1[1. Domain foundation]

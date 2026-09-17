@@ -19,6 +19,12 @@ Controller MCP servers, epochs, reservations — does not, and is the work in th
 [implementation roadmap](implementation-roadmap.md). Nothing here supplies
 those mechanisms.
 
+The [known issues and follow-up register](known-issues.md) qualifies the current
+implementation: unit tests pass, but lifecycle handling, recovery, telemetry and
+service verification have open findings. Its assessment did not run a live lab.
+Consult the register before relying on CLI success, optical `configured` status
+or receiver interval identity as evidence that a service is healthy or recovered.
+
 ## What is fixed
 
 Pin these when constructing an experiment manifest, and record the separately
