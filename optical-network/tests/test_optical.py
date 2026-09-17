@@ -16,6 +16,17 @@ from client import OpticalClient, OpticalError, collect_monitors, worst_gosnr
 
 
 class TestSpec:
+    def test_the_line_carries_more_than_one_wavelength(self):
+        assert len(spec.CHANNELS) >= 2
+        assert spec.DEFAULT_CHANNEL in spec.CHANNELS
+        assert len(set(spec.CHANNELS)) == len(spec.CHANNELS)
+
+    def test_an_unsupported_channel_is_refused(self):
+        with pytest.raises(spec.UnknownChannel, match="not carried"):
+            spec.check_channel(99)
+        with pytest.raises(spec.UnknownChannel):
+            spec.roadm_rules(99)
+
     def test_the_chain_has_four_roadms_and_two_terminals(self):
         assert len(spec.ROADMS) == 4
         assert spec.CLIENT_TERMINAL != spec.SERVER_TERMINAL
@@ -40,38 +51,49 @@ class TestSpec:
         }) == 3
 
 
+@pytest.mark.parametrize("channel", spec.CHANNELS)
 class TestRoadmRules:
-    def test_there_is_one_rule_per_roadm(self):
-        rules = spec.roadm_rules()
+    def test_there_is_one_rule_per_roadm(self, channel):
+        rules = spec.roadm_rules(channel)
         assert [rule.node for rule in rules] == list(spec.ROADMS)
 
-    def test_the_first_roadm_adds_the_channel_and_sends_it_east(self):
-        first = spec.roadm_rules()[0]
+    def test_the_first_roadm_adds_the_channel_and_sends_it_east(self, channel):
+        first = spec.roadm_rules(channel)[0]
         assert first.port_in == spec.ROADM_ADD_DROP_PORT
         assert first.port_out == spec.ROADM_EAST_PORT
 
-    def test_the_last_roadm_drops_the_channel_to_its_terminal(self):
-        last = spec.roadm_rules()[-1]
+    def test_the_last_roadm_drops_the_channel_to_its_terminal(self, channel):
+        last = spec.roadm_rules(channel)[-1]
         assert last.port_in == spec.ROADM_WEST_PORT
         assert last.port_out == spec.ROADM_ADD_DROP_PORT
 
-    def test_the_middle_roadms_pass_through_west_to_east(self):
-        for rule in spec.roadm_rules()[1:-1]:
+    def test_the_middle_roadms_pass_through_west_to_east(self, channel):
+        for rule in spec.roadm_rules(channel)[1:-1]:
             assert (rule.port_in, rule.port_out) == (
                 spec.ROADM_WEST_PORT, spec.ROADM_EAST_PORT
             )
 
-    def test_the_chain_is_continuous(self):
+    def test_the_chain_is_continuous(self, channel):
         """Whatever leaves one ROADM must be what the next one accepts."""
 
-        rules = spec.roadm_rules()
+        rules = spec.roadm_rules(channel)
         for west, east in zip(rules, rules[1:]):
             assert west.port_out == spec.ROADM_EAST_PORT
             assert east.port_in == spec.ROADM_WEST_PORT
 
-    def test_every_rule_carries_the_one_configured_channel(self):
-        for rule in spec.roadm_rules():
-            assert rule.channels == str(spec.CHANNEL)
+    def test_every_rule_carries_the_requested_channel_only(self, channel):
+        for rule in spec.roadm_rules(channel):
+            assert rule.channels == str(channel)
+
+    def test_every_channel_uses_the_same_physical_route(self, channel):
+        """A wavelength is a choice of carrier, not a protection path."""
+
+        ports = [(r.node, r.port_in, r.port_out) for r in spec.roadm_rules(channel)]
+        baseline = [
+            (r.node, r.port_in, r.port_out)
+            for r in spec.roadm_rules(spec.DEFAULT_CHANNEL)
+        ]
+        assert ports == baseline
 
 
 class RecordingClient(OpticalClient):
@@ -117,6 +139,43 @@ class TestConfigureLine:
         client.calls.clear()
         client.configure_line()
         assert client.calls == first
+
+    @pytest.mark.parametrize("channel", spec.CHANNELS)
+    def test_programs_whichever_channel_is_asked_for(self, channel):
+        client = RecordingClient()
+        client.configure_line(channel)
+        connects = [p for path, p in client.calls if path == "/connect"]
+        for params in connects:
+            asked = params.get("channels") or params.get("channel")
+            assert str(asked) == str(channel)
+
+    def test_retuning_clears_the_roadms_before_reprogramming(self):
+        """A retune must not leave the previous wavelength cross-connected."""
+
+        client = RecordingClient()
+        client.configure_line(spec.CHANNELS[0])
+        client.calls.clear()
+        client.configure_line(spec.CHANNELS[1])
+        paths = [path for path, _ in client.calls]
+        assert paths[: len(spec.ROADMS)] == ["/reset"] * len(spec.ROADMS)
+        assert paths.index("/reset") < paths.index("/connect")
+
+    def test_retuning_keeps_the_terminals_on_their_existing_wdm_port(self):
+        """Reusing the port is what clears the previous channel's flows."""
+
+        client = RecordingClient()
+        client.configure_line(spec.CHANNELS[1])
+        terminals = [p for _p, p in client.calls if "ethPort" in p]
+        assert terminals, "no terminal connect recorded"
+        for params in terminals:
+            assert params["wdmPort"] == spec.TERMINAL_WDM_PORT
+            assert params["ethPort"] == spec.TERMINAL_ETH_PORT
+
+    def test_an_unsupported_channel_is_refused_before_any_request(self):
+        client = RecordingClient()
+        with pytest.raises(spec.UnknownChannel):
+            client.configure_line(99)
+        assert client.calls == []
 
 
 class TestMonitorReduction:

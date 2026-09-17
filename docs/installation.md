@@ -350,6 +350,19 @@ Then confirm the service is actually carrying traffic:
 The `receiver` block should show samples accumulating at roughly 1 Mbit/s with
 0% loss. Sender output alone does not establish delivery.
 
+Optionally exercise the optical domain's own decision — moving the live service
+to the other wavelength:
+
+```bash
+cd optical-network
+sudo python3 main.py status                  # carrying_channels: [1]
+sudo python3 main.py configure --channel 2   # retune
+sudo python3 main.py status                  # carrying_channels: [2]
+```
+
+Traffic should keep flowing across the change, losing roughly 90-100 ms of
+delivery in the receiver interval that spans it.
+
 Optionally exercise a repair end to end:
 
 ```bash

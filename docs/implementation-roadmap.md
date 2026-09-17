@@ -88,7 +88,7 @@ properties to check before designing fault experiments.
 
 Derive the deterministic fixture from the selected reference manifests: four
 routers per packet domain, two packet paths per domain, two optical terminals,
-four ROADMs, and one fixed channel. Preserve the bridge/edge attachments and
+four ROADMs, and two selectable wavelengths. Preserve the bridge/edge attachments and
 `client-a`/`server-b` addresses. Supply fixtures for healthy operation, Packet A
 failure, optical unavailability or modeled QoT degradation, Packet B failure,
 and a stale topology revision. An optical failure has no alternate optical route

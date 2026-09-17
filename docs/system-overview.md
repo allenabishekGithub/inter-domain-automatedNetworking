@@ -61,7 +61,7 @@ The data plane is implemented in this repository, in `packet-network/` and
 [data-plane specification](data-plane.md) gives the complete node and interface
 map. Packet A owns `pe-a1`, `p-a1`, `p-a2`, and `gw-a`; Packet B owns `gw-b`,
 `p-b1`, `p-b2`, and `pe-b1`. The optical path connects `t-client` through
-`r1`–`r4` to `t-server` on channel 1.
+`r1`–`r4` to `t-server`, carrying one of two wavelengths at a time.
 
 ```mermaid
 flowchart LR
@@ -82,10 +82,13 @@ independent control. A trusted lab bootstrap sets up the shared environment
 without becoming the service orchestrator.
 
 The initial service is one iperf3 UDP flow, with two packet path options per
-packet domain and one fixed optical line. Packet recovery uses each domain's
-named backup-path action. Optical participation validates and retains that
-line or refuses a request; there is no baseline optical reroute, multi-service
-bandwidth isolation, or arbitrary spectrum allocation. These limits also govern
+packet domain and two wavelengths on one optical line — eight joint
+configurations. Packet recovery uses each domain's named backup-path action.
+The Optical DSO chooses which wavelength carries the service, validates and
+retains it, or refuses the request; retuning a live service costs about
+90–100 ms of delivery. There is no baseline optical reroute, because both
+wavelengths share the same fibre chain, and no multi-service bandwidth
+isolation or arbitrary spectrum allocation. These limits also govern
 the [journal experiments](experimental-validation.md#3-testbed-and-independent-measurement).
 
 ## Shared understanding, local ownership
@@ -251,11 +254,12 @@ flowchart LR
 ```
 
 For this baseline, Packet A offers its supported packet path and border
-attachment, Optical validates the existing channel-1 transport, and Packet B
+attachment, Optical offers one of its two wavelengths or refuses, and Packet B
 offers its supported packet path and receiver readiness. A domain whose segment
 already satisfies the contract can retain it without a configuration write.
-Richer QoS profiles, wavelength allocation, and transponder changes are future
-capabilities that must be advertised and implemented before use.
+Richer QoS profiles, simultaneous multi-channel operation with genuine
+spectrum contention, and transponder changes are future capabilities that must
+be advertised and implemented before use.
 Every candidate must be feasible in the synchronized graph and accepted by the
 owning domain's policy before it can be negotiated.
 

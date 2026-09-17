@@ -13,8 +13,9 @@ from dataclasses import dataclass
 import requests
 
 from spec import (
-    CHANNEL,
+    CHANNELS,
     CLIENT_TERMINAL,
+    DEFAULT_CHANNEL,
     MONITORED_NODES,
     REST_HOST,
     REST_PORT,
@@ -22,6 +23,7 @@ from spec import (
     SERVER_TERMINAL,
     TERMINAL_ETH_PORT,
     TERMINAL_WDM_PORT,
+    check_channel,
     monitor_name,
     roadm_rules,
 )
@@ -103,26 +105,50 @@ class OpticalClient:
     def turn_on(self, node: str):
         return self._get("/turn_on", node=node)
 
-    def configure_line(self) -> None:
-        """Program the single end-to-end lightpath.
+    def configure_line(self, channel: int = DEFAULT_CHANNEL) -> None:
+        """Program the end-to-end lightpath on one wavelength.
 
-        Clearing the ROADMs first makes this safe to re-run: the line ends in
-        the same state whether or not it was already configured.
+        Clearing the ROADMs first makes this safe to re-run and safe to retune:
+        the line ends carrying exactly the requested channel whether it was
+        unconfigured or already carrying a different one. Retuning the terminals
+        on their existing WDM port also clears the flows of the previous
+        channel, so no stale forwarding rule survives the change.
         """
 
+        check_channel(channel)
         for node in ROADMS:
             self.reset(node)
-        for rule in roadm_rules():
+        for rule in roadm_rules(channel):
             self.cross_connect(rule.node, rule.port_in, rule.port_out, rule.channels)
         for terminal in (CLIENT_TERMINAL, SERVER_TERMINAL):
             self.connect_terminal(
-                terminal, TERMINAL_ETH_PORT, TERMINAL_WDM_PORT, CHANNEL
+                terminal, TERMINAL_ETH_PORT, TERMINAL_WDM_PORT, channel
             )
         for terminal in (CLIENT_TERMINAL, SERVER_TERMINAL):
             self.turn_on(terminal)
 
+    def carried_channels(self) -> list[int]:
+        """Which channels are actually on the line, from the optical monitors.
 
-def collect_monitors(client: OpticalClient | None = None) -> dict[str, dict]:
+        Read from the signal the monitors see rather than from the rules that
+        were requested, so a half-applied or externally changed line reports
+        what it is really doing. A channel counts only when it reaches the
+        receiving terminal, which is what distinguishes a lightpath that was
+        programmed from one that arrives.
+
+        The emulator does expose a ``/rules`` endpoint, but its ROADM handler
+        raises on any node with an installed rule, so it cannot be used here.
+        """
+
+        readings = collect_monitors(self)
+        received = readings.get(SERVER_TERMINAL, {})
+        channels = received.get("osnr") if isinstance(received, dict) else None
+        if not isinstance(channels, dict):
+            return []
+        return sorted(int(key) for key in channels if str(key).isdigit())
+
+
+def collect_monitors(client: "OpticalClient | None" = None) -> dict[str, dict]:
     """Read every monitor on the line, keeping errors per node.
 
     One unreadable monitor should not hide the readings that did come back, so

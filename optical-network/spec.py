@@ -30,8 +30,13 @@ CLIENT_TERMINAL: Final[str] = "t-client"
 SERVER_TERMINAL: Final[str] = "t-server"
 ROADMS: Final[tuple[str, ...]] = ("r1", "r2", "r3", "r4")
 
-# One channel, one direction of switching rules, no alternate lightpath.
-CHANNEL: Final[int] = 1
+# The wavelengths this line can carry. The terminals are tunable: the service
+# rides exactly one of these at a time, and which one is a configuration choice
+# the optical domain owns. Lighting several at once would need a transceiver and
+# an add/drop port per channel, and is a separate extension.
+CHANNELS: Final[tuple[int, ...]] = (1, 2)
+DEFAULT_CHANNEL: Final[int] = CHANNELS[0]
+
 TERMINAL_ETH_PORT: Final[int] = 1
 TERMINAL_WDM_PORT: Final[int] = 11
 ROADM_ADD_DROP_PORT: Final[int] = 1
@@ -70,6 +75,21 @@ def attachment_container(node: str) -> str:
     return f"clab-{PACKET_LAB_NAME}-{node}"
 
 
+class UnknownChannel(ValueError):
+    """Raised when a channel is not one this line can carry."""
+
+
+def check_channel(channel: int) -> int:
+    """Return the channel, or fail with the set this line actually supports."""
+
+    if channel not in CHANNELS:
+        raise UnknownChannel(
+            f"channel {channel} is not carried by this line; "
+            f"it supports: {', '.join(str(c) for c in CHANNELS)}"
+        )
+    return channel
+
+
 @dataclass(frozen=True)
 class RoadmRule:
     """One wavelength cross-connect inside a ROADM."""
@@ -77,21 +97,24 @@ class RoadmRule:
     node: str
     port_in: int
     port_out: int
-    channels: str = str(CHANNEL)
+    channels: str
 
 
-def roadm_rules() -> list[RoadmRule]:
-    """The cross-connects that carry the channel from t-client to t-server.
+def roadm_rules(channel: int = DEFAULT_CHANNEL) -> list[RoadmRule]:
+    """The cross-connects that carry one channel from t-client to t-server.
 
     The first ROADM takes the channel off its add/drop port and sends it east;
     the middle ROADMs pass it west to east; the last one drops it toward the
-    receiving terminal.
+    receiving terminal. The shape is the same whichever wavelength is chosen --
+    only the channel the rules match on changes.
     """
 
+    check_channel(channel)
     first, *middle, last = ROADMS
-    rules = [RoadmRule(first, ROADM_ADD_DROP_PORT, ROADM_EAST_PORT)]
-    rules += [RoadmRule(node, ROADM_WEST_PORT, ROADM_EAST_PORT) for node in middle]
-    rules.append(RoadmRule(last, ROADM_WEST_PORT, ROADM_ADD_DROP_PORT))
+    label = str(channel)
+    rules = [RoadmRule(first, ROADM_ADD_DROP_PORT, ROADM_EAST_PORT, label)]
+    rules += [RoadmRule(node, ROADM_WEST_PORT, ROADM_EAST_PORT, label) for node in middle]
+    rules.append(RoadmRule(last, ROADM_WEST_PORT, ROADM_ADD_DROP_PORT, label))
     return rules
 
 

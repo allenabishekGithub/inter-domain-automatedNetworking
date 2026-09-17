@@ -6,24 +6,32 @@ path between them.
 
 ```text
 opt-a --- clientEdge --- t-client ==== r1 ==== r2 ==== r3 ==== r4 ==== t-server --- serverEdge --- opt-b
-                                              channel 1, west to east
+                                         channel 1 or 2, west to east
 ```
 
 `---` is Ethernet toward a packet attachment bridge, `====` is a WDM span.
 
-## Fixed by design
+## One route, two wavelengths
 
-One channel, one set of cross-connects, no alternate lightpath. A domain owning
-this line can inspect it, validate it, report on it, or refuse to carry a
-service over it — it cannot reroute around a cut. An optical failure has no
-automatic repair here and must surface as a degraded or unresolved service.
+The terminals are tunable. The service rides **one** wavelength at a time, and
+which one is a decision this domain owns: it can offer channel 1, offer channel
+2, or refuse to carry the service at all.
+
+What it cannot do is reroute. Both channels traverse the same fibre chain, so a
+wavelength is a choice of carrier, not a protection path — a span failure takes
+every channel with it. An optical cut has no automatic repair here and must
+surface as a degraded or unresolved service.
+
+That distinction is the point of the fixture: the domain has a real strategy
+set for **provisioning** and none at all for **restoration**, so an experiment
+can exercise negotiation and truthful refusal in the same topology.
 
 | | |
 |---|---|
-| Channel | 1 |
+| Channels | 1, 2 (one carried at a time) |
 | Terminal ports | Ethernet 1, WDM 11 |
 | ROADM ports | add/drop 1, west 111, east 222 |
-| Cross-connects | `r1: 1→222`, `r2: 111→222`, `r3: 111→222`, `r4: 111→1` |
+| Cross-connects | `r1: 1→222`, `r2: 111→222`, `r3: 111→222`, `r4: 111→1`, matched to the carried channel |
 | Spans | 50 m, unity-gain amplifiers (0.22 dB/km), 3 dB line boost |
 | Launch power | 0 dBm |
 | ROADM insertion loss | 0 dB (modelled) |
@@ -75,13 +83,44 @@ rather than resetting namespaces that belong to another line.
 Then, from anywhere:
 
 ```bash
-python3 main.py configure     # program the channel-1 lightpath
-python3 main.py status        # is the line up and carrying the channel
-python3 main.py monitor       # per-node OSNR/gOSNR
+python3 main.py configure                 # light the default wavelength
+python3 main.py configure --channel 2     # retune the service onto channel 2
+python3 main.py status                    # which channel is actually carried
+python3 main.py monitor                   # per-node OSNR/gOSNR
 ```
 
-`configure` clears the ROADMs before programming them, so it is safe to re-run
-and leaves the line in the same state either way.
+`configure` clears every ROADM before programming it and retunes the terminals
+on their existing WDM port. Both matter for a retune: the reset removes the old
+wavelength's cross-connects, and reusing the port is what makes the emulator
+clear the previous channel's forwarding rules. Without either, the old channel
+would linger. It is therefore safe to re-run and safe to retune, and it
+verifies the result by reading the installed rules back rather than trusting
+the request.
+
+`status` reports `carrying_channels` from that same readback, so a
+half-applied or externally changed line reports what it is really doing.
+
+### What a retune costs
+
+Retuning a live service is not free, and the cost is measured rather than
+assumed. Over one 60-second run at 1 Mbit/s with two retunes, the receiver lost
+packets in exactly two one-second intervals — the two retunes — and in no
+others:
+
+| Retune | Datagrams lost | Outage |
+|---|---|---|
+| channel 1 → 2 | 8 / 90 (8.9%) | ~90 ms |
+| channel 2 → 1 | 9 / 89 (10%) | ~100 ms |
+
+So roughly **90–100 ms of delivery**, with the stream fully recovered by the
+next interval. That figure is what belongs in a cost or utility model as the
+disruption term for this action; it is a measurement on this fixture, not a
+property of wavelength switching in general.
+
+Modelled gOSNR is 28.44 dB on either channel. They are symmetric here because
+only one is lit at a time, so neither carries the other's nonlinear
+interference — the choice between them is an allocation decision, not a quality
+trade-off, until simultaneous operation is added.
 
 ## How the attachment works
 

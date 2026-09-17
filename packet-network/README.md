@@ -115,8 +115,9 @@ piped.
 
 Each domain has exactly one forwarding action: move its two service routes onto
 its backup core router, and back. Both directions move together, and the
-optical attachment is never touched — a domain on its backup path still uses
-the same lightpath.
+optical attachment is never touched — a domain on its backup path is still
+carried by the optical line on whichever wavelength that domain chose, which is
+a decision the [optical domain](../optical-network) owns independently.
 
 | Domain | Router / destination | Primary | Backup |
 |---|---|---|---|

@@ -42,6 +42,25 @@ flowchart LR
     BM --> BC[Packet B controller]
 ```
 
+## Research questions
+
+The study evaluates five questions. Together they test the authority structure
+(RQ1, RQ2), that it has teeth in both directions (RQ3, RQ5), and whether the
+generative reasoning earns its place (RQ4). Each is stated with the evidence it
+requires and the boundary of what that evidence can support in the
+[experimental validation plan](docs/experimental-validation.md#1-research-questions-and-claims).
+
+| | Question | What it really tests |
+|---|---|---|
+| **RQ1** | Can three sovereign domain agents establish and sustain an end-to-end service across packet, optical and packet domains from one structured intent, with no central orchestrator? | Feasibility of removing the central orchestrator without losing the service. |
+| **RQ2** | Is the federation genuinely initiator-agnostic — can the intent arrive at any one of the three agents and produce the same service? | Whether the initiating DSO convenes or secretly commands. Differing outcomes by initiator would mean a disguised hierarchy. |
+| **RQ3** | Do the agents reason and negotiate — composing QoS across heterogeneous domains, and refusing — rather than executing a fixed sequence? | Negotiation versus script. The discriminator is **refusal**: an agent that can only say yes is not an authority. |
+| **RQ4** | Is the generative reasoning load-bearing, or is the deterministic path sufficient? | Whether the LLM contributes anything. The answer is allowed to be no, and would be reported as such. |
+| **RQ5** | Do the agents sustain the service autonomously through a failure, and report truthfully when no repair exists? | Both directions of competence: repair the packet fault, and say so honestly when the optical line has no alternative. |
+
+A correct refusal and an honest unresolved outcome count as success, not as
+experimental failure.
+
 Start with the [system overview](docs/system-overview.md) for a first-read
 explanation of the complete federation. The [domain-agent architecture](docs/domain-agent-architecture.md)
 contains the detailed operating model, DSO LangGraphs, topology/configuration
@@ -53,9 +72,9 @@ turns the architecture into incremental, testable delivery phases.
 
 The data plane is implemented here, in **[`packet-network/`](packet-network)**
 and **[`optical-network/`](optical-network)**: eight SR Linux routers across the
-two packet domains, a four-ROADM Mininet-Optical line on channel 1, and the
-`client-a` → `server-b` UDP service. On a prepared machine it deploys with one
-command:
+two packet domains, a four-ROADM Mininet-Optical line carrying one of two
+wavelengths, and the `client-a` → `server-b` UDP service. On a prepared machine
+it deploys with one command:
 
 ```bash
 sudo scripts/service-up.sh
@@ -70,7 +89,15 @@ The [data-plane specification](docs/data-plane.md) records the exact topology,
 addressing, ownership boundary and capability limits the experiments pin
 against. Operations are already scoped per domain: Packet A's tooling cannot
 address Packet B's routers, each domain switches only its own service path, and
-Packet A drives the sender while Packet B drives the receiver. The DSO
+Packet A drives the sender while Packet B drives the receiver.
+
+Each domain has a real decision to make, which is what RQ3 turns on. Both
+packet domains can move the service between a primary and a backup core router;
+the optical domain can carry it on either of two wavelengths, or refuse. That
+gives eight joint configurations. What no domain can do is reroute around an
+optical cut — both wavelengths ride the same fibre chain — so the fixture
+deliberately offers a genuine choice for provisioning and none for
+restoration, which is what lets one topology exercise both RQ3 and RQ5. The DSO
 federation above that data plane — A2A, signed contracts, per-domain Controller
 MCP servers, reservations, epochs — is documented here but not yet built; see
 the [implementation roadmap](docs/implementation-roadmap.md).

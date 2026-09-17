@@ -108,11 +108,24 @@ topology file, so the two cannot drift.
 clientEdge -- t-client == r1 == r2 == r3 == r4 == t-server -- serverEdge
 ```
 
-Channel **1** connects terminal Ethernet port **1** to WDM port **11**. The
-ROADM add/drop port is **1**, west line port **111**, east **222**. The
-configured path is `r1:1→222`, `r2:111→222`, `r3:111→222`, `r4:111→1`;
-installed rules and direction should come from controller readback rather than
-from this table.
+Terminal Ethernet port **1** connects to WDM port **11**. The ROADM add/drop
+port is **1**, west line port **111**, east **222**. The configured path is
+`r1:1→222`, `r2:111→222`, `r3:111→222`, `r4:111→1`, with the rules matched to
+whichever channel is carried; installed rules and direction should come from
+controller readback rather than from this table.
+
+Retuning a live service between the two channels costs roughly **90–100 ms** of
+delivery (8/90 and 9/89 datagrams lost across two measured retunes, with no
+other lossy interval in the run) at an unchanged 28.44 dB modelled gOSNR. Use
+that as the disruption term for the action; it is a measurement on this
+fixture, not a general property.
+
+The terminals are **tunable across channels 1 and 2**, and carry one at a time.
+Which one is a decision the optical domain owns, so it has a genuine strategy
+set — offer channel 1, offer channel 2, or refuse — rather than a single
+accept-or-refuse move. That is what makes negotiation measurable on this
+fixture instead of merely assertable; see
+[Service and search space](#service-and-search-space).
 
 The builder uses **50-metre span segments**, unity-gain span amplifiers, a 3 dB
 line boost, 0 dBm launch power and zero modelled ROADM insertion loss. Preserve
@@ -120,13 +133,19 @@ those for reproducibility and identify them as simplifying assumptions: this is
 a short lab model, not a calibrated long-haul or hardware result. It closes at
 roughly 28.4 dB gOSNR.
 
-There is **one configured channel and no alternate optical route.** The Optical
-DSO can advertise, inspect, validate, retain or refuse the existing transport.
-An optical cut with no valid alternative must produce a degraded or unresolved
-service, or an escalation, followed by reconciliation once repaired. It cannot
-produce an automatic optical reroute by negotiation. New wavelengths, tunable
-modulation, spectrum allocation and optical protection are extensions, not
-baseline actions.
+There is **no alternate optical route.** Both channels traverse the same fibre
+chain, so a wavelength is a choice of carrier and not a protection path: a span
+failure takes every channel with it. An optical cut with no valid alternative
+must produce a degraded or unresolved service, or an escalation, followed by
+reconciliation once repaired. It cannot produce an automatic optical reroute by
+negotiation.
+
+The fixture is deliberately asymmetric in this respect — a real strategy set
+for **provisioning**, none at all for **restoration** — so one topology can
+exercise both negotiation and truthful refusal. Simultaneous multi-channel
+operation (a transceiver and add/drop port per channel, hence genuine spectrum
+contention between concurrent services), tunable modulation and optical
+protection remain extensions, not baseline actions.
 
 Record monitor coverage and fresh OSNR/gOSNR evidence. A changed modelled gOSNR
 is not automatically changed packet loss or delay: demonstrate the coupling at
@@ -198,8 +217,8 @@ state of its own.
 | Packet A path change | `path backup` / `path primary --domain packet-a`. | Gate it on agreement and fresh readiness. |
 | Packet B path change | `path backup` / `path primary --domain packet-b`. | Same, validated independently. |
 | Precondition and readback | Refuses unless on the expected path, backup up and primary impaired; reads each write back; reports `mixed` on divergence. | Journalled prepare/commit/rollback/finalize, idempotency keys and receipts. Writes are per-router, never atomic across them. |
-| Optical participation | Inspect nodes, monitor OSNR/gOSNR, configure the fixed channel. | Observe and validate at run time; configuration belongs to bootstrap. |
-| Optical alternate path or spectrum reservation | Not supported. | Reject unsupported requests; a richer resource model is a P0 fixture or an explicit extension. |
+| Optical participation | Inspect nodes, monitor OSNR/gOSNR, light or retune the service onto channel 1 or 2, with readback of what is installed. | Bind the wavelength choice to the negotiated contract and to fresh evidence. |
+| Optical alternate route or spectrum reservation | Not supported. Both channels share one fibre chain, and only one is carried at a time. | Reject unsupported requests; concurrent multi-channel operation and genuine spectrum contention are an explicit extension. |
 | Per-service queues, VPNs or bandwidth isolation | Not present. No classifier, scheduler, policer or queue is configured anywhere. | Do not claim them from a path change or from an offered UDP rate. |
 | Fault injection | `impair down/up --domain D`, applied at the gateway so the core router observes a propagated failure. | Fault schedules and independent outcome checking. |
 | Epochs, signed contracts, dependency checks | Not present. | All of it. The data plane supplies none of these. |
@@ -257,20 +276,23 @@ left the source. Receiver interval identities must advance for a sample to
 count as fresh; the endpoint image's `stat` reports whole seconds, so file
 timestamps cannot order a sample against an event in the same second.
 
-The topology offers at most **four packet path combinations** — two per packet
-domain — over one optical line, and current conditions can reduce that further.
-Exact enumeration is the search baseline here. This graph is suitable for
-demonstrating collaboration between owners; it is not a basis for claiming
-swarm-search superiority.
+The topology offers **two packet path options per packet domain and two
+wavelengths**, so eight joint configurations, and current conditions can reduce
+that further. Exact enumeration is the search baseline here.
 
-It is also a thin bargaining problem, and that limit should be stated wherever
-the [cost model](domain-agent-architecture.md#game-theoretic-coordination) is
-evaluated. The Optical DSO has no mutating action and no alternate lightpath,
-so its strategy set is accept-or-refuse and a refusal ends the service rather
-than opening a counteroffer. Weighted Nash bargaining over four candidates with
-one participant's contribution fixed will not distinguish itself from choosing
-the feasible option. Owner veto is a real and testable property on this
-fixture; comparative allocation quality is not.
+That is enough for the [bargaining mechanism](domain-agent-architecture.md#game-theoretic-coordination)
+to be exercised rather than merely described: every participant has a real
+choice, the optical contribution is no longer a constant, and a counteroffer
+has somewhere to go. It is **not** enough for a search claim — eight candidates
+are exhaustively enumerable, so ACO cannot beat enumeration here, and
+[swarm search](domain-agent-architecture.md#swarm-optimization-layer) needs a
+separately labelled larger fixture before its contribution can be measured.
+
+Two limits to state wherever results are reported. Both wavelengths ride the
+same fibre, so this is not path diversity. And with one service there is no
+spectrum contention: the opportunity-cost term in the cost model only becomes
+load-bearing once concurrent services compete for the two channels, which is
+the extension named above.
 
 ## A complete service example
 
@@ -285,7 +307,7 @@ sequenceDiagram
     A->>O: A2A proposed path and evidence requirements
     O->>B: A2A validate egress and receiver readiness
     B-->>O: Signed local acceptance and evidence
-    O-->>A: Accept fixed channel if current evidence is valid
+    O-->>A: Offer a wavelength, or refuse, on current evidence
     A->>A: Bind all owner acceptances to service contract
     Note over A,B: Independent checks establish active service
     A->>A: Detect primary path failure and correlate incident

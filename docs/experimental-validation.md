@@ -60,7 +60,7 @@ study and must be declared as untested rather than implied:
 
 | Deferred area | Why it is out of scope for this paper |
 | --- | --- |
-| Concurrent intents and atomic reservation under contention | Requires a multi-service resource model the fixed-channel baseline does not provide. |
+| Concurrent intents and atomic reservation under contention | The line carries one wavelength at a time, so two services cannot yet contend for spectrum; simultaneous multi-channel operation is an explicit extension. |
 | State changes injected between agent reasoning and controller acceptance | A race-injection study in its own right; needs conditional-acceptance adapters that the baseline controller lacks. |
 | Message loss, duplication, expiry, and replay | Fault-protocol scope; the cooperative profile here assumes ordinary delivery. |
 | Partial commit, failed compensation, and uncertain application | Depends on transaction primitives that require separate adapter work. |
@@ -77,7 +77,7 @@ recovery; do not count it as successful service delivery.
 | Profile | Required capability | Permitted interpretation |
 | --- | --- | --- |
 | P0: protocol simulator | Fake controllers, explicit state machines, resource and fault models. | Validate protocol logic within the model. No measured physical packet/optical service claim. |
-| P1: reused SR Linux / Mininet-Optical PoC | The pinned `packet-qos` topology, eight SR Linux routers, a fixed four-ROADM optical line on channel 1, the shared UDP flow, and scoped controller adapters. | Measured emulated packet behavior through the reference optical data plane, with modeled optical quality. No alternate optical route or per-service bandwidth isolation. Recommended first paper profile. |
+| P1: SR Linux / Mininet-Optical PoC | The pinned `packet-qos` topology, eight SR Linux routers, a four-ROADM optical line tunable across two wavelengths, the UDP flow, and scoped controller adapters. | Measured emulated packet behavior through the optical data plane, with modeled optical quality. A wavelength choice, but no alternate optical route and no per-service bandwidth isolation. Recommended first paper profile. |
 | P2: controller or optical hardware extension | Selected actual controller/device operations and calibrated observations. | Hardware/controller-specific findings only for the exercised capabilities. |
 
 Report results by profile. Do not pool synthetic controller timing with hardware
@@ -169,7 +169,7 @@ interfaces, addresses, and configuration in the baseline manifest:
 | Domain | Resources | Alternatives and dependencies |
 | --- | --- | --- |
 | Packet A | `client-a`; routers `pe-a1`, `p-a1`, `p-a2`, `gw-a`; attachment bridge `opt-a`. | Primary `pe-a1–p-a1–gw-a`, backup `pe-a1–p-a2–gw-a`. |
-| Optical O | `clientEdge`, `t-client`, `r1`, `r2`, `r3`, `r4`, `t-server`, `serverEdge`. | One fixed terminal/ROADM line, channel 1; no alternate optical route. |
+| Optical O | `clientEdge`, `t-client`, `r1`, `r2`, `r3`, `r4`, `t-server`, `serverEdge`. | One terminal/ROADM line carrying channel 1 or 2, one at a time; no alternate optical route. |
 | Packet B | Attachment bridge `opt-b`; routers `gw-b`, `p-b1`, `p-b2`, `pe-b1`; `server-b`. | Primary `gw-b–p-b1–pe-b1`, backup `gw-b–p-b2–pe-b1`. |
 | Handoffs | `opt-a–clientEdge` and `serverEdge–opt-b`, joined by the reference bridge integration. | Preserve the L2 attachments and transparent transit between `gw-a` and `gw-b`; there is no direct packet bypass. |
 
@@ -212,8 +212,10 @@ without observed forwarding behavior is insufficient evidence of service recover
 
 Mininet-Optical is the baseline optical backend. Preserve its 50-metre span
 segments, amplifier settings, terminal launch power, zero modeled ROADM insertion
-loss, and fixed channel-1 configuration. Pin the separately installed library
-version as well as the repository commit. These are simplified lab parameters,
+loss, and the two-channel plan. Pin the separately installed library version as
+well as the repository commit. Record which wavelength each run carried, and
+the measured retune cost if a run changes it (about 90–100 ms of delivery on
+this fixture). These are simplified lab parameters,
 not a calibrated long-haul model or evidence of line-rate optical performance.
 
 Separate three observations: graph/port/channel continuity, modeled OSNR/gOSNR
@@ -222,8 +224,9 @@ coupling between a modeled quality change and packet delivery. A low-gOSNR fixtu
 alone cannot be called measured packet loss. An optical connectivity fault must
 actually interrupt the mapped transit path before it counts as a data-plane cut.
 
-Spectrum fragmentation, multiple wavelengths, regeneration/modulation selection,
-and alternate optical paths are not baseline capabilities. Model them in P0 or
+Spectrum fragmentation, simultaneous multi-channel operation, regeneration and
+modulation selection, and alternate optical paths are not baseline
+capabilities. Selecting between the two available wavelengths is. Model them in P0 or
 add a versioned extension before evaluating them as executable actions. An
 optional [GNPy model](https://gnpy.readthedocs.io/en/master/) may provide an additional
 comparison in such a profile; it does not replace the selected Mininet-Optical
@@ -242,7 +245,7 @@ capability coverage before running it:
 | Subject | Same-data-plane P1 coverage | Additional work or limitation |
 | --- | --- | --- |
 | Packet recovery | Existing PN1 and PN2 named backup-route procedures. | Add domain-scoped control and typed MCP mutation wrappers; independently validate both and joint recovery. |
-| Optical participation | Observe and validate the fixed line; retain or refuse its use. | No alternate lightpath; failure may correctly require escalation. |
+| Optical participation | Observe and validate the line; carry the service on either wavelength, retain it, or refuse. | Both wavelengths share one fibre chain, so there is no alternate route; a cut may correctly require escalation. |
 | A2A, DSO stores, signed agreements, freshness, epochs | New federation control layer around the existing data plane. | Implement and validate these mechanisms; do not attribute them to reference code. |
 | Local transaction guarantees | Packet journal, preparation, rechecks, readback, supported compensation. | Multi-device writes are not atomic; external writers can bypass controller locks. Stronger acceptance/fencing must be implemented or declared unsupported. Optical transactions need their own capability profile. |
 | Provisioning and resource contention | Adopt/admit the existing transport, control the shared flow through its owners, and serialize conflicting route/contract updates. | Does not establish dynamic VPN/circuit provisioning or independent per-service bandwidth isolation. |
@@ -640,12 +643,16 @@ probabilities without justification.
 **Scope:** Core; RQ3; I1, I2, I4.
 
 **Setup:** Known candidate set with fixed costs, disclosed gains, budgets,
-disagreement utilities, and weights. Include positive gains for all, a zero or
-negative gain for one domain, no budget-feasible contract, and tied scores.
+disagreement utilities, and weights. On this fixture the candidate set is the
+eight joint configurations — two packet paths per domain, two wavelengths — so
+every participant has a real choice and the optical contribution is not a
+constant. Include positive gains for all, a zero or negative gain for one
+domain, no budget-feasible contract, and tied scores.
 
 **Procedure:** Submit offers/counteroffers, reject from each domain in turn, and
-deliver expired or mismatched acceptances. Recreate the two-packet-domains-approve,
-optical-domain-refuses example. Repeat with a different participating subset in
+deliver expired or mismatched acceptances. Exercise the optical domain offering
+its second wavelength as a counteroffer after its first is declined. Recreate
+the two-packet-domains-approve, optical-domain-refuses example. Repeat with a different participating subset in
 a fixture with an unrelated domain or a domain-local request. Alter an offered
 allocation after signatures have been collected.
 
@@ -657,6 +664,14 @@ no positive-gain candidate means no Nash agreement under the stated rule.
 **Measure/report:** Correct agreements/rejections, participant-set correctness,
 budget adherence, rounds, expiry rate, and information disclosed. Prices/gains
 are attributed reports; this test does not establish honest strategic behavior.
+
+Eight candidates are exhaustively enumerable, so this experiment shows that the
+bargaining rule selects a defensible allocation and that veto is respected. It
+cannot show that the rule scales or beats a simpler selection at size; that
+needs a separately labelled larger fixture. Both wavelengths also measure the
+same modelled gOSNR, because only one is lit at a time, so the choice between
+them is an allocation decision rather than a quality trade-off — state that
+wherever utility differences are reported.
 
 ### E05 — Provisioning, sustained service, modification, and teardown
 
@@ -729,14 +744,18 @@ domains in signaling role.
 
 **Scope:** Core; RQ5; I1–I5, I7, I8.
 
-**Setup:** The active shared UDP service on the reference data plane. Prepare
-the supported `p-a2` and `p-b2` backup actions and a separate case with no feasible
-recovery. Record existing protection/static-route behavior so its effect can be
+**Setup:** The active shared UDP service on the data plane. Prepare the
+supported `p-a2` and `p-b2` backup actions and a separate case with no feasible
+recovery. Note that the optical domain's wavelength choice is a provisioning
+action, not a repair: both wavelengths ride the same fibre chain, so a retune
+cannot restore a cut and must not be attempted as one. Record existing protection/static-route behavior so its effect can be
 separated from DSO action. Independent unaffected-service controls require an
 explicit extension; unchanged resources can still be checked in the baseline.
 
 **Procedure:** Inject a primary packet link failure in A, B, and both domains,
-then an optical transit cut as separate trials. Cross B0/B1 and the main
+then an optical transit cut as separate trials. The optical cut must be shown
+to take both wavelengths with it, so that a failed retune is not mistaken for a
+recovery option the fixture never had. Cross B0/B1 and the main
 architecture baseline with matched fault/telemetry traces. Packet repairs must
 re-enter agreement and use the named backup actions; verify fresh receiver
 samples and path readback before finalizing. Congestion or modeled QoT changes
@@ -980,7 +999,7 @@ unresolved fields in a frozen manifest.
   "experiment_id": "E07",
   "variant_id": "B0",
   "profile": "P1",
-  "topology_id": "packet-qos-four-roadm-channel1-v1",
+  "topology_id": "packet-qos-four-roadm-2ch-v1",
   "data_plane_revision": "<recorded testbed revision>",
   "participants": ["packet-a", "optical-o", "packet-b"],
   "workload_id": "single-feasible-service-v1",
@@ -1065,7 +1084,7 @@ results.
 | --- | --- |
 | Shared host bottlenecks masquerade as federation overhead | Pin resources, calibrate forwarding/model throughput, record contention, and repeat selected cells with distributed placement where feasible. |
 | Shared reference controller mistaken for independent ownership | Implement and test scoped inventories, credentials, journals, MCP/API authorization, and runtime tool restrictions; label any retained shared backend. |
-| One flow and fixed line generalized to arbitrary service provisioning | Separate admission/route recovery from VPN, bandwidth isolation, and wavelength allocation; report unsupported cases and extension datasets explicitly. |
+| One flow and a two-wavelength line generalized to arbitrary service provisioning | Separate admission and route recovery from VPN, bandwidth isolation, and general spectrum allocation. Choosing between two pre-planned wavelengths is not wavelength assignment; report unsupported cases and extension datasets explicitly. |
 | Optical simulation presented as physical validation | Separate P0/P1/P2 results, publish impairment/resource models, and quantify available calibration error. |
 | Planner and checker share the same bug | Independent formulations, reference fixtures, source-state inspection, and endpoint observations; state any remaining common dependencies. |
 | Unfair baseline information or tuning | Match authorized evidence, tools, policies, compute/model budgets, and development effort; disclose intentional differences. |
