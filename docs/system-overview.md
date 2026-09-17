@@ -323,6 +323,62 @@ Learning remains an optional extension for the first paper. Compare it against
 fixed policies on held-out cases, and distinguish retrieval of past incidents
 from model training. A federation of DSOs does not imply federated model training.
 
+## Vulnerabilities and coordination limitations
+
+These are architectural risks and unresolved protocol requirements, not confirmed
+exploits in an implemented system. The absence of majority voting is not itself
+a vulnerability: service authorization requires consent from every affected
+resource owner. The main coordination gap is specifying and validating recovery
+when agents disagree, lose communication, or replace a failed coordinator.
+
+### Voting cannot replace domain consent
+
+Keep explicit, signed acceptance of the same contract from **every participating
+domain**, followed by valid reservations and independent local controller
+authorization. Unrelated federation members do not vote on that service. A
+coordinator organizes the exchange; it does not acquire authority over peers.
+
+For example, Packet A and Packet B may approve a 100 Gbit/s service while the
+optical domain rejects it because spectrum is unavailable. A 2–1 majority cannot
+create capacity or authorize the optical resources. The DSOs must find another
+feasible agreement or reject the request. Bargaining weights influence allocation
+selection; they are not voting power that can override an owner's rejection.
+
+### Risks, consequences, and required controls
+
+| Vulnerability or limitation | Potential consequence | Required control or design decision |
+| --- | --- | --- |
+| Majority approval incorrectly treated as execution authority | Two domains attempt to override another owner's policy or resource rejection. | Require acceptance from every affected owner and enforce local controller authorization for each operation. |
+| Competing or superseded recovery coordinators | Concurrent loops issue incompatible repairs for the same service. | Define coordinator nomination and replacement, durable grants and epochs, and controller rejection of superseded requests. Lease expiry alone does not establish exclusion. |
+| A required participant is unreachable, slow, or refuses agreement | New service establishment or shared-service recovery can stall even while other domains are healthy. | Bound negotiation and reservation lifetimes; defer or reject the dependent change. Silence is not consent. Continue monitoring and independently preauthorized protection within scope. |
+| Peers approve against stale or inconsistent evidence | An accepted allocation is no longer feasible when execution begins. | Bind approvals to contract and dependency revisions; enforce resource conditions at controller acceptance. Matching votes or digests alone do not establish current feasibility. |
+| Unanimous agreement followed by partial execution or a lost receipt | Some domains apply changes while others fail; an uncertain retry may duplicate effects. | Reconcile durable receipts, use operation-scoped idempotency, and attempt supported compensation. Retain explicit partial, degraded, or unresolved outcomes. Agreement is not atomic physical activation. |
+| Several agents repeat the same unsupported diagnosis or misleading report | Apparent agreement amplifies an error rather than validating network state. | Validate attributable observations and controller evidence. LLM opinions are advisory; signatures prove attribution, not truth. The initial cooperative-operator model does not establish tolerance of malicious peers. |
+
+### Coordinator failover requirements
+
+Before claiming recovery coordination is safe, specify and test:
+
+1. How a candidate coordinator is nominated and which participants must acknowledge it.
+2. How grants, service/contract references, and ordered coordination epochs survive restart.
+3. When a replacement may act, how controllers enforce its authority, and how already accepted operations from an earlier epoch are reconciled.
+4. Which clock and expiry assumptions apply, and how partitions affect replacement.
+5. How missing approvals or unknown operation outcomes defer new shared-service changes without granting authority by timeout.
+
+These responsibilities belong in the existing incident, `remediation_dispatch`,
+`bargaining_solution_gate`, `reservation_barrier`, `commit_authorization_gate`,
+and `controller_transaction` paths. A generic LLM voting node is not required.
+See the [protocol requirements](domain-agent-architecture.md#research-protocol-requirements)
+and [evaluation plan](implementation-roadmap.md#journal-evaluation-plan) for the
+corresponding failure experiments.
+
+If a later design requires a fault-tolerant shared coordination log, a consensus
+protocol such as Raft may support leader election and replicated decisions under
+its non-Byzantine failure assumptions. Such a quorum decides coordination state;
+it does not replace each operator's service approval or make physical execution
+atomic. This is an optional future mechanism, not part of the current design.
+[Raft paper](https://raft.github.io/raft.pdf).
+
 ## Research validation
 
 The [journal evaluation plan](implementation-roadmap.md#journal-evaluation-plan)

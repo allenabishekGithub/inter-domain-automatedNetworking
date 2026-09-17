@@ -47,6 +47,11 @@ and implementation milestones. The [LangGraph node catalogue](docs/langgraph-nod
 lists every workflow node and its execution method. The [implementation roadmap](docs/implementation-roadmap.md)
 turns the architecture into incremental, testable delivery phases.
 
+The [experimental validation plan](docs/experimental-validation.md) specifies
+the journal study in detail: testbed profiles, workloads, matched baselines,
+24 experiment families, independent checks, metrics, statistical analysis,
+reproducibility artifacts, and the evidence required for each paper claim.
+
 The [related-work and novelty assessment](docs/related-work-and-novelty.md)
 compares this design with research papers and networking specifications,
 identifies candidate contributions for the journal paper, and defines the

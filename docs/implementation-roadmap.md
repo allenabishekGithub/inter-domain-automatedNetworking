@@ -290,6 +290,11 @@ or learning adds complexity.
 
 ## Journal evaluation plan
 
+The [detailed experimental validation plan](experimental-validation.md) expands
+this summary into testbed specifications, 24 experiment families, procedures,
+independent outcome checks, statistical analysis, and reproducibility requirements.
+Use that plan to define and freeze the final study configuration before runs.
+
 Use this plan to test the candidate contributions. It does not promise favorable
 results. The initial demonstration establishes feasibility; the journal study
 must explain what the proposed mechanisms add beyond existing orchestration.
