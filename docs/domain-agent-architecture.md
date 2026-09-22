@@ -17,8 +17,9 @@ the fixed four-ROADM Mininet-Optical line. The
 [data-plane specification](data-plane.md) records the exact topology,
 addressing, ownership boundary and capability limits. The capability
 table below describes the broader architecture; the initial executable profile
-is limited to the reference's named packet-route recovery and fixed channel-1
-optical transport. Unsupported functions must not be offered as executable actions.
+is limited to the reference's named packet-route recovery and one optical route
+with channels 1 and 2 selectable one at a time. Unsupported functions must not
+be offered as executable actions.
 
 | Domain | AI DSO owns | Local controller owns |
 |---|---|---|
@@ -293,6 +294,15 @@ to observe state, prepare an approved configuration change, commit it, roll it
 back, and retrieve verification evidence. Packet A cannot call the Optical or
 Packet B MCP Server; the Optical DSO cannot call a packet-domain MCP Server.
 
+For the reference testbed, implement **Containerlab Packet MCP** and
+**Mininet-Optical MCP** as separate server types. Run two domain-bound instances
+of the packet server (`packet-a-mcp`, `packet-b-mcp`) and one optical server
+(`optical-mcp`). The packet instances wrap inventory and SR Linux gNMI operations;
+the optical instance wraps the Mininet-Optical HTTP API. These fill the controller
+integration role in this fixture; no additional SDN controller product is required
+by this mapping. See the [MCP server design](mcp-server-design.md) for resource
+ownership, proposed tool groups and the administrative lifecycle boundary.
+
 ```mermaid
 flowchart LR
     AI[Domain AI agent\nreasoning and candidate proposal] --> DSO[Domain Service Orchestrator\npolicy, bargaining, transaction gate]
@@ -331,9 +341,10 @@ backup-path action — `path backup` or `path primary`, scoped to `packet-a` or
 `packet-b`. That action checks its preconditions and reads each write back, but
 it is not a transaction: prepare/commit/rollback, durable receipts, idempotency
 and conditional acceptance are what the MCP wrapper has to add. The Optical
-DSO initially observes and validates the existing line; fixed-channel setup is
-a bootstrap operation, and no alternate lightpath or native spectrum reservation
-is provided. See the [capability profile](data-plane.md#action-and-capability-profile)
+DSO observes the line and may request retention or an approved configuration/retune
+to channel 1 or 2 through its Mininet-Optical MCP server. Emulator lifecycle and
+attachment remain bootstrap operations. No alternate lightpath or native spectrum
+reservation is provided. See the [capability profile](data-plane.md#action-and-capability-profile)
 for the distinction between source support and required new protocol primitives.
 
 The AI agent can therefore cause a network configuration change through MCP,

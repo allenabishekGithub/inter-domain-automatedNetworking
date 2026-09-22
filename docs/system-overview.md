@@ -203,6 +203,14 @@ MCP is used only within a domain. The DSO calls its own Controller MCP Server
 to observe or change that domain's SDN-controlled network. A peer DSO cannot
 call a different domain's MCP server.
 
+The reference design requires two implementations: **Containerlab Packet MCP**
+and **Mininet-Optical MCP**. Packet A and Packet B each get a separately scoped
+instance of the Containerlab server; Optical gets its own Mininet-Optical server.
+That is three runtime endpoints from two server types. Packet router operations
+use gNMI through the existing adapter, and optical operations use the emulator's
+HTTP API. The [MCP server design](mcp-server-design.md) defines this mapping and
+keeps shared testbed lifecycle powers outside runtime domain tools.
+
 ```mermaid
 flowchart LR
     PA[Packet A DSO] <-->|A2A: topology, contracts,\nquality signals, learning| O[Optical DSO]
@@ -219,8 +227,9 @@ them to routing, VPN, QoS, and traffic-engineering APIs. The Optical MCP server
 maps them to transport, transponder, ROADM, spectrum, channel, and QoT APIs where
 supported. These are architectural capabilities, not a claim that every reference
 API already exists. The [baseline capability mapping](data-plane.md#action-and-capability-profile)
-limits the first integration to the actual packet recovery procedures and fixed
-optical transport; missing transaction semantics need explicit adapter work.
+limits the first integration to the actual packet recovery procedures and
+selection of channel 1 or 2 on the one optical route; missing transaction
+semantics need explicit adapter work.
 
 ## Creating a cross-domain service
 

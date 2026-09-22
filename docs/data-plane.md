@@ -161,14 +161,19 @@ packets actually stop crossing the attachment.
 
 ## Control boundary
 
+The planned [MCP servers](mcp-server-design.md) are **Containerlab Packet MCP**
+(separate Packet A and Packet B instances) and **Mininet-Optical MCP** (one
+Optical instance). The diagram maps those three domain endpoints to the
+implemented backend packages; the MCP servers themselves are not yet built.
+
 ```mermaid
 flowchart TB
     A["Packet A AI DSO"] <-->|"A2A"| O["Optical AI DSO"]
     O <-->|"A2A"| B["Packet B AI DSO"]
     A <-->|"A2A"| B
-    A --> MA["Packet A Controller MCP"]
-    O --> MO["Optical Controller MCP"]
-    B --> MB["Packet B Controller MCP"]
+    A --> MA["Containerlab Packet MCP: packet-a"]
+    O --> MO["Mininet-Optical MCP"]
+    B --> MB["Containerlab Packet MCP: packet-b"]
     MA --> CA["packet-network, scoped to packet-a"]
     MO --> CO["optical-network"]
     MB --> CB["packet-network, scoped to packet-b"]

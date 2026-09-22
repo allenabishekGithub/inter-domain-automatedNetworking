@@ -16,6 +16,81 @@ contributions that still require comparison and validation. Swarm optimization
 and learning remain optional extensions rather than prerequisites for the core
 paper experiment.
 
+## Planning and design priorities
+
+**Workspace decision, 22 September 2026:** the current VM is dedicated to
+planning, architecture, design review and optimization. Prepare specifications,
+design decisions and implementation plans here. Deployment, live network
+validation and research experiment execution belong in a separate testbed
+environment. Missing Containerlab, Open vSwitch, Mininet or Mininet-Optical on
+this VM is expected and is not a design-readiness issue. The
+[installation guide](installation.md) describes preparation of that testbed.
+
+The immediate work is the following design sequence. The implementation phases
+later in this document describe subsequent delivery, not a requirement to
+deploy the stack on the planning VM.
+
+1. **Freeze a coherent v1 scope.** Specify the `client-a` → `server-b` service,
+   the eight supported joint configurations, ownership boundaries and the
+   failure cases included in the first implementation. Separate provisioning
+   choices from repair actions. Reconcile capability descriptions and the
+   experimental scope, including what is deliberately unsupported or deferred.
+   Produce one versioned capability and scenario matrix shared by the
+   architecture, adapters and experiment plan.
+2. **Turn architectural prose into implementable contracts.** Define versioned
+   message schemas, service states and transitions, evidence freshness,
+   owner acceptance, deadlines, receipts and partial/unknown-outcome handling.
+   State exactly which preconditions, reservations and recovery operations each
+   controller adapter can enforce. A documented tool name is not evidence that
+   the underlying controller supplies its promised semantics.
+3. **Simplify the initial architecture.** Identify the minimum workflow for
+   intent → agreement → local execution → verification, including refusal and
+   unresolved outcomes. Exact enumeration is sufficient for the eight-candidate
+   fixture. Evaluate deferring Neo4j, vector retrieval, swarm methods and learning
+   until a specific research question requires them. Keep PostgreSQL as the
+   proposed authoritative store, and preserve ownership, revision and evidence
+   requirements when evaluating a smaller graph representation. Record the
+   trade-offs and update the affected phases if a simplification is selected;
+   these are design options, not an assertion that the broader stack below has
+   already been replaced.
+4. **Resolve findings at the design level.** For every open finding, record the
+   intended behavior, alternatives, selected approach, implementation dependency
+   and acceptance criteria. Link each decision to its F/C identifier in the
+   [known-issues register](known-issues.md). Distinguish a design decision from
+   an implemented fix and from a validated outcome. Define the checks here;
+   execute the required validation in the designated implementation/testbed
+   environment before closing the finding.
+5. **Produce an implementation sequence.** Break the agreed design into bounded
+   work packages with explicit interfaces, inputs, outputs, dependencies and
+   completion criteria. Map each package to the phases below and its relevant
+   findings. Distinguish design-review completion from implementation and
+   experimental acceptance, and specify the evidence each handoff must retain.
+
+**Next planned deliverable: v1 executable design specification.** This is a
+precise blueprint for implementation and validation in the designated
+environment. It should contain:
+
+- A versioned service/capability scope and included/excluded scenario matrix.
+- Component boundaries, domain authority and the minimum workflow.
+- Message and tool schemas, state transitions and example exchanges, including
+  intents originating at each of the three domains.
+- Evidence, freshness, deadline and service-verification rules.
+- Controller capability limits, receipts, retries, partial application and
+  reconciliation behavior.
+- The [Containerlab Packet and Mininet-Optical MCP server designs](mcp-server-design.md),
+  including the separate Packet A, Packet B and Optical instance boundaries.
+- Design decisions mapped to the open findings and their acceptance criteria.
+- Ordered implementation packages, the validation-environment handoff and
+  separately identified optional research extensions.
+
+The specification is ready for implementation when its interfaces and outcomes
+are precise enough to implement without inventing protocol behavior, mandatory
+decisions are resolved or explicitly scoped out, and each claimed capability has
+a defined acceptance check. Design approval does not establish runtime behavior
+or close a finding that still requires implementation or validation evidence.
+
+## Implementation and validation follow-through
+
 Track the current fixture's consequential gaps in the
 [known issues and follow-up register](known-issues.md). Address F1–F5 before
 using automated fixture output as experiment evidence; carry F6–F10 and C1 into
@@ -54,11 +129,11 @@ TimescaleDB or partitioned PostgreSQL: telemetry
 Controller MCP Server: adapter over that domain's SDN controller
 ```
 
-Run three copies of the stack locally with Docker Compose or a small Kubernetes
-deployment. Give each copy separate database credentials, controller identity,
-and network namespace. A shared development CA can issue the three local mTLS
-identities; production uses each operator's own identity provider and trust
-policy.
+In the separate implementation/validation environment, run three copies of the
+stack with Docker Compose or a small Kubernetes deployment. Give each copy
+separate database credentials, controller identity, and network namespace. A
+shared development CA can issue the three local mTLS identities; production
+uses each operator's own identity provider and trust policy.
 
 Use this repository's [packet–optical data plane](data-plane.md) and its
 `packet-network` and `optical-network` components, deployed with
@@ -122,9 +197,17 @@ rebuild its local GraphRAG projection from PostgreSQL records.
 
 ## Phase 2 — local Controller MCP Server and transaction safety
 
-Build one Controller MCP Server for each domain. Begin with fake controllers
-for protocol tests, using the same inventory and capability limits. Then put
-the packet package and the optical control API behind scoped adapters. Give
+Build two Controller MCP Server implementations:
+**Containerlab Packet MCP** and **Mininet-Optical MCP**. Deploy the packet
+implementation twice, as `packet-a-mcp` and `packet-b-mcp`, and the optical
+implementation once, as `optical-mcp`. This preserves one endpoint per domain;
+the two packet owners share implementation code, not unrestricted authority.
+The [MCP server design](mcp-server-design.md) specifies their scope, backend
+mapping, target tools and design handoff.
+
+Begin with fake controllers for protocol tests, using the same inventory and
+capability limits. Then put the packet package's gNMI operations and the
+Mininet-Optical HTTP API behind their respective scoped adapters. Give
 the two packet instances separate router credentials, inventory allowlists,
 journals, and endpoint bindings; enforce ownership below the MCP tool layer.
 The data plane's own scoping check runs in the caller, so it guards against a
@@ -140,9 +223,10 @@ control in Packet A and receiver control in Packet B are already separate; keep
 them that way, or explicitly keep a fixed measurement flow in the experiment
 driver. A per-instance receipt store is fine; DSO PostgreSQL remains the
 domain's orchestration source of truth.
-The optical API provides observation and fixed configuration, not the complete
-reservation/transaction sequence below; advertise that limitation and implement
-durable adapter receipts before relying on them.
+The optical API provides observation and configuration/retuning of the one
+lightpath onto channel 1 or 2, not the complete reservation/transaction sequence
+below; advertise that limitation and implement durable adapter receipts before
+relying on them.
 
 Implement this transaction sequence:
 

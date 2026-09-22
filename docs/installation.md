@@ -4,6 +4,12 @@ Everything needed to take a clean Ubuntu 24.04 LTS machine to a running
 `client-a` → `server-b` service. Each step says what it installs, why the data
 plane needs it, and how to prove it worked before moving on.
 
+**Environment scope:** these instructions prepare a separate deployment and
+validation host. The current project VM is for planning, design review and
+optimization; it does not need this emulation stack to perform that role. See
+the [planning and design priorities](implementation-roadmap.md#planning-and-design-priorities)
+for the work performed there and the specification handed to the testbed.
+
 Three upstream projects need small local edits to build on Ubuntu 24.04. Those
 edits, and the reason each one is necessary, are in
 [Required upstream edits](#required-upstream-edits). They are not optional.

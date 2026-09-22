@@ -12,10 +12,13 @@ conditional LLM nodes plus 54 other nodes retain the total of **57**.
 All nodes operate over the [packet–optical data plane](data-plane.md) in this repository.
 This does not add nodes: capabilities determine permitted workflow branches.
 `local_candidate_generation` and `candidate_verification` admit only the
-reference's supported packet actions or retention of the fixed optical line.
+reference's supported packet actions and retention or channel selection on the
+single optical route. These use the planned [Containerlab Packet and
+Mininet-Optical MCP servers](mcp-server-design.md), with one instance per domain.
 `local_reservation` and `controller_transaction` need scoped MCP adapters around
-the existing packet recovery procedures; the listed generic transaction tools
-are a target contract, not existing reference tool names. Optical observation
+the existing packet recovery and optical configuration procedures; the listed
+generic transaction tools are a target contract, not existing reference tool
+names. Optical observation
 and acceptance of an unchanged segment must not be reported as an optical
 configuration write. `service_verification` requires fresh receiver evidence.
 

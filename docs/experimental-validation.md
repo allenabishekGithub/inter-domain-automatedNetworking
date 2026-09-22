@@ -11,6 +11,14 @@ analysis, and artifacts needed to evaluate the
 [literature review](related-work-and-novelty.md) supplies the prior-work
 comparison; experimental success alone does not establish novelty.
 
+**Environment scope:** define and refine this protocol on the planning/design
+VM. Execute deployment, live validation and measured experiments in a separate
+testbed environment prepared with the [installation guide](installation.md).
+The [v1 design specification deliverable](implementation-roadmap.md#planning-and-design-priorities)
+must define the scenarios, interfaces, acceptance checks and evidence needed for
+that handoff. Missing lab dependencies on the planning VM do not block this
+design work or establish anything about testbed behavior.
+
 **What this study sets out to demonstrate.** There is one AI DSO per networking
 domain and exactly one, each the sole authority inside its own borders
 ([sovereign domain authority](domain-agent-architecture.md#sovereign-domain-authority)).

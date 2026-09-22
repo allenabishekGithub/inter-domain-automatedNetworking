@@ -11,6 +11,17 @@ device boundaries reproduced several gaps below. Docker, Containerlab, Open
 vSwitch, Mininet and Mininet-Optical were unavailable on the assessment host;
 live forwarding, recovery and optical performance were **not verified**.
 
+**Workspace clarification, 22 September 2026:** the current VM is for planning,
+design and optimization. Missing lab dependencies here are expected; the earlier
+assessment's environment inventory records a limit on its evidence, not a
+requirement to prepare this VM as a validation host. Follow the
+[planning and design priorities](implementation-roadmap.md#planning-and-design-priorities)
+to document each finding's intended behavior, alternatives, chosen approach,
+implementation dependencies and acceptance criteria. Keep design resolution,
+implementation status and validation evidence distinct. Execute the required
+checks in the designated implementation/testbed environment before closing an
+item that depends on those checks.
+
 “Reproduced” below means local logic exercised with synthetic input or fake
 devices, not a fault observed on a deployed network. “Source review” identifies
 a code path and its consequences without exercising it against a live lab.

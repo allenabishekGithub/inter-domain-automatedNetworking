@@ -4,6 +4,11 @@ A four-ROADM optical network, emulated with Mininet-Optical, carrying one
 channel between the two [packet domains](../packet-network). It is the only
 path between them.
 
+The planned [Mininet-Optical MCP server](../docs/mcp-server-design.md) wraps
+this package's control API for the Optical DSO, separately from the Containerlab
+Packet MCP servers. It is not implemented; the commands below remain the current
+lab interface.
+
 ```text
 opt-a --- clientEdge --- t-client ==== r1 ==== r2 ==== r3 ==== r4 ==== t-server --- serverEdge --- opt-b
                                          channel 1 or 2, west to east

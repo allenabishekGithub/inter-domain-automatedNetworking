@@ -70,6 +70,15 @@ and implementation milestones. The [LangGraph node catalogue](docs/langgraph-nod
 lists every workflow node and its execution method. The [implementation roadmap](docs/implementation-roadmap.md)
 turns the architecture into incremental, testable delivery phases.
 
+**Current workspace:** this VM is for planning, architecture, design review and
+optimization. Deployment and experimental validation belong in a separate
+testbed environment; missing emulation tools here are expected and do not block
+design work. The immediate priorities are to freeze the v1 scope, specify
+implementable contracts, simplify the initial architecture, resolve findings at
+the design level, and sequence implementation work. The next planned deliverable
+is a consolidated **v1 executable design specification**; see the
+[planning and design priorities](docs/implementation-roadmap.md#planning-and-design-priorities).
+
 The data plane is implemented here, in **[`packet-network/`](packet-network)**
 and **[`optical-network/`](optical-network)**: eight SR Linux routers across the
 two packet domains, a four-ROADM Mininet-Optical line carrying one of two
@@ -80,7 +89,7 @@ it deploys with one command:
 sudo scripts/service-up.sh
 ```
 
-Starting from a fresh Ubuntu VM, work through the
+For a separate validation host starting from a fresh Ubuntu VM, work through the
 [installation guide](docs/installation.md) first: it covers Docker,
 Containerlab, Mininet, Open vSwitch and Mininet-Optical, including the three
 edits those upstream projects need to build on Ubuntu 24.04.
@@ -101,6 +110,12 @@ restoration, which is what lets one topology exercise both RQ3 and RQ5. The DSO
 federation above that data plane — A2A, signed contracts, per-domain Controller
 MCP servers, reservations, epochs — is documented here but not yet built; see
 the [implementation roadmap](docs/implementation-roadmap.md).
+
+The required [MCP server design](docs/mcp-server-design.md) has two
+implementations: **Containerlab Packet MCP** and **Mininet-Optical MCP**. Deploy
+the packet implementation separately as `packet-a-mcp` and `packet-b-mcp`, plus
+one `optical-mcp`: three domain-scoped endpoints from two server types. These
+servers are planned and wrap the existing packet gNMI and optical HTTP adapters.
 
 The [known issues and follow-up register](docs/known-issues.md) records the
 consequential findings from the 17 September 2026 repository assessment:
