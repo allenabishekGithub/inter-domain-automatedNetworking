@@ -76,10 +76,10 @@ predictor releases do not change the MCP action allowlist or another owner's pol
 
 Containerlab supplies topology and node lifecycle. Router configuration and
 telemetry use the existing gNMI adapter, rather than treating Containerlab as a
-routing controller. Reuse [inventory.py](../packet-network/inventory.py),
-[gnmi.py](../packet-network/gnmi.py),
-[backup_path.py](../packet-network/backup_path.py) and
-[telemetry.py](../packet-network/telemetry.py) behind a typed, domain-scoped
+routing controller. Reuse [inventory.py](../../packet-network/inventory.py),
+[gnmi.py](../../packet-network/gnmi.py),
+[backup_path.py](../../packet-network/backup_path.py) and
+[telemetry.py](../../packet-network/telemetry.py) behind a typed, domain-scoped
 service interface.
 
 Each instance must bind its domain, inventory, credentials, receipt store and
@@ -103,8 +103,8 @@ reservation, VPN creation and QoS programming remain unsupported in this fixture
 
 ## Mininet-Optical MCP
 
-Wrap [spec.py](../optical-network/spec.py) and
-[client.py](../optical-network/client.py) for inventory, supported channels,
+Wrap [spec.py](../../optical-network/spec.py) and
+[client.py](../../optical-network/client.py) for inventory, supported channels,
 observed optical state, monitor readings, retaining a verified channel and
 configuring/retuning to channel 1 or 2. Bind the backend address and permitted
 resources in deployment configuration; tools must not accept arbitrary backend

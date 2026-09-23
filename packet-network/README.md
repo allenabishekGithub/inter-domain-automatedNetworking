@@ -5,10 +5,10 @@ Nokia SR Linux routers, either side of the [optical line](../optical-network).
 Together with that line they carry one UDP service from `client-a` in Packet A
 to `server-b` in Packet B.
 
-The planned [Containerlab Packet MCP server](../docs/mcp-server-design.md)
-wraps this package for domain-agent access. It has separate Packet A and Packet B
-instances with independent identities, credentials and resource scopes. The
-server is not implemented; the commands below remain the current lab interface.
+The [packet domain agents](../docs/design.md) will wrap this package as their
+controller adapter, as separate Packet A and Packet B instances with independent
+identities, credentials and resource scopes. The agents are not implemented; the
+commands below remain the current lab interface.
 
 ```text
             Packet A                                        Packet B

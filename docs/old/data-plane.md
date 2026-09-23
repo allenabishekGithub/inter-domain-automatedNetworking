@@ -1,8 +1,8 @@
 # Packet–optical data plane
 
 The laboratory data plane this repository's architecture and experiments run
-on. It is implemented here, in [`packet-network/`](../packet-network) and
-[`optical-network/`](../optical-network), and can be deployed today:
+on. It is implemented here, in [`packet-network/`](../../packet-network) and
+[`optical-network/`](../../optical-network), and can be deployed today:
 
 ```bash
 sudo scripts/service-up.sh

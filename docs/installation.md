@@ -4,11 +4,10 @@ Everything needed to take a clean Ubuntu 24.04 LTS machine to a running
 `client-a` → `server-b` service. Each step says what it installs, why the data
 plane needs it, and how to prove it worked before moving on.
 
-**Environment scope:** these instructions prepare a separate deployment and
-validation host. The current project VM is for planning, design review and
-optimization; it does not need this emulation stack to perform that role. See
-the [planning and design priorities](implementation-roadmap.md#planning-and-design-priorities)
-for the work performed there and the specification handed to the testbed.
+**Environment scope:** these instructions prepare a deployment and validation
+host. A machine used only for design work does not need this emulation stack.
+See the [build phases](plan.md#7-build-phases) for what runs where; Phase 0
+onward needs a host prepared as below.
 
 Three upstream projects need small local edits to build on Ubuntu 24.04. Those
 edits, and the reason each one is necessary, are in
@@ -135,7 +134,7 @@ script, the traffic tooling and the optical attachment all call `docker exec`.
 > Membership of the `docker` group is equivalent to root on this host. That is
 > expected for a lab, and it is also why the data plane's per-domain scoping is
 > documented as a correctness guard rather than isolation — see
-> [the data-plane specification](data-plane.md#control-boundary).
+> [the data-plane specification](old/data-plane.md#control-boundary).
 
 ## 2. Containerlab and the node images
 

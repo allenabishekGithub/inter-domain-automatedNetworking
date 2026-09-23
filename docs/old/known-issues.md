@@ -56,8 +56,8 @@ and keep broad cleanup an explicit maintenance operation on an exclusive host.
 untouched, and a stale PID cannot cause an unrelated process to be signalled.
 Use isolated test fixtures to verify these cases.
 
-Sources: [optical lifecycle](../optical-network/topology.py),
-[startup](../scripts/service-up.sh), [shutdown](../scripts/service-down.sh).
+Sources: [optical lifecycle](../../optical-network/topology.py),
+[startup](../../scripts/service-up.sh), [shutdown](../../scripts/service-down.sh).
 
 **F2 — Represent unavailable primary-router evidence explicitly.**
 
@@ -75,7 +75,7 @@ router unavailability and management-only failure each produce an explicit,
 tested action or deferral according to policy.
 
 Source: `readiness()`, `state()` and `_move_to()` in
-[backup_path.py](../packet-network/backup_path.py).
+[backup_path.py](../../packet-network/backup_path.py).
 
 **F3 — Normalize telemetry responses and report incomplete coverage.**
 
@@ -92,8 +92,8 @@ recorded device-response fixtures. **Close when:** the supported response
 structures produce correctly attributed counters, while malformed or incomplete
 responses cannot silently appear to be complete observations.
 
-Sources: [telemetry parser](../packet-network/telemetry.py),
-[gNMI adapter](../packet-network/gnmi.py).
+Sources: [telemetry parser](../../packet-network/telemetry.py),
+[gNMI adapter](../../packet-network/gnmi.py).
 
 **F4 — Make receiver evidence session-aware and time-bounded.**
 
@@ -112,7 +112,7 @@ have distinct identities, stale/no-traffic reports are explicit, and recovery
 verification requires the specified observation window after the event.
 
 Source: `parse_intervals()`, `Sample.identity` and `Receiver.report()` in
-[traffic.py](../packet-network/traffic.py).
+[traffic.py](../../packet-network/traffic.py).
 
 **F5 — Verify lifecycle completion and preserve failure status.**
 
@@ -134,10 +134,10 @@ indefinitely. **Close when:** failure at each startup/shutdown stage produces a
 truthful result, delayed attachment is handled, and failed cleanup returns
 nonzero with the remaining resources identified.
 
-Sources: [startup](../scripts/service-up.sh),
-[shutdown](../scripts/service-down.sh),
-[optical lifecycle](../optical-network/topology.py),
-[traffic processes](../packet-network/traffic.py).
+Sources: [startup](../../scripts/service-up.sh),
+[shutdown](../../scripts/service-down.sh),
+[optical lifecycle](../../optical-network/topology.py),
+[traffic processes](../../packet-network/traffic.py).
 
 **F6 — Add durable receipts and explicit packet reconciliation.**
 
@@ -155,7 +155,7 @@ enough evidence to reconcile or report unresolved state without blindly
 repeating effects. Verify delivered traffic independently of configured route
 references. This work belongs with the roadmap's controller transaction phase.
 
-Sources: [backup path operations](../packet-network/backup_path.py),
+Sources: [backup path operations](../../packet-network/backup_path.py),
 [controller transaction roadmap](implementation-roadmap.md#phase-2--local-controller-mcp-server-and-transaction-safety).
 
 **F7 — Avoid disruptive optical writes when retaining a verified channel.**
@@ -172,8 +172,8 @@ resets, an actual retune is verified at the receiver, and failures at each step
 produce explicit partial/unresolved outcomes. Do not describe final-state
 convergence as disruption-free retry behavior.
 
-Sources: `configure_line()` in [client.py](../optical-network/client.py),
-[optical tests](../optical-network/tests/test_optical.py).
+Sources: `configure_line()` in [client.py](../../optical-network/client.py),
+[optical tests](../../optical-network/tests/test_optical.py).
 
 **F8 — Separate observed optical configuration from verified health.**
 
@@ -191,8 +191,8 @@ degraded health, and service verification cannot infer success from `configured`
 alone. Preserve valid partial monitor observations and their errors.
 
 Sources: `carried_channels()` and `collect_monitors()` in
-[client.py](../optical-network/client.py), `cmd_status()` in
-[main.py](../optical-network/main.py).
+[client.py](../../optical-network/client.py), `cmd_status()` in
+[main.py](../../optical-network/main.py).
 
 **F9 — Check attachment commands and unwind partial setup.**
 
@@ -206,8 +206,8 @@ Check namespace operations and track each owned resource as it is created.
 and either remove owned partial resources or identify what remains for cleanup,
 without requiring an indiscriminate global reset.
 
-Sources: `attach_edge()` in [packet_bridge.py](../optical-network/packet_bridge.py),
-`start()` and `stop()` in [topology.py](../optical-network/topology.py).
+Sources: `attach_edge()` in [packet_bridge.py](../../optical-network/packet_bridge.py),
+`start()` and `stop()` in [topology.py](../../optical-network/topology.py).
 
 **F10 — Define a consistent machine-readable CLI contract.**
 
@@ -224,9 +224,9 @@ commands decode as a single result, expected operational failures have stable
 exit/error behavior, and rate collection uses at least two observations while
 preserving null for unavailable or reset counters.
 
-Sources: [packet CLI](../packet-network/main.py),
-[telemetry collector](../packet-network/telemetry.py),
-[packet CLI documentation](../packet-network/README.md).
+Sources: [packet CLI](../../packet-network/main.py),
+[telemetry collector](../../packet-network/telemetry.py),
+[packet CLI documentation](../../packet-network/README.md).
 
 **Additional follow-up work**
 
