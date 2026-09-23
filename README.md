@@ -1,8 +1,19 @@
 # Inter-domain automated networking
 
-This repository documents the technical architecture and research design for an
-Elsevier *Computer Networks* journal paper on federated AI-driven inter-domain
-networking.
+New here? Read the [project overview and paper report](docs/project-at-a-glance.md).
+
+This repository develops the research design for an Elsevier *Computer Networks*
+(COMNET) **agentic AI networking systems paper**. **ACO, PSO, Nash bargaining,
+and continual learning are required core mechanisms**, coupled to autonomous
+service provisioning and assurance across separately owned packet–optical networks.
+The [paper plan](docs/paper-positioning.md) and
+[coupled method](docs/agentic-system-method.md) define their roles and evidence requirements.
+
+The organizing idea is **collective intelligence under independent ownership**:
+can peer evidence, counteroffers, and learning improve joint service decisions?
+This is a hypothesis to test, not a fifth algorithm or shared authority. The
+[feedback design](docs/agentic-system-method.md#collective-intelligence-through-peer-feedback)
+and E10/E11 experiments make its proposed benefits and costs measurable.
 
 This project defines three autonomous domain agents, each with its own local
 service-orchestrator capability, that establish and assure a network service
@@ -44,28 +55,31 @@ flowchart LR
 
 ## Research questions
 
-The study evaluates five questions. Together they test the authority structure
-(RQ1, RQ2), that it has teeth in both directions (RQ3, RQ5), and whether the
-generative reasoning earns its place (RQ4). Each is stated with the evidence it
-requires and the boundary of what that evidence can support in the
-[experimental validation plan](docs/experimental-validation.md#1-research-questions-and-claims).
+The five research questions test cross-owner service autonomy (RQ1), coupled
+ACO–PSO optimization (RQ2), Nash bargaining between owners (RQ3), continual
+adaptation and retention (RQ4), and grounded agent reasoning (RQ5). See the
+[experimental plan](docs/experimental-validation.md#1-research-questions-and-claims).
 
-| | Question | What it really tests |
-|---|---|---|
-| **RQ1** | Can three sovereign domain agents establish and sustain an end-to-end service across packet, optical and packet domains from one structured intent, with no central orchestrator? | Feasibility of removing the central orchestrator without losing the service. |
-| **RQ2** | Is the federation genuinely initiator-agnostic — can the intent arrive at any one of the three agents and produce the same service? | Whether the initiating DSO convenes or secretly commands. Differing outcomes by initiator would mean a disguised hierarchy. |
-| **RQ3** | Do the agents reason and negotiate — composing QoS across heterogeneous domains, and refusing — rather than executing a fixed sequence? | Negotiation versus script. The discriminator is **refusal**: an agent that can only say yes is not an authority. |
-| **RQ4** | Is the generative reasoning load-bearing, or is the deterministic path sufficient? | Whether the LLM contributes anything. The answer is allowed to be no, and would be reported as such. |
-| **RQ5** | Do the agents sustain the service autonomously through a failure, and report truthfully when no repair exists? | Both directions of competence: repair the packet fault, and say so honestly when the optical line has no alternative. |
+| Required mechanism | Role in the full system |
+| --- | --- |
+| ACO | Discrete packet paths and optical route/channel candidates. |
+| PSO | Continuous per-service bandwidth allocation on those candidates. |
+| Nash bargaining | Mutually acceptable agreements between owners with distinct utilities. |
+| Continual learning | Actual predictor updates from outcomes, improving later search/allocation/utility estimates. |
 
-A correct refusal and an honest unresolved outcome count as success, not as
-experimental failure.
+Each network belongs to a different person or organization. These are independent
+administrative owners, not just different layers controlled by one operator.
+Removing a required mechanism creates an evaluation ablation, not a reduced
+version that fulfills the paper scope.
+
+Correct refusal and honest unresolved reporting count as correct behavior, but
+not successful service delivery. Report both outcomes separately.
 
 Start with the [system overview](docs/system-overview.md) for a first-read
 explanation of the complete federation. The [domain-agent architecture](docs/domain-agent-architecture.md)
 contains the detailed operating model, DSO LangGraphs, topology/configuration
 federation, swarm optimization, game-theoretic negotiation and cost model,
-domain closed loops, continual learning, message protocol, safety boundaries,
+domain closed loops, continual learning, ownership boundaries,
 and implementation milestones. The [LangGraph node catalogue](docs/langgraph-node-catalog.md)
 lists every workflow node and its execution method. The [implementation roadmap](docs/implementation-roadmap.md)
 turns the architecture into incremental, testable delivery phases.
@@ -76,7 +90,8 @@ testbed environment; missing emulation tools here are expected and do not block
 design work. The immediate priorities are to freeze the v1 scope, specify
 implementable contracts, simplify the initial architecture, resolve findings at
 the design level, and sequence implementation work. The next planned deliverable
-is a consolidated **v1 executable design specification**; see the
+is the **coupled ACO–PSO–Nash–learning specification and evaluation fixtures**,
+incorporated into the v1 executable design specification; see the
 [planning and design priorities](docs/implementation-roadmap.md#planning-and-design-priorities).
 
 The data plane is implemented here, in **[`packet-network/`](packet-network)**
@@ -100,15 +115,16 @@ against. Operations are already scoped per domain: Packet A's tooling cannot
 address Packet B's routers, each domain switches only its own service path, and
 Packet A drives the sender while Packet B drives the receiver.
 
-Each domain has a real decision to make, which is what RQ3 turns on. Both
+Each domain has a real provisioning choice. Both
 packet domains can move the service between a primary and a backup core router;
 the optical domain can carry it on either of two wavelengths, or refuse. That
 gives eight joint configurations. What no domain can do is reroute around an
 optical cut — both wavelengths ride the same fibre chain — so the fixture
 deliberately offers a genuine choice for provisioning and none for
-restoration, which is what lets one topology exercise both RQ3 and RQ5. The DSO
-federation above that data plane — A2A, signed contracts, per-domain Controller
-MCP servers, reservations, epochs — is documented here but not yet built; see
+restoration. This supports a small bargaining and assurance demonstration, not
+the entire optimization/learning claim. The DSO
+federation above that data plane — peer cooperation, per-domain Controller
+MCP servers, optimization, bargaining, and predictor learning — is documented here but not yet built; see
 the [implementation roadmap](docs/implementation-roadmap.md).
 
 The required [MCP server design](docs/mcp-server-design.md) has two
@@ -127,9 +143,11 @@ the live integration checks listed there.
 
 The [experimental validation plan](docs/experimental-validation.md) specifies
 the journal study in detail: testbed profiles, workloads, matched baselines,
-nine experiment families, independent checks, metrics, statistical analysis,
+eleven experiment families, independent checks, metrics, statistical analysis,
 reproducibility artifacts, and the evidence required for each paper claim. It
-also records what the study deliberately does not test.
+adds fixed-proposal-exchange A8, peer-informed decision comparisons (E10), and
+feedback × continual-learning tests (E11), reusing centralized planning (E09).
+It also records what the study deliberately does not test.
 
 The [related-work and novelty assessment](docs/related-work-and-novelty.md)
 compares this design with research papers and networking specifications,
@@ -137,18 +155,18 @@ identifies candidate contributions for the journal paper, and defines the
 evidence needed to substantiate them. The literature search is dated
 16 September 2026; proposed contributions are not claims of demonstrated results.
 
-The paper focus is sovereign domain agents reasoning with one another to
-autonomously establish a service that runs through all three domains, from an
-intent submitted to any one of them. The
-[research protocol requirements](docs/domain-agent-architecture.md#research-protocol-requirements)
-bind agreements to evidence, reservations, and controller execution conditions.
-The [evaluation plan](docs/implementation-roadmap.md#journal-evaluation-plan)
-compares the same federation with and without LLM assistance. Behavior under
-injected races, message faults, partitions, and coordinator replacement is a
-separate protocol study and is explicitly out of scope. Swarm optimization and
-continual learning are optional extensions whose value must be measured
-separately. These are design recommendations, not implemented or experimentally
-established guarantees.
+The full study requires a richer resource-allocation and learning workload than
+the current single-flow fixture: multiple demands, meaningful continuous
+bandwidth choices, diverse discrete candidates, and chronological condition
+changes. Implement these in a reproducible simulator, then add actual
+per-service enforcement before claiming measured allocation on the emulator.
+The [evaluation plan](docs/experimental-validation.md) requires full-system,
+component-removal, and interaction comparisons, including negative results.
+
+Known algorithms and separate ownership are not novelty by themselves. The
+candidate contribution is the specific coupled agentic method and demonstrated
+service/owner benefits at measured cost. Hardware validation and LLM fine-tuning
+are additional possibilities, not substitutes for the four required mechanisms.
 
 ## Core rule
 
@@ -161,22 +179,19 @@ negotiated contract.
 
 ## First target scenario
 
-An authorized user of packet domain A requests connectivity from `client-a`
-(`10.10.0.2`) to `server-b` (`10.20.0.2`) with specified service objectives and a
-deadline. The initial traffic profile uses the reference 1 Mbit/s offered load;
-this does not establish reserved bandwidth. Packet domain A asks its optical
-neighbor for a feasible transport envelope; the optical agent asks packet domain
-B for its egress envelope. The agents negotiate through A2A and obtain the
-local holds supported by the declared controller profile. Unchanged segments
-contribute acceptance and fresh evidence without artificial configuration writes.
-Each controller checks the agreed execution conditions before accepting its
-local change. Failures can leave a partially applied service; the DSOs reconcile
-receipts, release unused reservations, and attempt compensation where supported.
-They report unresolved outcomes explicitly.
+An authorized user requests a service across Packet A, Optical, and Packet B.
+Agents gather evidence, explore paths with ACO, allocate resources with PSO,
+evaluate owner-specific utilities, and select a Nash agreement. Each owner
+executes its approved local contribution; receiver evidence establishes the
+actual service outcome. Completed outcomes update predictors for later decisions.
 
-The result is a service contract and a verifiable end-to-end outcome based on a
-shared, versioned view of the packet-optical-packet topology.
+Begin all four mechanisms in the required allocation simulator. On the current
+emulator, demonstrate only supported operations: verify the reference UDP flow,
+diagnose a packet primary-path fault, use its backup, and verify fresh delivery.
+An optical cut has no alternative and must be reported honestly. Do not label
+sender offered load as a reserved bandwidth allocation.
 
-The first recovery changes Packet A or Packet B to its existing backup packet
-path while retaining the fixed optical line. An unavailable optical line has
-no alternate route in this baseline and must be reported accordingly.
+The [complete demonstration sequence](docs/paper-positioning.md#5-implement-one-complete-agentic-demonstration-first)
+connects optimization, bargaining, service verification, and learning. A small
+integration checkpoint does not replace the required allocation and continual
+learning experiments.

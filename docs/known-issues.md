@@ -255,9 +255,12 @@ additional reproduced runtime defects. They remain open.
   channel-1/four-candidate descriptions to match the two-channel/eight-candidate
   fixture; remove claims of an existing packet journal or installed optical-rule
   readback; update the optical test count from 25 to 40 at this snapshot. Resolve
-  deferred concurrency/message-fault scenarios still present in sweep tables,
-  B0/B1 staging relative to deterministic-first development, and the proposed
-  third LLM-node ablation while learning is disabled. Define a policy-approved
+  scope descriptions across the richer simulator, present single-flow emulation,
+  and allocation-capable emulation to implement. The 23 September revision makes
+  ACO, PSO, Nash bargaining, and continual predictor learning required; B0 uses
+  learning, and B1 disables generative calls without disabling the numerical
+  learner. Validate the revised node mapping, component ablations, actual
+  continuous allocation, and chronological learning evidence. Define a policy-approved
   packet provisioning action for healthy-path selection rather than relying on
   a repair command's rehearsal `--force` flag. Close with consistent capability
   and study profiles across the [architecture](domain-agent-architecture.md),

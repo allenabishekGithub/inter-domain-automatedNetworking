@@ -35,6 +35,43 @@ These implement the existing **Controller MCP Server** role. They do not add
 another orchestrator. Each DSO calls only its own instance; agreements and peer
 evidence continue to travel over A2A.
 
+## Observation support for the agentic decision loop
+
+The [adaptive decision loop](domain-agent-architecture.md#adaptive-agent-decision-loop)
+requires a versioned catalogue of permitted read/validate operations, separate
+from mutation candidates. Entries specify tool ID, owning domain, typed bounded
+parameters, returned evidence schema, freshness, and query cost/budget accounting.
+Examples are owned interface/path status, optical channel/QoT observations, and
+Packet B's fresh receiver results; advertise only capabilities the adapter
+actually supplies. Unsupported measurements remain explicitly unavailable.
+
+The model proposes a catalogue ID and arguments. Existing deterministic DSO nodes
+validate identity, scope, arguments, and budget before invoking local MCP. Peer
+evidence requests travel over A2A and are executed only by the peer's own DSO;
+no model or peer gains direct access to another owner's MCP endpoint. Return
+timestamped, attributable observations or typed errors, not fabricated health.
+Record the request, result, and subsequent decision. Read-only acquisition never
+reserves or mutates resources; configuration changes retain all existing gates.
+
+This is a planned interface refinement for the agentic systems study, not an
+implemented server or permission to expose shell/device commands. B0–B4 share
+the same authorized observation/action capabilities and declared query budgets.
+
+## Required allocation support for the full system
+
+ACO, PSO, Nash bargaining, and continual learning are all required by the
+[coupled method](agentic-system-method.md). The current tools cannot enforce
+PSO's continuous per-service bandwidth allocations. Implement the resource
+simulator first; measured allocation claims additionally require owner-scoped
+service classification, packet shaping/scheduling, capacity accounting, readback,
+and independent measurements of competing flows. Expose typed allocation
+operations only after their backend behavior is implemented and validated.
+
+The optical owner validates channel choice, capacity contribution, and modeled
+quality. Do not invent optical power/modulation controls or concurrent wavelength
+capabilities. Learning consumes attributable observations and actual outcomes;
+predictor releases do not change the MCP action allowlist or another owner's policy.
+
 ## Containerlab Packet MCP
 
 Containerlab supplies topology and node lifecycle. Router configuration and

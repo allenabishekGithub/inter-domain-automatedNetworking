@@ -1,20 +1,23 @@
 # Related work and novelty assessment
 
 **Search date:** 16 September 2026. **Target venue:** Elsevier *Computer Networks*.
+**Scope update, mechanism and collective-intelligence checks:** 23 September 2026;
+the original catalogue date is unchanged. This is not an exhaustive new search.
 **Project status:** architecture and research design; this report does not establish
 implemented capabilities, measured improvements, formal guarantees, or acceptance
 by the journal.
 
-This report maps 40 relevant paper records and eight networking specifications or
-drafts to the [proposed architecture](domain-agent-architecture.md). Some records
+The original catalogue maps 40 relevant paper records and eight networking
+specifications or drafts to the [proposed architecture](domain-agent-architecture.md). Some records
 belong to the same research family; they are not 40 independent implementations.
+Supplemental mechanism and conceptual references below do not change that count.
 The most important finding is that the broad combination of domain agents,
 distributed orchestration, negotiation, retrieval, controller tools, and closed
 loops already has substantial precedent. The architecture needs a more precise
 networking contribution to support a strong novelty claim.
 
-The recommendations are carried into the
-[architecture protocol requirements](domain-agent-architecture.md#research-protocol-requirements),
+The recommendations are carried into the [five paper priorities](paper-positioning.md),
+[adaptive agent decision loop](domain-agent-architecture.md#adaptive-agent-decision-loop),
 [existing-node responsibilities](langgraph-node-catalog.md#research-requirements-mapped-to-existing-nodes),
 and [journal evaluation plan](implementation-roadmap.md#journal-evaluation-plan).
 Those updates specify intended behavior and experiments; they do not turn the
@@ -68,6 +71,10 @@ The current design has independently owned packet A, optical, and packet B
 domains. Each domain operates one persistent AI DSO: the agent and domain service
 orchestrator are the same runtime. Its four workflows and shared context utility
 contain 57 named nodes, with three conditional generative-LLM reasoning nodes.
+The full study requires ACO, PSO, Nash bargaining, and continual predictor
+learning. Two online reasoning nodes support observation/diagnostic decisions;
+the third can propose bounded learning hypotheses. Each network belongs to a
+different person or organization, not just a different technology layer.
 
 Peers exchange service and topology information over A2A. Each DSO controls only
 its own SDN controller through its Controller MCP server. Each maintains its own
@@ -75,11 +82,11 @@ PostgreSQL/pgvector store, graph projection in Neo4j, and operational evidence.
 Approved topology and configuration advertisements are replicated among peers;
 ownership of each record and authority to change devices remain local.
 
-The design combines constrained path construction, optional ACO exploration,
-local utility evaluation, weighted Nash bargaining, reservations, controller
-execution, verification, and domain-local assurance. Retrieval grounds selected
-LLM calls. Learning is an evaluated update process, not permission for models to
-change controller policy directly. See the [node catalogue](langgraph-node-catalog.md)
+The design couples ACO discrete exploration, PSO continuous resource allocation,
+owner utility evaluation, weighted Nash bargaining, verified service execution,
+and continual performance-predictor updates. Retrieval grounds selected LLM
+calls. Learning must change later estimates/decisions, not owner authority or
+hard policy. None of these four mechanisms is optional in the full system. See the [node catalogue](langgraph-node-catalog.md)
 for the current workflow inventory.
 
 ```mermaid
@@ -112,15 +119,15 @@ The right-hand column is our assessment, not a finding stated by the cited autho
 | [Brodimas et al., 2025](#p04) | Agentic orchestration combines peer handoffs, retrieval, tools, and persistent state. | Agent orchestration with RAG and MCP is insufficient as the main contribution. |
 | [Confucius, SIGCOMM 2025](#p05) | Structured multi-agent network workflows, retrieval, tools, and validation. | Workflow structure and grounded tool use need a stronger inter-operator distinction. |
 | [Chergui et al., 2025](#p06) | Cross-domain agent negotiation uses collective memory and digital-twin feedback. | Negotiating agents that improve from experience are already explored. |
-| [Carballo González et al., September 2026](#p07) | Federated operators, A2A negotiation, MCP-accessible context, and closed-loop resource management. | The broad proposed combination is particularly close to this preprint. Focus comparison on protocol semantics and demonstrated packet–optical failure handling. |
+| [Carballo González et al., September 2026](#p07) | Federated operators, A2A negotiation, MCP-accessible context, and closed-loop resource management. | The broad combination is particularly close. Compare adaptive evidence/negotiation methods, decision traces, and measured packet–optical outcomes; do not assume a unique architecture. |
 | [Tranoris and Trantzas, 2026](#p08) | Agentic intent handling is separated from deterministic orchestration and test-based assurance. | Selective cognition with controlled actuation is already a design precedent. |
 | [DFSC, Computer Networks 2022](#p22) | Distributed, cost-aware orchestration across autonomous domains. | Removing a global orchestrator is not sufficient novelty. |
 | [Sun et al., 2016–2017](#p25) | Nash bargaining supports cooperation in multi-domain elastic optical service provisioning. | Applying Nash bargaining to optical coordination alone is not new. |
-| [NSI Connection Service](#s05) | Cross-domain network service agents, held reservations, commit/abort, and asynchronous outcomes. | A reserve/commit protocol needs an explicit technical difference from established network service coordination. |
+| [NSI Connection Service](#s05) | Established cross-domain network-service coordination. | Supporting engineering precedent; the proposed contribution concerns the coupled agentic optimization/learning system. |
 
 There is no verified basis here for claiming that this is the world's first
 federated agentic networking architecture. Nor does this review prove that a
-specific protocol extension proposed below is unprecedented. That requires a
+specific coupled optimization/bargaining/learning method proposed below is unprecedented. That requires a
 deeper comparison against the closest full texts and their cited predecessors.
 
 ## 4. Annotated paper catalogue
@@ -171,12 +178,19 @@ automatically with independent operators.
 
 <a id="p06"></a>
 **P06. Hatim Chergui et al. — Toward an Unbiased Collective Memory for Efficient LLM-Based Agentic 6G Cross-Domain Management.**
-arXiv:2509.26200, 2025. **Evidence: Text.** RAN/edge agents negotiate resource
+arXiv:2509.26200, 2025 (v1); revised 19 September 2026 (v2).
+**Evidence: Text (v1); abstract and metadata (v2), rechecked 23 September 2026.**
+RAN/edge agents negotiate resource
 trade-offs with digital-twin feedback and memory of past outcomes. It directly
 overlaps negotiation and continual improvement. Its A2A terminology should not,
 without checking implementation details, be taken as proof of conformance to a
 particular standardized A2A version.
 [Manuscript](https://arxiv.org/html/2509.26200v1).
+The v2 abstract additionally describes a Retrieval Bias Index, a tandem-queue
+evaluation, and a Nash bargaining reference. This strengthens the overlap in
+collective decision-making and owner trade-offs; it does not establish that its
+negotiation algorithm is identical to ours. Inspect the revised full text before
+making detailed distinctions. [Revised record](https://arxiv.org/abs/2509.26200v2).
 
 <a id="p07"></a>
 **P07. Claudia Carballo González et al. — AI-Native Orchestration in the 6G Continuum: Evolving Operator Platforms with Agentic AI.**
@@ -514,9 +528,10 @@ progress, not adopted IETF standards.
 | Nash bargaining for optical coordination | Direct precedent in P25–P26. A new objective, mechanism, or proven property would need to be specified. |
 | ACO/swarm routing | Long-standing precedent, e.g. P29. A group of DSOs is not itself proof of a new swarm algorithm. |
 | Closed loops and learning | Precedents include P06, P27, and S03. |
+| Collective intelligence among network agents | P01/P06/P07 already address forms of distributed collaboration. A collective-intelligence framing is not itself novelty; specify and test the contribution of peer feedback and learning. |
 | LLM advice checked by non-LLM execution gates | Substantial overlap with P05 and P08. |
 | Reservation, commit, and compensation | Prior foundations in S05, P30, and P39. |
-| A precise protocol relating evidence revisions, economic agreement, authorization, and recovery across packet–optical owners | **Candidate research contribution.** Needs a specific technical advance over the preceding mechanisms and an evaluated result. |
+| Coupled ACO/PSO search, Nash agreement, and continual predictor learning within cross-owner service agents | **Candidate systems contribution.** Specify the coupling and compare its outcomes and cost with existing systems and simpler methods; algorithm names and ownership alone are insufficient. |
 
 LangGraph, Neo4j, PostgreSQL, and pgvector are implementation choices. The number
 of workflow nodes is not a research contribution. Combining known parts can
@@ -527,275 +542,199 @@ establish those conditions.
 
 ## 6. Recommended research question and candidate contributions
 
-**Research question:** How can independently controlled packet and optical
-domains negotiate and maintain an end-to-end service when their state views
-differ, actions complete asynchronously, and model-generated advice may be
-incorrect—while preserving local authorization and meeting measurable QoS goals?
+**Research question:** How can agents belonging to independent packet and optical
+owners jointly search discrete service paths, allocate continuous resources,
+negotiate mutually beneficial agreements, and improve future service decisions
+from experience under changing conditions?
 
-This narrows the paper to inter-domain networking, as intended. It does not
-introduce a general AI-operations platform.
+The organizing hypothesis is collective intelligence under independent ownership:
+peer evidence and counteroffers can improve joint decisions, and verified outcomes
+can improve later collaboration. Collective intelligence is not shared authority
+or a fifth mechanism. Treat benefits as empirical questions, not automatic
+consequences of agent count or message exchange.
 
-### C1. A service protocol that binds decisions to the state they depend on
+**ACO, PSO, Nash bargaining, and continual learning are all required.** Their
+specific interaction, implementation, and empirical consequences—not their mere
+coexistence—are the candidate research contribution. The
+[coupled method](agentic-system-method.md) is the mechanism specification.
 
-Specify the exact relationship between an accepted service contract, its
-dependency state, local resource reservations, and allowed controller actions.
-The existing architecture sketches much of this; the research work is to make
-the protocol precise, demonstrate a gap in existing mechanisms, and establish
-what its additional rules achieve.
+### C1. An integrated cross-owner agentic networking system
 
-A proposed transaction record could bind:
+Implement separate owner agents with local observations, objectives, controller
+access, and refusal rights. Demonstrate end-to-end service delivery and assurance.
+Distinguish actual independent administrative control from merely heterogeneous
+packet and optical equipment under one owner.
 
-```text
-service ID and intent revision
-contract revision and participant set
-path/resource allocation digest
-revisions of the topology and configuration dependencies
-local policy versions and signed acceptances
-reservation IDs, expirations, and resource conditions
-coordination epoch and idempotency keys
-verification obligations and compensation references
-```
+Compare with EDAIR, Xu et al., Confucius, Brodimas et al., and the federated
+operator-platform work. One agent per domain, A2A/MCP, and grounded tools alone
+have substantial precedent.
 
-These are proposed specification requirements, not an implemented schema.
-Separate signatures over the agreement from each domain's local commit authority.
-Define whether validity requires the entire replicated graph digest or only a
-complete dependency set. Whole-graph invalidation is simpler but may cause
-unnecessary restarts when unrelated resources change. Dependency-scoped
-validation is an experimentable refinement, not yet the accepted protocol.
+### C2. A coupled search, allocation, bargaining, and learning method
 
-Crucially, a DSO reading the latest state immediately before an MCP call does
-not close a check-then-act race. The controller must enforce the relevant
-precondition when accepting the change, or provide an equivalent protected
-reservation mechanism. If the controller cannot do this, the paper must weaken
-its guarantee and measure the resulting exposure.
+ACO constructs discrete alternatives; PSO searches feasible continuous allocations;
+owners evaluate gains; Nash selection finds a mutually acceptable proposal;
+verified outcomes update performance predictors used in later search and utility
+estimation. Grounded reasoning requests evidence and chooses supported replanning.
 
-Candidate properties to specify and verify include local authorization,
-rejection of expired or dependency-invalidated operations, effective idempotency,
-correct handling of partial completion, and exclusion of conflicting writers
-under a defined coordination mechanism. Progress requires assumptions about
-eventual connectivity, resource availability, and recoverable participants.
+Specify variables, objectives, constraints, shared information, budgets, and
+learning update/promotion rules. Show why coupling matters through required
+component removals and ACO × PSO / learning × Nash interaction comparisons.
+Neither ACO nor PSO inherently guarantees superiority to an exact or conventional
+solver. No new Nash theorem or truthful reporting property is assumed.
+E10/E11 additionally isolate adaptive peer feedback and its interaction with
+predictor learning, with consumed-input traces and verified service outcomes.
 
-This is **not** a claim to invent reservations, optimistic concurrency, fencing,
-or sagas. The potential contribution is the specific composition and its
-network-service properties under the stated failure model. Compare explicitly
-against NSI, SENSE, and consistent network updates before claiming novelty.
+### C3. Reproducible networking and adaptation findings
 
-### C2. Evidence-grounded reasoning connected to executable validity checks
+Demonstrate service/allocation quality, owner trade-offs, diagnosis/recovery,
+adaptation to change, retention of earlier conditions, and total overhead.
+Use chronological learn-after-scoring streams, frozen/memory-only comparisons,
+independent measurements, and honest negative outcomes.
+Distinguish the benefits of extra information, adaptive peer revision, and
+planning placement using fixed-exchange A8, equal-information decision replay,
+and the matched centralized B2. An improvement over A8 is not proof of an
+improvement over B2 or of general emergent intelligence.
 
-The context supplied to an LLM should include canonical intent, relevant graph
-relationships, time-bounded telemetry, policy constraints, current contract and
-peer state, candidate actions, missing information, and source provenance.
-Retrieved facts should refer to the same decision context that the execution
-gate validates. Context completeness means coverage of required decision
-dependencies; it does not mean placing the entire network in a prompt.
+The single-flow eight-configuration emulator is an integration anchor. A richer
+resource simulator and meaningful continuous allocation are required for the full
+study. Claim measured allocation only after actual per-service enforcement is
+implemented and checked; otherwise report those results as simulation.
 
-A testable question is whether this linkage reduces obsolete or unsupported
-recommendations, unnecessary model calls, or service recovery time compared with
-document RAG, graph retrieval without revision checks, and fixed context.
-GraphRAG and contextual prompts alone are already established. To count as a
-contribution, specify a new dependency-selection or validation method, or show a
-reproducible systems effect that existing designs do not address.
+### Targeted mechanism check, 23 September 2026
 
-Separate two effects: an execution gate may reject stale actions even if the LLM
-is removed, while better retrieval may improve diagnosis or reduce wasted
-negotiation. The evaluation must identify which component produces each benefit.
+This check supplements, and may overlap, the original catalogue. It establishes
+precedents, not the absence of the proposed exact combination. Access labels
+apply to the evidence actually inspected.
 
-### C3. Joint service feasibility, operator agreement, and recovery
+| Primary source | Relevant precedent and implication |
+| --- | --- |
+| [ACO-based distributed multilayer routing and restoration in IP/MPLS over optical networks, Computer Networks 185 (2021), 107747](https://doi.org/10.1016/j.comnet.2020.107747) | Indexed publisher abstract/highlights: ACO for coordinated packet/optical routing and restoration already exists in the target journal. The direct publisher page was access-limited on recheck; obtain the full paper before detailed differences. |
+| [Chaves et al., Impairment Aware Routing Algorithm for All-Optical Networks Based on Power Series and Particle Swarm Optimization](https://biblioteca.sbrt.org.br/articlefile/2619.pdf) | Indexed primary proceedings text: PSO trains a routing cost model. PSO applied to optical routing is not new; distinguish our proposed continuous service allocation. |
+| [Sun et al., Broker-based Cooperative Game in Multi-Domain SD-EONs](https://zuqingzhu.info/pub_doc/2016/ECOC2016_nash_bargaining_submission.pdf) | Indexed author manuscript: Nash bargaining for broker agreement over cross-domain optical provisioning is precedent. Independent economic interests are not newly introduced by our design. |
+| [Carballo González et al., AI-Native Orchestration in the 6G Continuum](https://arxiv.org/html/2609.08441v1) | Accessible author preprint: stateful agentic operation and negotiation across operator platforms. Compare the actual mechanisms and tested service setting, not framework names. |
 
-Represent an end-to-end candidate as domain-local segments with explicitly
-composed QoS requirements. Packet-side feasibility must cover capacity and
-forwarding policy; optical feasibility must include the physical/resource
-constraints actually represented by the testbed, such as spectrum continuity,
-contiguity, transponder compatibility, and optical quality thresholds where
-applicable. Do not claim validated optical feasibility from graph reachability
-alone.
+Do not claim that the four-way combination is the first without a more focused
+full-text review. Continual-learning comparisons must distinguish incremental
+predictor updates, experience retrieval, reinforcement updates within a search,
+and LLM fine-tuning; these are not interchangeable.
 
-Then quantify utility and agreement over feasible candidates. A possible
-weighted Nash objective is:
+### Collective-intelligence positioning
 
-```text
-choose x in F to maximize sum_i w_i * log(u_i(x) - d_i)
-subject to u_i(x) > d_i for every participating domain
-```
+Collective intelligence is an established research area, not a new term for
+our combination of algorithms. [Casadei's 2023 survey](https://arxiv.org/abs/2304.05147v1)
+maps artificial collective-intelligence concepts and engineering perspectives.
+**Evidence: abstract and author bibliographic record**; used as conceptual
+background, not as evidence of a particular packet–optical implementation.
+The record identifies the corresponding *Artificial Life* article,
+[DOI 10.1162/artl_a_00408](https://doi.org/10.1162/artl_a_00408).
 
-Here, `F` is the verified feasible candidate set, `d_i` is the specified
-disagreement utility, and `w_i` is an agreed positive bargaining weight. If no
-strictly beneficial candidate exists, define a no-agreement outcome or a
-separately specified weak-acceptance rule. Log formulation, bargaining, and
-enumeration are known techniques; using them is not itself novel.
+For direct networking comparisons, P01 establishes per-domain collaborating
+agents, P06 studies cross-domain negotiation and collective memory (with a Nash
+reference in its revised abstract), and P07 studies operator-platform federation.
+Do not claim a first networking "hivemind," equate shared memory with parameter
+learning, or infer absent mechanisms from abstracts. Compare actual information
+exchange, revision rules, ownership assumptions, learned objects, and outcomes.
 
-Keep prices, resource costs, SLA penalties, and dimensionless scores distinct.
-Document units, normalization, who chooses weights, and which utility signals
-are disclosed. A global bargaining calculation cannot simply assume access to
-utilities that the design simultaneously claims to keep completely private.
-Do not claim strategy-proofness, truthfulness, uniqueness, or Nash equilibrium
-from use of a Nash bargaining objective.
-
-The research opportunity is an explicit interaction between feasible allocations,
-agreement invalidation, and recovery when the physical network changes. Its
-value must be established against simpler allocation and negotiation methods.
-Treat ACO and learning as optional components unless ablations show they help.
-
-```mermaid
-flowchart TD
-    E["Intent and observed evidence"] --> V["Dependency and freshness checks"]
-    V --> F["Feasible packet and optical candidates"]
-    F --> N["Local utilities and peer agreement"]
-    N --> R["Local reservations"]
-    R --> C["Controller-enforced preconditions"]
-    C -->|"Accepted"| X["Apply local change and record receipt"]
-    C -->|"Invalidated"| U["Refresh evidence and renegotiate"]
-    U --> V
-    X --> Q["Verify end-to-end outcome"]
-    Q -->|"Verified"| M["Domain assurance loops"]
-    Q -->|"Failure or partial completion"| K["Reconcile or compensate"]
-    M -->|"Material service change"| V
-    K --> V
-```
-
-The diagram shows the proposed research focus. It does not imply that every
-failure can be repaired automatically or that compensation is always possible.
+Our proposed distinction is a specified and evaluated feedback loop joining
+discrete ACO paths, continuous PSO allocations, owner-specific Nash gains,
+verified service outcomes, and continually updated local predictors. E10 tests
+peer-driven replanning against fixed exchange; E11 tests feedback × learning;
+E09 controls planning placement. Whether that loop adds useful collective
+capability remains a hypothesis to be implemented and tested.
 
 ## 7. Illustrative distinguishing experiment
 
-An authorized user requests a 10 Gbit/s connection across packet A, optical O,
-and packet B. Use a stated latency budget and consistent measurement definition.
-Suppose all DSOs agree on a path depending on optical resource revision 418.
+Generate a chronological sequence of services spanning separate packet and optical
+owners. Vary demand and resource quality, with owner preferences declared in
+advance. ACO proposes discrete routes; PSO allocates continuous rates under
+capacity constraints; Nash selects accepted owner gains; independent checks
+measure service outcomes. Predictors update only after each scored episode.
 
-1. O advertises a material change at revision 419. A has not received it yet.
-2. A may still retrieve revision 418 from its graph projection and propose an obsolete plan.
-3. The contract and local operation identify the resource conditions they require.
-4. O rejects preparation or commit if those conditions are no longer valid. If an actual protected reservation still makes the allocation valid, specify that separately rather than rejecting every revision change blindly.
-5. The peers refresh evidence and renegotiate, release unused reservations, or handle a partially applied service according to its recovery state.
-6. End-to-end probing establishes whether the service works; successful local tool calls are insufficient.
+Introduce a demand/quality shift, then a return to earlier conditions. Ask whether
+learning changes search/allocation/agreements in useful ways, whether owners
+benefit, whether previous knowledge is retained, and whether costs outweigh gains.
 
-Compare this against exactly the same federation without dependency checks,
-without graph grounding, and without LLM assistance. If all the improvement
-comes from controller preconditions, report that as a protocol result. Do not
-attribute it to LLM reasoning or GraphRAG.
+Repeat with each required ablation and matched objective-evaluation budgets.
+A frozen learner still runs ordinary ACO/PSO; an owner-respecting no-Nash baseline
+still needs consent. Keep hidden fault labels and future demand out of every
+planner. Link simulator mechanism results to actual supported service operations
+in the packet–optical emulator.
 
 ## 8. Design requirements to validate before making strong claims
 
-| Design issue identified by the review | Required clarification or experiment |
+| Requirement | Evidence or clarification |
 | --- | --- |
-| Full topology and approved configuration are shared | State the strong disclosure/trust assumption. Local database ownership preserves authority, not topology confidentiality. Compare with P28 and P38. |
-| “All agents have the whole topology” | Distinguish eventual replica convergence from instantaneous equality. Define cross-domain link ownership, revision ordering, expiry, deletion, and restart behavior. |
-| Global graph freshness | A digest identifies content; it does not prove that no newer state exists. Specify authority contact, reservation protection, and partition behavior. |
-| Bargaining utility is private | Specify the shared scores or other computation mechanism. Signed values establish attribution, not honest economic reporting. |
-| Non-LLM execution classification | The updated catalogue uses non-generative categories. Validate reproducibility separately: ACO is stochastic, retrieval can use learned embeddings, and fixed seeds do not make the underlying algorithm non-stochastic. |
-| Structured intent intake | The current deterministic intake accepts a canonical schema. Explain where arbitrary natural language becomes that schema if the paper claims a natural-language interface. |
-| Successful reservations imply successful provisioning | They do not. Explicitly model failed commits, lost receipts, expiry, replay, and uncertain outcomes. |
-| Saga recovery described as atomicity | State that intermediate physical states may exist and compensation may fail. Make-before-break or forwarding consistency needs separate mechanisms. |
-| Temporary incident coordinator | Define selection, replacement, and enforcement of epochs/fencing. A timeout lease alone is not proof that a partitioned old coordinator cannot act. |
-| “Complete situational context” | Define required dependencies, telemetry windows, missing-data behavior, and projection lag; do not imply perfect network knowledge. |
-| Continual learning | Distinguish memory retrieval, offline parameter updates, and model training. Federation does not automatically mean federated learning. |
-| LLM value | With three conditional generative nodes, demonstrate the tasks on which they improve upon the same protocol using deterministic policies. |
+| Independent ownership | Separate authority, policies, inventories, credentials, and refusal; label synthetic owners. |
+| Meaningful ACO search | A richer candidate space and conventional/exact search references. |
+| Meaningful PSO allocation | Actual continuous bandwidth variables and constraints; simulation-only unless enforcement is measured. |
+| Nash semantics | Disclosed gains, fixed units/weights, disagreement values, no-agreement behavior, and no strategy-proofness claim. |
+| Actual continual learning | Parameter updates with bounded replay, past-only validation, future decision use, adaptation, and forgetting tests. |
+| Agent contribution | Traces show selected observations/replanning and actual consumed choices. |
+| Collective contribution | Peer-input-to-revision and outcome-to-learning-to-later-decision links, A8 and B2 controls, and E10/E11 service/cost comparisons; sharing messages is insufficient. |
+| Faithful verification | Independent receiver/resource checks; modeled QoT is not physical validation. |
+| Reproducibility | Initial states, budgets, seeds, streams, update histories, negative outcomes, and runnable analysis. |
 
-These findings now inform the linked architecture and roadmap requirements.
-Updating documentation resolves wording and specifies intended behavior; the
-implementation, protocol validation, and empirical questions remain open.
+No model may authorize another owner's resources or invent an unimplemented
+actuator. Those constraints enable a credible networking system; they do not
+replace its optimization and learning contribution.
 
 ## 9. Evaluation needed for a defensible paper
 
-### 9.1 Baselines
+The [experimental plan](experimental-validation.md#5-systems-and-baselines)
+defines B0 (full), B1 (no generative reasoning, four mechanisms retained),
+B2 (centralized planning, local approval retained), B3 (fixed diagnostic order),
+and B4 (competent simpler system).
 
-| Baseline | What it isolates |
-| --- | --- |
-| Same federated DSO, same graph, protocol, controller tools, and candidate set, with LLM nodes disabled | Whether generative reasoning adds value beyond the networking protocol. This is essential. |
-| Central ACTN-style orchestration with matched information, resources, and algorithms | Trade-offs of federation in availability, latency, signaling, and control authority. Do not intentionally weaken the central baseline. |
-| Federated deterministic intent resolution / orchestration inspired by EDAIR or DFSC | Improvement over established distributed approaches. Label adaptations accurately; do not call them reproductions without matching the original method. |
-| Conventional multi-agent LLM workflow with matched tools and task budget | Value of selective reasoning and structured gates compared with broader model-driven coordination. |
-| Document RAG; graph retrieval; graph retrieval with dependency/freshness validation | Contribution of each retrieval and state mechanism. |
-| K-shortest feasible paths versus ACO with matched computational budgets | Whether swarm exploration is useful. Include an exact small-instance solver to quantify optimality gaps where tractable. |
-| Greedy or fixed-policy acceptance versus weighted Nash selection over the same feasible set | Effect of bargaining separate from path-search quality. |
-| No learning versus evaluated memory/model updates | Whether learning improves future cases without regressions; use held-out scenarios. |
+Required ablations replace ACO, PSO, Nash selection, and continual learning one at
+a time, plus memory-only and reasoning/retrieval controls. Test ACO × PSO and
+learning × Nash interactions. Add A8 fixed proposal exchange and E11's feedback ×
+learning contrast, retaining consent and numerical fitness queries. E10 includes
+equal-information replay and closed-loop service trials; E09 reuses B2 rather
+than inventing a weaker centralized control. Match actions, constraints, evidence
+opportunities, initial states, objective-evaluation/model/query budgets, and
+development effort.
 
-Do not attempt every optional ablation in the first paper if it obscures the main
-claim. Start with protocol correctness, the no-LLM baseline, and the principal
-retrieval/negotiation comparisons.
-
-### 9.2 Scenarios and faults
-
-Start with three independently controlled packet–optical–packet domains, then
-vary domain count, nodes per domain, concurrent services, state-change rate,
-and inter-domain delay. Larger domain counts such as 5, 10, and 20 are proposed
-experimental points, not established capacity claims. Separate emulated
-packet behavior, simulated optical feasibility, and measurements from actual
-optical equipment.
-
-Test normal admission and rejection, optical impairment/capacity loss, packet
-congestion, simultaneous local assurance alarms, stale graph projections,
-out-of-order advertisements, controller changes between validation and execution,
-expired reservations, lost/duplicate messages, partial commits, failed
-compensation, coordinator restart, and partitions. Include incorrect LLM advice,
-unsupported graph references, and unavailable models. State whether domains are
-trusted to report truthfully; signatures do not solve dishonest telemetry.
-
-### 9.3 Metrics and analysis
-
-| Dimension | Measurements |
-| --- | --- |
-| Service outcome | Admission rate, end-to-end verified success, SLA violation duration, unaffected-service regressions. |
-| Timing | Median and tail provisioning/recovery time, negotiation rounds, convergence after a change. |
-| Protocol behavior | Invalidated operations rejected, unauthorized commits, conflicting writers, duplicate effects, leaked reservations, unresolved partial transactions. |
-| Economic/algorithmic quality | Utility gains relative to disagreement, domain-level outcomes, acceptance rate, resource cost, and small-instance optimality gap. |
-| Resource overhead | A2A messages/bytes, replica size and lag, graph-query time, controller calls, CPU, and memory. |
-| Model contribution | Calls, input/output tokens, monetary cost under stated pricing, invalid recommendations, diagnosis accuracy, and fallback success. |
-| Robustness | Outcome under each fault and state-change rate, including cases where no safe agreement is available. |
-
-Use repeated trials, paired traffic/failure traces, fixed reported model versions,
-logged prompts/tool schemas, random seeds for stochastic search, and confidence
-intervals. Compare methods with equal access to evidence unless evidence
-availability is the experimental variable. A protocol model and model checking
-can complement experiments, but guarantees must state their assumptions and
-cannot be inferred from zero failures in a finite test run.
+Measure verified service delivery, resource allocation, per-owner gains,
+diagnosis/recovery, adaptation, forgetting, and total compute/communication/
+training cost. Chronological episodes within one learned stream are dependent:
+repeat whole streams and preserve that dependence in uncertainty estimates.
+Do not freeze B0's learner throughout an experiment and then claim continual
+learning was evaluated.
 
 ## 10. Recommended paper positioning
 
-**Suggested working title:**
+**Working title:** *Learning and Bargaining Agents for Cross-Owner Packet–Optical
+Network Services*.
 
-> Version-Aware Federated Intent Orchestration Across Independently Controlled Packet–Optical Networks
+**Candidate contribution statement, without invented results:**
 
-“Agentic” can be included in the title if the experiments establish a meaningful
-role for the generative reasoning nodes. The paper should remain centered on
-inter-domain networking rather than on the chosen agent framework.
+> We investigate collective intelligence in an agentic networking system for
+> service provisioning and assurance across independently owned packet and
+> optical domains. The system couples ACO-based discrete exploration,
+> PSO-based continuous resource
+> allocation, Nash bargaining among domain owners, and continual learning of
+> network-performance estimates. Peer evidence and counteroffers drive bounded
+> proposal revision while each owner retains local authority. We evaluate how
+> these interactions affect service outcomes, owner benefit, adaptation,
+> and overhead using matched
+> centralized and fixed-exchange baselines, component and interaction studies,
+> chronological workloads, and independent service verification.
 
-**Candidate contribution statement, deliberately without performance claims:**
-
-> We investigate federated intent orchestration across independently controlled
-> packet and optical domains. The proposed design couples domain-local
-> orchestration with a service protocol that binds negotiated allocations to
-> their evidence, resource reservations, and execution preconditions. Selective
-> language-model reasoning operates within that protocol, while local
-> controllers retain configuration authority. We study the effects of stale
-> state, asynchronous execution, and competing recovery actions on service
-> establishment and assurance.
-
-This wording is appropriate for research planning. A final abstract must replace
-the investigation language with the exact implemented mechanism, supported
-properties, and measured findings. It must not claim “first,” “optimal,”
-“privacy-preserving,” “atomic,” or “guaranteed SLA” without corresponding evidence.
-
-The strongest candidate novelty is **how a negotiated service remains valid—or
-is rejected and repaired—across independent packet and optical operators under
-changing state and partial failure**. Whether that becomes a publishable advance
-depends on identifying a substantive difference from the closest prior protocols
-and demonstrating its effect. If the final implementation simply combines
-existing A2A/MCP agents, RAG, Nash bargaining, and saga orchestration, the
-contribution is primarily integration and should be described accordingly.
+This is planning language, not a final results abstract. The final paper must
+name implemented capabilities, quantitative findings, fidelity, and limitations.
+If simpler methods win, report that. Adding four components increases the
+burden of evidence; it does not automatically increase novelty.
 
 ## 11. Remaining literature work before submission
 
-The bibliography is a dated working artifact, not a closed novelty certificate.
-Before submission, obtain and compare full texts for the closest abstract-only
-records, particularly EDAIR, the OFC cross-domain demonstration, the OFC GraphRAG
-paper, and the ONDM controller-MCP paper. Complete protocol-level comparisons
-with NSI, SENSE, ACTN, and network-update consistency work. Follow their relevant
-backward and forward citations using institutional bibliographic access where
-available, and refresh the rapidly changing 2026 literature.
+Obtain closest full texts for packet–optical ACO, continuous allocation via PSO,
+multi-domain Nash bargaining, continual networking predictors, and cross-owner
+agentic systems. Search their backward/forward citations for coupled methods.
+Compare decision variables, optimization/learning interaction, ownership,
+evaluation profiles, baselines, and measured outcomes. Mark unavailable details
+unknown rather than absent.
 
-Normalize the final BibTeX against publisher metadata, group conference/journal
-extensions, and record exactly which published versions supersede preprints.
-Cite only work with a verified publication record; an internal engineering
-artifact is not a citable paper, and this repository's own data plane is
-described in its documentation rather than cited.
+Refresh publication metadata and preprint status, normalize BibTeX, and group
+conference/journal extensions. The original catalogue is a working bibliography,
+not a novelty certificate. Supporting standards are interface references, not
+the paper's contribution story.

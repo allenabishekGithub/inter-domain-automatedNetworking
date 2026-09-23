@@ -15,7 +15,8 @@ references; this document is the specification the experiments pin against.
 
 **Status:** deployable. The data plane and its domain-scoped operations exist
 and are tested. The DSO federation above it — A2A, signed contracts, per-domain
-Controller MCP servers, epochs, reservations — does not, and is the work in the
+Controller MCP servers, ACO/PSO optimization, Nash bargaining, and continual
+predictor learning — does not, and is the work in the
 [implementation roadmap](implementation-roadmap.md). Nothing here supplies
 those mechanisms.
 
@@ -227,12 +228,12 @@ state of its own.
 | Router configuration and telemetry | Static interfaces and routes over gNMI; interface counters with rates derived across reads. | Typed MCP wrappers and per-domain identity. |
 | Packet A path change | `path backup` / `path primary --domain packet-a`. | Gate it on agreement and fresh readiness. |
 | Packet B path change | `path backup` / `path primary --domain packet-b`. | Same, validated independently. |
-| Precondition and readback | Refuses unless on the expected path, backup up and primary impaired; reads each write back; reports `mixed` on divergence. | Journalled prepare/commit/rollback/finalize, idempotency keys and receipts. Writes are per-router, never atomic across them. |
-| Optical participation | Inspect nodes, monitor OSNR/gOSNR, light or retune the service onto channel 1 or 2, with readback of what is installed. | Bind the wavelength choice to the negotiated contract and to fresh evidence. |
+| Precondition and readback | Refuses unless on the expected path, backup up and primary impaired; reads each write back; reports `mixed` on divergence. | Owner-approved execution, durable outcomes, and supported recovery. Writes are per-router, never atomic across them. |
+| Optical participation | Inspect nodes, monitor OSNR/gOSNR, light or retune the service onto channel 1 or 2; terminal observations are not installed-rule readback. | Bind the wavelength choice to the owner-approved service and fresh independent evidence. |
 | Optical alternate route or spectrum reservation | Not supported. Both channels share one fibre chain, and only one is carried at a time. | Reject unsupported requests; concurrent multi-channel operation and genuine spectrum contention are an explicit extension. |
-| Per-service queues, VPNs or bandwidth isolation | Not present. No classifier, scheduler, policer or queue is configured anywhere. | Do not claim them from a path change or from an offered UDP rate. |
+| Per-service queues, VPNs or bandwidth isolation | Not present. No classifier, scheduler, policer or queue is configured anywhere. | Required per-service allocation enforcement for emulated PSO claims; otherwise continuous-allocation results remain simulation-only. A sender's offered rate is not a reservation. |
 | Fault injection | `impair down/up --domain D`, applied at the gateway so the core router observes a propagated failure. | Fault schedules and independent outcome checking. |
-| Epochs, signed contracts, dependency checks | Not present. | All of it. The data plane supplies none of these. |
+| ACO, PSO, Nash bargaining, continual predictor learning | Not implemented in this fixture. | All four are required in the proposed agentic system; the data plane supplies observations and actuators, not the decision methods. |
 
 The two path changes rewrite the next-hop-group reference of existing static
 routes:
@@ -294,16 +295,25 @@ that further. Exact enumeration is the search baseline here.
 That is enough for the [bargaining mechanism](domain-agent-architecture.md#game-theoretic-coordination)
 to be exercised rather than merely described: every participant has a real
 choice, the optical contribution is no longer a constant, and a counteroffer
-has somewhere to go. It is **not** enough for a search claim — eight candidates
-are exhaustively enumerable, so ACO cannot beat enumeration here, and
+has somewhere to go. It is **not** enough to establish a search advantage — eight
+candidates are exhaustively enumerable, so there is no better feasible optimum
+for ACO to discover than a complete exact search under the same objective, and
 [swarm search](domain-agent-architecture.md#swarm-optimization-layer) needs a
 separately labelled larger fixture before its contribution can be measured.
 
 Two limits to state wherever results are reported. Both wavelengths ride the
 same fibre, so this is not path diversity. And with one service there is no
-spectrum contention: the opportunity-cost term in the cost model only becomes
-load-bearing once concurrent services compete for the two channels, which is
-the extension named above.
+spectrum contention. Multiple flows can compete for modeled or enforced transport
+capacity without pretending the present optical line supports simultaneous
+wavelength allocation.
+
+For the revised journal scope, the [richer allocation and learning profile](agentic-system-method.md)
+is required: meaningful continuous bandwidth decisions, diverse discrete
+candidates, competing service demands, and chronological condition changes.
+Build those studies in P0 and label them as simulation. Add owner-scoped
+per-service enforcement and independent flow measurements for P1-A before
+claiming measured PSO allocation; use the current P1 fixture as the service
+integration anchor. All four mechanisms remain required in the full system.
 
 ## A complete service example
 

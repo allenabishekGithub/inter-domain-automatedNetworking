@@ -1,490 +1,256 @@
 # Implementation roadmap
 
-Build this as a sequence of AI DSO federation capabilities. Deterministic policy,
-graph, protocol, and controller-transaction nodes establish the first
-cross-domain service. Conditional LLM reasoning, swarm optimization, bargaining,
-and continual learning consume this validated state and never replace its safety
-gates.
+Build a complete **agentic AI networking system for independently owned
+packet–optical domains**. ACO, PSO, Nash bargaining, and continual learning are
+required in the final system and journal study. Implementation can proceed in
+stages; an intermediate stage is not a substitute for the agreed full scope.
 
-This document is an implementation and evaluation plan, not implementation
-evidence. For the Elsevier *Computer Networks* paper, prioritize the
-[research protocol requirements](domain-agent-architecture.md#research-protocol-requirements):
-agreements tied to network dependencies, evidence-grounded reasoning, and
-coordinated recovery across independent packet and optical owners. The
-[literature assessment](related-work-and-novelty.md) treats these as candidate
-contributions that still require comparison and validation. Swarm optimization
-and learning remain optional extensions rather than prerequisites for the core
-paper experiment.
+The [paper plan](paper-positioning.md) defines the contribution and the
+[coupled method](agentic-system-method.md) specifies the algorithmic roles.
+This roadmap is a plan, not evidence that the agents or optimizers exist.
 
 ## Planning and design priorities
 
-**Workspace decision, 22 September 2026:** the current VM is dedicated to
-planning, architecture, design review and optimization. Prepare specifications,
-design decisions and implementation plans here. Deployment, live network
-validation and research experiment execution belong in a separate testbed
-environment. Missing Containerlab, Open vSwitch, Mininet or Mininet-Optical on
-this VM is expected and is not a design-readiness issue. The
-[installation guide](installation.md) describes preparation of that testbed.
+The current VM remains a planning/design workspace. Deployment, emulation, and
+measured runs belong in a separate environment prepared with the
+[installation guide](installation.md). Missing lab dependencies here are expected.
 
-The immediate work is the following design sequence. The implementation phases
-later in this document describe subsequent delivery, not a requirement to
-deploy the stack on the planning VM.
+**Next deliverable: coupled ACO–PSO–Nash–learning design and evaluation fixtures.**
 
-1. **Freeze a coherent v1 scope.** Specify the `client-a` → `server-b` service,
-   the eight supported joint configurations, ownership boundaries and the
-   failure cases included in the first implementation. Separate provisioning
-   choices from repair actions. Reconcile capability descriptions and the
-   experimental scope, including what is deliberately unsupported or deferred.
-   Produce one versioned capability and scenario matrix shared by the
-   architecture, adapters and experiment plan.
-2. **Turn architectural prose into implementable contracts.** Define versioned
-   message schemas, service states and transitions, evidence freshness,
-   owner acceptance, deadlines, receipts and partial/unknown-outcome handling.
-   State exactly which preconditions, reservations and recovery operations each
-   controller adapter can enforce. A documented tool name is not evidence that
-   the underlying controller supplies its promised semantics.
-3. **Simplify the initial architecture.** Identify the minimum workflow for
-   intent → agreement → local execution → verification, including refusal and
-   unresolved outcomes. Exact enumeration is sufficient for the eight-candidate
-   fixture. Evaluate deferring Neo4j, vector retrieval, swarm methods and learning
-   until a specific research question requires them. Keep PostgreSQL as the
-   proposed authoritative store, and preserve ownership, revision and evidence
-   requirements when evaluating a smaller graph representation. Record the
-   trade-offs and update the affected phases if a simplification is selected;
-   these are design options, not an assertion that the broader stack below has
-   already been replaced.
-4. **Resolve findings at the design level.** For every open finding, record the
-   intended behavior, alternatives, selected approach, implementation dependency
-   and acceptance criteria. Link each decision to its F/C identifier in the
-   [known-issues register](known-issues.md). Distinguish a design decision from
-   an implemented fix and from a validated outcome. Define the checks here;
-   execute the required validation in the designated implementation/testbed
-   environment before closing the finding.
-5. **Produce an implementation sequence.** Break the agreed design into bounded
-   work packages with explicit interfaces, inputs, outputs, dependencies and
-   completion criteria. Map each package to the phases below and its relevant
-   findings. Distinguish design-review completion from implementation and
-   experimental acceptance, and specify the evidence each handoff must retain.
+**Recommended scope boundary:** the current design has enough potential research
+scope. Prioritize precise method rules, implementation, and evidence rather than
+additional algorithms or terminology. Keep the four mechanisms mandatory and
+collective intelligence as the organizing hypothesis; pilot-driven corrections
+and implementation refinements remain necessary. Use the
+[COMNET readiness assessment](paper-positioning.md#comnet-readiness-assessment)
+to track reviewer risks and the evidence still missing, without assuming that
+every method must outperform its comparator.
 
-**Next planned deliverable: v1 executable design specification.** This is a
-precise blueprint for implementation and validation in the designated
-environment. It should contain:
+1. Fix the network-service problem, objective units, owner policies, admission
+   rule, discrete choices, and continuous bandwidth variables.
+2. Define how ACO passes candidates to PSO, how owners evaluate the resulting
+   proposals, and when peer feedback triggers replanning. Specify consumed-input
+   traces, round caps, and the A8 fixed-proposal boundary.
+3. Specify the predictor, features, observed targets, incremental update,
+   bounded replay, promotion checks, and chronological evaluation.
+4. Define a richer allocation simulator, independently checked small instances,
+   and the bridge to the current packet–optical emulation.
+5. Freeze B0–B4, required component ablations, compute/query budgets, drift
+   sequences, metrics, and reproducibility artifacts, including E10/E11's
+   collective-intelligence comparisons. This framing adds no fifth algorithm.
 
-- A versioned service/capability scope and included/excluded scenario matrix.
-- Component boundaries, domain authority and the minimum workflow.
-- Message and tool schemas, state transitions and example exchanges, including
-  intents originating at each of the three domains.
-- Evidence, freshness, deadline and service-verification rules.
-- Controller capability limits, receipts, retries, partial application and
-  reconciliation behavior.
-- The [Containerlab Packet and Mininet-Optical MCP server designs](mcp-server-design.md),
-  including the separate Packet A, Packet B and Optical instance boundaries.
-- Design decisions mapped to the open findings and their acceptance criteria.
-- Ordered implementation packages, the validation-environment handoff and
-  separately identified optional research extensions.
-
-The specification is ready for implementation when its interfaces and outcomes
-are precise enough to implement without inventing protocol behavior, mandatory
-decisions are resolved or explicitly scoped out, and each claimed capability has
-a defined acceptance check. Design approval does not establish runtime behavior
-or close a finding that still requires implementation or validation evidence.
+Preserve one DSO per owner, separate local controller access, approved-topology
+replication, and verified service outcomes. Do not expand the current adapter's
+capabilities by naming an unsupported action. Policies, parameters, and stopping
+rules must be sufficiently precise that implementation does not invent the method.
 
 ## Implementation and validation follow-through
 
-Track the current fixture's consequential gaps in the
-[known issues and follow-up register](known-issues.md). Address F1–F5 before
-using automated fixture output as experiment evidence; carry F6–F10 and C1 into
-the controller-adapter and assurance phases. C2 and C3 cover the reproducible
-live run and documentation/scope alignment needed before freezing the study.
-The register separates reproduced local behavior from source-review risks and
-specifies the verification required to close each item.
+The [known-issues register](known-issues.md) remains the engineering acceptance
+checklist. Address F1–F5 before relying on fixture output; resolve relevant
+adapter/assurance issues F6–F10 and owner isolation C1 before live autonomous
+operations. Retain C2's reproducible run evidence and C3's scope checks. No
+documentation change closes a runtime finding.
 
 ```mermaid
 flowchart LR
-    P0[0. Contracts and lab] --> P1[1. Domain foundation]
-    P1 --> P2[2. Local Controller MCP]
-    P2 --> P3[3. A2A federation]
-    P3 --> P4[4. Deterministic service saga]
-    P4 --> P5[5. Closed-loop assurance]
-    P5 --> P6[6. RAG, GraphRAG, and safe LLM context]
-    P6 --> E[Core protocol and LLM comparison]
-    E -.-> P7[7. Optional optimization experiments]
-    P7 -.-> P8[8. Optional continual learning]
+    P0[0. Problem and resource simulator] --> P1[1. Owner agents and observations]
+    P1 --> P2[2. Local controller access]
+    P2 --> P3[3. Shared topology and peer evidence]
+    P3 --> P4[4. ACO and PSO candidates]
+    P4 --> P5[5. Nash agreement and service execution]
+    P5 --> P6[6. Grounded diagnosis and assurance]
+    P6 --> P7[7. Continual predictor learning]
+    P7 --> P8[8. Full-system and ablation evaluation]
 ```
+
+All phases are required for the full research result. Test doubles and temporary
+deterministic choices enable incremental development but must be labeled as such.
 
 ## Technology baseline
 
-Use one deployable AI DSO service per domain. Python is a practical initial
-language because the data plane in this repository is written in it, and
-because it supports Pydantic contracts, FastAPI APIs, LangGraph, data-science
-tooling, and the official Neo4j GraphRAG package.
+Use one persistent domain runtime per owner with durable local state, scoped
+controller adapters, and peer evidence exchange. LangGraph is the proposed
+workflow engine; PostgreSQL is the authoritative local store. Neo4j and pgvector
+support graph/document retrieval when their use is justified by the task.
+These implementation choices are not novelty claims.
 
-Each domain has this local stack:
+Use the existing SR Linux packet and Mininet-Optical data plane for emulated
+service integration. ACO/PSO and learner libraries, versions, seeds, and numerical
+precision must be pinned. Start with explicit reproducible implementations or
+well-specified library configurations, not opaque optimization prompts.
 
-```text
-Domain Agent Runtime: FastAPI + LangGraph + A2A server/client + MCP client
-PostgreSQL + pgvector: source of truth, service state, audit, RAG
-Neo4j: GraphRAG projection
-TimescaleDB or partitioned PostgreSQL: telemetry
-Controller MCP Server: adapter over that domain's SDN controller
-```
+## Phase 0 — problem definition and resource simulator
 
-In the separate implementation/validation environment, run three copies of the
-stack with Docker Compose or a small Kubernetes deployment. Give each copy
-separate database credentials, controller identity, and network namespace. A
-shared development CA can issue the three local mTLS identities; production
-uses each operator's own identity provider and trust policy.
+Define distinct packet/optical owners, service classes, cost/risk models,
+bandwidth units, capacity constraints, discrete paths/channels, and disagreement
+values. Build a required richer simulator with multiple demands sharing resource
+bottlenecks, more alternatives than the eight-configuration fixture, and
+chronological demand/quality changes.
 
-Use this repository's [packet–optical data plane](data-plane.md) and its
-`packet-network` and `optical-network` components, deployed with
-`sudo scripts/service-up.sh`.
-Keep its Containerlab topology, SR Linux configuration, Mininet-Optical line,
-bridge attachments, endpoint addresses, and initial UDP profile. Pin the
-repository commit and the installed optical dependencies. Its operations are
-already scoped per domain; giving each domain its own credentials, journal and
-endpoint binding is still to do, and creating three DSO containers alone does
-not provide controller isolation.
+Implement independent feasibility and utility checkers. On tiny cases enumerate
+discrete alternatives and solve the continuous subproblem exactly or to a
+reported bound where tractable. Expose only permitted observations to agents;
+keep ground-truth fault labels and future demand private to the evaluator.
 
-## Phase 0 — contracts and laboratory model
+**Exit:** simulator cases distinguish path selection, allocation, owner conflict,
+and prediction error. They include infeasible requests and no-repair outcomes.
+Simulator measurements are not presented as physical-network performance.
 
-Define versioned Pydantic/JSON Schema models before building services:
+## Phase 1 — owner agents and observations
 
-- Domain, node, interface, link, configuration, service attachment, and graph
-  digest records.
-- A2A artifact payloads for topology, service contracts, reservations,
-  verification, swarm signals, and learning releases.
-- MCP tool input/output models and durable controller receipt models.
-- Intent, QoS budget, cost quote, utility, candidate, and rollback models.
+Run three copies of the domain runtime with separate identities, policies,
+inventories, stores, and credentials. Define structured intent intake from any
+owner, catalogued local/peer evidence requests, bounded reasoning proposals,
+and per-episode budgets.
 
-Bind the agreement to the intent/contract revision, participant set, candidate
-digest, topology/configuration dependencies, evidence windows, policy versions,
-reservation conditions, coordination epoch, and operation idempotency keys.
-Define local versus aggregate service states, including unknown, partially
-applied, compensating, degraded, and unresolved outcomes. Record which controller
-primitives can enforce execution preconditions and which only approximate them.
-
-State the failure model and disclosure assumptions: cooperating authenticated
-owners, eventual topology replication, complete approved-topology sharing, and
-delayed, duplicated, reordered, or lost messages. Specify restart persistence,
-clock/lease assumptions, and peer rules for replacing a coordinator. Select the
-properties to check before designing fault experiments.
-
-Derive the deterministic fixture from the selected reference manifests: four
-routers per packet domain, two packet paths per domain, two optical terminals,
-four ROADMs, and two selectable wavelengths. Preserve the bridge/edge attachments and
-`client-a`/`server-b` addresses. Supply fixtures for healthy operation, Packet A
-failure, optical unavailability or modeled QoT degradation, Packet B failure,
-and a stale topology revision. An optical failure has no alternate optical route
-in this fixture. Additional resource options require a separately labeled extension.
-
-**Exit criterion:** Message structure and canonical digests are validated by
-schema checks; authorization, feasibility, and state-transition rules have
-separate specifications. Schema validation alone does not establish correctness.
-
-## Phase 1 — independent domain foundations
-
-Create three DSO services: `packet-a-dso`, `optical-dso`, and `packet-b-dso`.
-Each gets its own PostgreSQL database, database migrations, immutable audit
-journal, outbox/inbox tables, and configuration for its own domain identity.
-
-Implement local topology/configuration ingestion from the pinned reference
-topology and configuration fixtures first.
-Materialize the records into PostgreSQL and Neo4j, preserving source domain,
-revision, digest, expiry, and ownership. Do not use an LLM in this phase.
-
-**Exit criterion:** Each DSO restarts without losing its own state and can
-rebuild its local GraphRAG projection from PostgreSQL records.
+**Exit:** each agent makes and journals its own decisions; another owner cannot
+authorize its resources. A fixed diagnostic workflow and deterministic rules
+are available as comparators, not merely weaker error-prone scripts.
 
 ## Phase 2 — local Controller MCP Server and transaction safety
 
-Build two Controller MCP Server implementations:
-**Containerlab Packet MCP** and **Mininet-Optical MCP**. Deploy the packet
-implementation twice, as `packet-a-mcp` and `packet-b-mcp`, and the optical
-implementation once, as `optical-mcp`. This preserves one endpoint per domain;
-the two packet owners share implementation code, not unrestricted authority.
-The [MCP server design](mcp-server-design.md) specifies their scope, backend
-mapping, target tools and design handoff.
+Implement the two [MCP server types](mcp-server-design.md) as three independently
+scoped instances: Packet A, Optical, Packet B. Wrap existing gNMI/optical adapters.
+Expose only supported observations and named local actions. Readback and fresh
+receiver evidence determine success; an API acknowledgement does not.
 
-Begin with fake controllers for protocol tests, using the same inventory and
-capability limits. Then put the packet package's gNMI operations and the
-Mininet-Optical HTTP API behind their respective scoped adapters. Give
-the two packet instances separate router credentials, inventory allowlists,
-journals, and endpoint bindings; enforce ownership below the MCP tool layer.
-The data plane's own scoping check runs in the caller, so it guards against a
-mistake rather than against a peer, and an adapter must not treat it as the
-authorization boundary.
-Exclude global deploy/destroy/configure-all and bridge lifecycle operations from
-runtime domain tools. Keep these operations in trusted lab bootstrap.
+Keep handling of failed/partial actions, retries, and cleanup explicit in the
+implementation. Do not advertise guarantees the adapter cannot enforce.
 
-Wrap each domain's named backup-path action as a local typed MCP tool, and add
-the transaction semantics the data plane does not have: durable receipts,
-idempotency keys, prepare/commit/rollback and conditional acceptance. Sender
-control in Packet A and receiver control in Packet B are already separate; keep
-them that way, or explicitly keep a fixed measurement flow in the experiment
-driver. A per-instance receipt store is fine; DSO PostgreSQL remains the
-domain's orchestration source of truth.
-The optical API provides observation and configuration/retuning of the one
-lightpath onto channel 1 or 2, not the complete reservation/transaction sequence
-below; advertise that limitation and implement durable adapter receipts before
-relying on them.
+**Allocation work required for emulated PSO claims:** add per-service packet
+shaping/scheduling and identifiers, optical-capacity accounting, readback, and
+independent simultaneous-flow measurements. Validate capacity contention and
+isolation. If this work is not completed, report continuous-allocation results
+only in the simulator; sender offered-rate changes do not demonstrate allocation.
 
-Implement this transaction sequence:
+**Exit:** owner-scoped observations/actions work in the declared profile, healthy
+optical retention avoids resets, and unsupported features are reported honestly.
 
-```text
-get_topology / get_telemetry
-→ validate_change
-→ reserve_resources
-→ prepare_change
-→ commit_change
-→ verify_change
-→ rollback_change or release_reservation
-```
+## Phase 3 — shared topology and peer evidence
 
-Every mutating MCP request must include domain ID, correlation ID, candidate
-digest, graph/contract revision, expected resource/configuration conditions,
-reservation reference, coordination epoch, idempotency key, expiry, and caller
-identity. Persist distinct acceptance and application receipts. Add
-`get_transaction` to reconcile a lost response without blindly repeating a write.
+Implement approved-topology replication and owner-attributed evidence exchange
+using established A2A facilities. Peers exchange resource availability, feasible
+candidates, constraints, utility gains, and verified outcomes; each retains local
+controller authority. Define stale/missing-observation behavior without assuming
+instantaneous global knowledge.
 
-Enforce preconditions at controller acceptance or through an equivalent protected
-reservation, not only through an earlier DSO read. If the real adapter lacks this
-primitive, retain that limitation in the capability profile and experiments.
+**Exit:** each agent constructs the same required cross-domain dependencies and
+can request observations from the owning peer. Full topology sharing is explicit.
+Peer observations retain owner/time attribution and can be linked to the
+receiving decision; message delivery alone is not a successful reasoning step.
 
-**Exit criterion:** Retries do not duplicate effects; altered payloads cannot
-reuse a key; superseded epochs and invalid resource conditions are rejected.
-Inject a change between validation and acceptance. Demonstrate receipt
-reconciliation and both successful and failed compensation; unresolved outcomes
-survive restart instead of being reported as a restored before-state.
+## Phase 4 — required ACO and PSO
 
-## Phase 3 — A2A topology federation
+Implement bounded ACO discrete exploration and PSO continuous allocations as
+separate subroutines within the existing swarm workflow. Use the
+[coupled method](agentic-system-method.md) for variables and constraints.
+Preserve diverse feasible path/allocation candidates; numerical search must not
+invent new adapter capabilities.
 
-Implement Agent Cards, mTLS authentication, A2A task/context correlation, and
-the `topology-federation/v1` extension. Build snapshot, digest, delta, ACK,
-tombstone, stale-record, and resynchronization flows. Use an inbox table for
-deduplication and an outbox worker for retryable sending.
+Log seeds, particle/scout counts, iterations, objective evaluations, feasibility
+rejections, wall time, and candidate quality. Add constrained K-shortest search,
+a non-swarm continuous allocator, and small-instance reference solutions now.
 
-```mermaid
-sequenceDiagram
-    participant A as Packet A DSO
-    participant O as Optical DSO
-    participant B as Packet B DSO
-    A->>O: Agent Card and topology digest
-    O-->>A: Missing signed records
-    A->>A: Verify and materialize graph revision
-    O->>B: Agent Card and topology digest
-    B-->>O: Missing signed records
-    A->>B: Direct mesh synchronization
-```
+**Exit:** both methods affect candidate construction on suitable workloads.
+Matched-budget ACO and PSO ablations execute, even if their eventual result is
+negative. Running PSO on a meaningless discrete index does not satisfy this phase.
 
-**Exit criterion:** All three DSOs converge on the same graph digest after a
-snapshot and after a node, link, or configuration delta. Wrong-owner, replayed,
-expired, and malformed records are rejected.
+## Phase 5 — required Nash bargaining and service execution
 
-Also test delayed/out-of-order advertisements, tombstones, owner restart, a
-cross-domain link with inconsistent endpoint advertisements, and Neo4j projection
-lag. Equal digests identify equal replicas at an observed point; they do not
-establish that no newer remote state exists. No service mutation may rely solely
-on an expired or unverified remote dependency.
+Each owner evaluates the candidate's benefit, resource/opportunity cost, and
+predicted disruption against its own disagreement value. Exchange the agreed
+candidate-specific gains and select a feasible positive-gain agreement using the
+fixed weighted Nash objective. Preserve refusal when no agreement exists.
 
-## Phase 4 — deterministic cross-domain service saga
+Execute only owner-approved local actions, retain unchanged healthy segments,
+and independently verify the end-to-end service. Provide an owner-respecting
+greedy selector for the no-Nash ablation.
 
-Implement the service lifecycle LangGraph without model-driven reasoning. It
-receives a structured intent, loads the synchronized graph, derives QoS budgets,
-enumerates known candidates, validates feasibility, exchanges A2A service
-contract artifacts, reserves through local MCP servers, commits, and verifies.
+**Exit:** heterogeneous preferences lead to meaningful agreement trade-offs.
+Every accepted service meets the declared feasibility and consent conditions.
+Nash objective values, per-owner gains, and actual delivery are reported separately.
+Implement A8's fixed proposal exchange alongside adaptive counteroffer-driven
+revision. Preserve numerical utility queries, current validation, consent, and
+learning between episodes in A8; use one total search budget in both conditions.
 
-Use a distributed saga, not a cross-database transaction. Each DSO owns its
-reservation and compensating rollback. The initiating DSO coordinates one
-correlation ID but cannot issue a peer controller call.
+## Phase 6 — grounded agent reasoning and assurance
 
-**Exit criterion:** Demonstrate all of these cases in the simulator:
+Implement the adaptive observation/diagnosis loop using the two online LLM nodes
+and deterministic dispatch. Ground requests in available evidence, missing facts,
+supported actions, current optimizer/learner state, and peer feedback. Model
+output can request evidence or propose replanning but does not compute an
+authoritative allocation or override an owner.
 
-- Successful three-domain provisioning and endpoint verification.
-- A remote policy rejection with no controller change.
-- Reservation expiry and clean release.
-- Partial application followed by supported compensation or an explicit unresolved state.
-- Rejection of a plan based on a stale graph or contract revision.
-- Lost commit acknowledgements followed by receipt reconciliation and no duplicate effects.
-- A failed compensation and a DSO restart while a recovery task is pending.
+Demonstrate receiver-triggered packet diagnosis and repair, plus honest optical
+failure when no route exists. Resolve stale receiver evidence and optical
+no-op reset issues before treating a demonstration as experimental evidence.
 
-## Phase 5 — closed-loop assurance
+**Exit:** traces connect observations and peer constraints to changed queries,
+ACO/PSO replanning, supported offers, or deferral. Timeouts and invalid model
+outputs have bounded fallbacks. Explanation-only output is insufficient.
 
-Add periodic and event-driven assurance workflows. Normalize packet, optical,
-controller, and endpoint observations into typed evidence bound to graph and
-configuration revisions. Implement health evaluation, incident deduplication,
-impact analysis, a short-lived coordination lease, cooldowns, hysteresis, and
-action-rate limits. Bind incident coordination to durable epochs and require
-controller-side rejection of superseded requests. Specify how participants grant
-and replace a coordinator; a timeout lease alone is not evidence of exclusion.
+## Phase 7 — required continual learning
 
-The initial recovery catalogue contains each packet domain's named
-backup-path action and its return to primary, with the compensation each
-supports. Packet QoS-profile mutation and optical rerouting
-are not baseline actions. Route shared-service repairs through the Phase 4 saga;
-unchanged participants validate and retain their segments. An optical cut must
-exercise detection, refusal/escalation, and reconciliation after fault repair.
+Implement incremental domain-local QoS/disruption predictors with bounded replay,
+past-only validation, release versions, and bounded promotion. Use completed
+service outcomes, not unverified model narratives. Updated predictions must
+reach future ACO heuristics, PSO scoring, and utility estimates.
 
-**Exit criterion:** Inject Packet A, Optical, Packet B, joint, stale-state, and
-agent-outage scenarios. Record SLA violation duration, recovery success,
-rollback success, and conflicting-action prevention.
+Keep base LLM weights and prompts fixed unless a separate declared experiment
+changes them. Freeze update rules, not the evolving predictor state. A learning
+release cannot weaken a hard constraint or automatically rewrite owner values.
 
-Include simultaneous alarms, a partitioned old coordinator, and reconnection
-after expiry. Define which independent local protection actions remain permitted
-while a new shared-service change waits for required peer acknowledgements.
-Treat exclusion and progress as separate properties with explicit assumptions.
+**Exit:** parameters genuinely change across episodes, prediction changes are
+traceable to service decisions, and both frozen-predictor and memory-only
+comparators run. Measure adaptation and forgetting on demand/quality shifts
+and recurrence of earlier conditions. Logging incidents alone is insufficient.
+Connect verified joint outcomes to local updates and later proposals. Model
+parameters need not be shared to test learning-assisted collective decisions.
 
-## Phase 6 — RAG and GraphRAG
+## Phase 8 — integrated experiments and reproducible results
 
-Populate `pgvector` with authorized runbooks, policies, controller-tool
-documentation, approved change records, incident reports, and learning releases.
-Materialize the topology/service/evidence knowledge graph in Neo4j. Add the
-`rag_context_retrieval`, `graphrag_subgraph_retrieval`, and
-`retrieval_grounding_gate` LangGraph nodes. Add the shared
-`reasoning_context_assembly` node before any conditional LLM call.
+Execute the full system, B1–B4 comparators, component ablations, and prespecified
+interaction studies. Freeze code, initial states, model versions, numerical
+settings, scenario streams, and analysis before confirmatory runs.
+Use whole independent streams for learning uncertainty estimates.
+Run E10's equal-information replay and closed-loop trials, then E11's adaptive/
+fixed feedback × continual/frozen predictor comparison, reusing E06/E09 controls.
+Include cases where feedback is redundant, unnecessary, or cannot find agreement.
 
-Require every retrieved context item to carry provenance, authorization scope,
-source digest, and relevant graph/configuration revision. Evaluate retrieval on
-a fixed set of operational questions before it affects explanations or candidate
-ranking. The assembled LLM context must include the canonical intent or event,
-fresh evidence, feasible candidate set, peer state, hard constraints, and
-node-specific response schema. The LLM cannot call MCP or introduce a candidate.
-
-Record absent/conflicting evidence rather than assuming perfect context.
-Connect retrieved revisions and evidence IDs to the candidate and execution
-preconditions. Compare the same protocol with LLM nodes disabled; a benefit caused
-only by controller checks must be attributed to those checks rather than to AI.
-
-**Exit criterion:** The agent can answer bounded topology-impact and procedure
-questions with traceable sources, and the grounding gate rejects stale or
-unsupported context. An LLM timeout or invalid response follows a deterministic
-fallback without blocking the closed loop.
-
-Required protocol dependencies may still block the dependent change. An LLM
-fallback does not bypass missing evidence or permit an unapproved operation.
-
-## Phase 7 — optional swarm and bargaining comparisons
-
-Add bounded ACO scouts over the federated graph. Start with a fixed number of
-paths and fixed quality weights. Feed verified path outcomes into time-decaying
-quality/pheromone signals. Add PSO only for clearly continuous choices such as
-bandwidth allocation or queue-share tuning.
-
-Next, calculate each domain's local utility, disagreement value, and cost quote.
-Extend the existing offer, counteroffer, acceptance, and rejection protocol using the
-`service-contract/v1` A2A extension. Select an agreement only after feasibility,
-budget, individual-rationality, and matching-signature checks; weighted Nash
-bargaining ranks the admissible contracts.
-
-For the cooperative prototype, disclose signed candidate-specific utility gains,
-model versions, and agreed normalization/weights; retain underlying coefficients
-locally. Record the information disclosed and assume neither truthful strategic
-behavior nor zero economic leakage. Define no-agreement and score tie-break
-outcomes. Keep the numerical game-theory calculation independent of LLM calls.
-
-**Exit criterion:** Compare constrained K-shortest candidate search with ACO
-under matched compute budgets and repeated seeds. Compare greedy acceptance with
-Nash selection over the same feasible candidates. Use a tractable exact solver
-on small instances to measure search gaps. Report service outcomes, cost,
-negotiation rounds, utility gains, and overhead without conflating search and
-bargaining effects.
-
-## Phase 8 — optional continual learning
-
-Make terminal decision traces the only input to the asynchronous learning graph.
-Implement comparable-trace retrieval, novelty/provenance gates, offline replay
-or digital-twin evaluation, promotion, release, and revocation. Start with L0
-observational findings, then L1 shadow ranking. Introduce L2 only after review
-and reproducible replay evidence.
-
-**Exit criterion:** A learning release is versioned, scoped to topology and
-configuration revisions, reproducible from retained traces, and automatically
-ignored when stale or revoked.
-
-Compare fixed policies with each permitted learning level on held-out scenarios.
-Separate incident-memory retrieval from parameter updates and model training.
-The deployment is a federation of domains; federated model training is a
-different mechanism and is not implied.
+**Exit:** results separate simulation from emulation, quantify overhead and
+negative outcomes, and explain whether each method earns its complexity.
+No positive result or journal acceptance is assumed.
 
 ## Recommended first demonstration
 
-First exercise the protocol in P0 using fixtures derived from the reference
-topology. Then demonstrate P1 on the same Containerlab SR Linux and
-Mininet-Optical data plane, without physical network hardware or a paid model
-requirement. Use one `client-a` → `server-b` intent, A2A graph convergence, owner
-acceptances, supported local transactions, fresh receiver verification, and a
-primary packet-path fault followed by its named backup action. Record a complete
-trace. Include an optical failure that correctly reports unavailable restoration.
-Capability gaps discovered in P0 must remain explicit until verified in P1.
+First run all four mechanisms on a small but nontrivial allocation/learning
+sequence in the simulator. Then integrate the three DSOs with the existing UDP
+fixture: establish service, detect degradation, select evidence, choose a
+supported packet response, agree, execute locally, and verify receiver delivery.
+
+The current fixture is an integration checkpoint; it cannot replace required
+allocation and learning experiments. Introduce the richer emulated allocation
+profile only after its actual enforcement and measurement have been validated.
+See the [paper demonstration sequence](paper-positioning.md#5-implement-one-complete-agentic-demonstration-first).
 
 ## Journal evaluation plan
 
-The [detailed experimental validation plan](experimental-validation.md) expands
-this summary into testbed specifications, nine experiment families, procedures,
-independent outcome checks, statistical analysis, and reproducibility requirements.
-Use that plan to define and freeze the final study configuration before runs.
+Use the [detailed plan](experimental-validation.md) as the single experiment
+definition. The required contrasts are:
 
-Use this plan to test the candidate contributions. It does not promise favorable
-results. The initial demonstration establishes feasibility; the journal study
-must explain what the proposed mechanisms add beyond existing orchestration.
-
-### Baselines and ablations
-
-| Comparison | Controlled variables and research question |
+| Contrast | Required evidence |
 | --- | --- |
-| Same federation with all three LLM nodes disabled | Keep graph, evidence, protocol, candidates, tools, and policies matched. Which tasks benefit from generative reasoning? |
-| Central ACTN-style orchestrator | Match information, resources, algorithms, and failure scenarios. What does federation change in service outcomes, delay, availability, and overhead? |
-| Established distributed orchestration | Compare a reproducible implementation or clearly labeled adaptation of relevant prior work. Do not label an inspired baseline as an exact reproduction. |
-| Conventional multi-agent LLM workflow | Match tools, evidence, and model budget. Does selective reasoning improve cost or task completion? |
-| Document RAG, graph retrieval, and graph retrieval with freshness/dependency checks | Separate diagnosis/recommendation quality from rejection of invalid actions by the controller. |
-| Whole-graph versus dependency-scoped invalidation | Later protocol refinement: measure unnecessary renegotiations and verify that the dependency set is complete before accepting unrelated changes. |
-| K-shortest versus ACO; greedy versus Nash | Separate search quality from agreement quality; use matched candidate sets or computational budgets as appropriate. |
-| Fixed policies versus learning | Optional held-out evaluation with explicit regression and promotion criteria. |
+| Full B0 vs B1 | Generative reasoning's incremental effect with ACO/PSO/Nash/learning held present. |
+| B0 vs B2/B3/B4 | Decision placement, adaptive observation selection, and complexity versus a simpler competent system. |
+| ACO vs conventional search | Candidate quality and overhead under matched objective evaluations. |
+| PSO vs constrained non-swarm allocation | Allocation quality and cost over identical discrete candidates. |
+| Nash vs owner-respecting greedy selection | Per-owner gains, agreement outcomes, and service trade-offs over identical candidates. |
+| Continual vs frozen and memory-only predictors | Prequential prediction/service performance, adaptation, forgetting, and update cost. |
+| ACO × PSO; learning × bargaining | Whether coupling matters beyond isolated component effects. |
+| B0 vs A8, with B2 context (E10/E09) | Value of post-proposal peer feedback under equal-information replay and matched-budget service trials; all owner checks remain. |
+| Adaptive/fixed feedback × continual/frozen predictors (E11) | Whether learning changes later collective decisions and whether the feedback × learning interaction is useful; reuse memory-only A5. |
 
-For the first paper, prioritize the same-protocol/no-LLM comparison, a meaningful
-orchestration baseline, and fault experiments for the proposed execution protocol.
-Add optimization and learning claims only when their separate comparisons justify
-them. New controller protection is itself a protocol variable; evaluate it with
-and without LLM advice to avoid attributing its effects to the model.
-
-### Experiment matrix and measurements
-
-Begin with the exact three-domain reference data plane and its one shared UDP
-flow. Multiple pending intents exercise control contention, not independent
-service isolation. Additional nodes, optical paths, or simultaneous isolated
-services belong to separately identified simulator or data-plane extensions.
-Within those declared profiles, vary domains, nodes per domain,
-concurrent intents, load, advertisement delay, controller delay, and change rate.
-Counts such as 5, 10, and 20 domains are proposed experiment points, not claimed
-supported scale. Record whether packet forwarding is emulated, optical behavior
-is simulated, or actual equipment is measured. State optical feasibility limits.
-
-| Scenario family | Measurements |
-| --- | --- |
-| Admission and healthy operation | Verified service success, rejection causes, provisioning latency, resource cost, and per-domain utility gains. |
-| Optical impairment, packet congestion, and simultaneous incidents | SLA violation duration, recovery success and latency, action conflicts, and regressions in unaffected services. |
-| Stale replicas, projection lag, and changes between validation and acceptance | Invalidated decisions, rejected stale operations, unnecessary renegotiations, and unsupported recommendations. |
-| Lost/duplicate messages, partial commits, failed compensation, and restart | Duplicate effects, leaked reservations, unresolved transactions, reconciliation time, and durable recovery continuity. |
-| Partitions and coordinator replacement | Conflicting writers, epoch rejections, actions deferred for missing approval, and progress after reconnection. |
-| Incorrect or unavailable LLM output | Fallback outcome, diagnosis quality, model calls/tokens/cost, and end-to-end completion. |
-| Scaling and repeated state changes | A2A messages/bytes, replica lag/storage, graph queries, controller calls, CPU/memory, and tail latency. |
-
-Use paired traffic/failure traces, repeated runs, reported random seeds, confidence
-intervals, and recorded model/prompt/tool versions. Publish measured median and
-tail behavior; do not infer tail reliability from too few samples. Preserve raw
-outcome classifications, including failed or unresolved trials.
-
-### Claim readiness
-
-| Candidate claim | Evidence required before using it in the paper |
-| --- | --- |
-| Execution respects local authorization and state dependencies | Specified invariants and controller capabilities, protocol analysis/model checking where appropriate, and injected race/failure tests. |
-| Evidence-grounded reasoning improves decisions | Matched retrieval and no-LLM comparisons showing an attributable effect. |
-| Recovery is coordinated across owners | Explicit epoch/replacement rules plus concurrent-incident, partition, partial-completion, and restart experiments. |
-| Economic allocation improves | Defined units, disclosed inputs, disagreement outcomes, fairness measures, and comparison with simpler selection. |
-| Swarm or learning is beneficial | Separate improvements under fair budgets and held-out cases, including overhead and regressions. |
-
-State assumptions for every guarantee. Zero failures in a finite experiment is
-not a proof; a model-checked property applies only within the modeled semantics.
-Compare the final protocol in detail with NSI, SENSE, ACTN, and consistent network
-updates, then refresh the closest papers before submission. Full topology privacy,
-atomic physical activation, and automatic strategy-proofness are not claimed.
+Basic owner access checks and observed failure reporting remain necessary
+engineering. Byzantine tolerance, coordinator failover, wire-message proofs,
+and transaction-race campaigns are not this paper's research programme.
