@@ -37,7 +37,7 @@ evidence continue to travel over A2A.
 
 ## Observation support for the agentic decision loop
 
-The [adaptive decision loop](docs/old/domain-agent-architecture.md#adaptive-agent-decision-loop)
+The adaptive decision loop
 requires a versioned catalogue of permitted read/validate operations, separate
 from mutation candidates. Entries specify tool ID, owning domain, typed bounded
 parameters, returned evidence schema, freshness, and query cost/budget accounting.
@@ -60,7 +60,7 @@ the same authorized observation/action capabilities and declared query budgets.
 ## Required allocation support for the full system
 
 ACO, PSO, Nash bargaining, and continual learning are all required by the
-[coupled method](docs/old/agentic-system-method.md). The current tools cannot enforce
+coupled method. The current tools cannot enforce
 PSO's continuous per-service bandwidth allocations. Implement the resource
 simulator first; measured allocation claims additionally require owner-scoped
 service classification, packet shaping/scheduling, capacity accounting, readback,
@@ -179,7 +179,7 @@ credentials and execution paths must enforce it too.
    transitions and acceptance cases before choosing server SDK/transport details.
 3. Plan the Containerlab and Mininet-Optical adapters as separate implementation
    packages, reusing schema/receipt code without sharing cross-domain authority.
-4. Cover the [known findings](docs/old/known-issues.md): F2/F3/F4/F6/F10 for packet
+4. Cover the [known findings](known-issues.md): F2/F3/F4/F6/F10 for packet
    observation/actions; F7/F8 for optical changes/evidence; F1/F5/F9 for the
    administrative lifecycle; C1 for authorization and C2 for retained evidence.
 5. Validate in the designated testbed: wrong-domain denial, supported and
@@ -188,6 +188,6 @@ credentials and execution paths must enforce it too.
    MCP success and preserve outcomes after server restart.
 
 This supplies the backend-specific design for
-[roadmap Phase 2](docs/old/implementation-roadmap.md#phase-2--local-controller-mcp-server-and-transaction-safety)
-and the [local controller contract](docs/old/domain-agent-architecture.md#local-sdn-controller-mcp-servers).
+roadmap Phase 2
+and the local controller contract.
 Server implementation and live validation remain future work.

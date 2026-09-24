@@ -55,7 +55,7 @@ Everything Paper 1 builds, plus **Phase 5**:
 
 | Section | Why it matters here |
 | --- | --- |
-| [design §6.9](../docs/design.md) | The node taxonomy: 14 reasoning, 6 gates, 5 effectors — and why the gates can never be a model call |
+| [design §6.9](../paper-1-federated-evidence/design.md) | The node taxonomy: 14 reasoning, 6 gates, 5 effectors — and why the gates can never be a model call |
 | §10 | The reasoning engine: what it decides, the contract, the grounding gate, the boundaries |
 | §11.1–11.2 | The SIMAP and the four traversal directions that ground retrieval |
 | §11.8–11.9 | Retrieval modes, and what each decision point retrieves |

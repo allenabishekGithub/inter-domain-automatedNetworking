@@ -4,7 +4,7 @@ A four-ROADM optical network, emulated with Mininet-Optical, carrying one
 channel between the two [packet domains](../packet-network). It is the only
 path between them.
 
-The [optical domain agent](../docs/design.md) will wrap this package's control
+The [optical domain agent](../paper-1-federated-evidence/design.md) will wrap this package's control
 API as its controller adapter. The agent is not implemented; the commands below
 remain the current lab interface.
 

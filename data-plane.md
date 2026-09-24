@@ -17,10 +17,10 @@ references; this document is the specification the experiments pin against.
 and are tested. The DSO federation above it — A2A, signed contracts, per-domain
 Controller MCP servers, ACO/PSO optimization, Nash bargaining, and continual
 predictor learning — does not, and is the work in the
-[implementation roadmap](docs/old/implementation-roadmap.md). Nothing here supplies
+implementation roadmap. Nothing here supplies
 those mechanisms.
 
-The [known issues and follow-up register](docs/old/known-issues.md) qualifies the current
+The [known issues and follow-up register](known-issues.md) qualifies the current
 implementation: unit tests pass, but lifecycle handling, recovery, telemetry and
 service verification have open findings. Its assessment did not run a live lab.
 Consult the register before relying on CLI success, optical `configured` status
@@ -189,7 +189,7 @@ tooling cannot address Packet B's four routers. The optical line is a single
 owner with its own control API.
 
 That scoping is a correctness guard, not an isolation boundary, and the
-distinction matters for [E01](docs/old/experimental-validation.md#e01--domain-authority-identities-and-controller-boundaries).
+distinction matters for E01.
 Both packet domains are emulated on one host, addressed through one management
 subnet, and reached with one set of device credentials; the emulation host's
 container runtime is root-equivalent and is required by anything that drives
@@ -202,7 +202,7 @@ item.
 The device interface is gNMI on port **57400**; the optical control API is
 HTTP on **8080**, bound to loopback. There are no other network services: the
 per-domain Controller MCP servers, their typed transaction tools and their
-authorization are [Phase 2](docs/old/implementation-roadmap.md#phase-2--local-controller-mcp-server-and-transaction-safety)
+authorization are Phase 2
 work, and this data plane is what they will wrap.
 
 A trusted **lab bootstrap** — `scripts/service-up.sh` — creates the shared
@@ -292,13 +292,13 @@ The topology offers **two packet path options per packet domain and two
 wavelengths**, so eight joint configurations, and current conditions can reduce
 that further. Exact enumeration is the search baseline here.
 
-That is enough for the [bargaining mechanism](docs/old/domain-agent-architecture.md#game-theoretic-coordination)
+That is enough for the bargaining mechanism
 to be exercised rather than merely described: every participant has a real
 choice, the optical contribution is no longer a constant, and a counteroffer
 has somewhere to go. It is **not** enough to establish a search advantage — eight
 candidates are exhaustively enumerable, so there is no better feasible optimum
 for ACO to discover than a complete exact search under the same objective, and
-[swarm search](docs/old/domain-agent-architecture.md#swarm-optimization-layer) needs a
+swarm search needs a
 separately labelled larger fixture before its contribution can be measured.
 
 Two limits to state wherever results are reported. Both wavelengths ride the
@@ -307,7 +307,7 @@ spectrum contention. Multiple flows can compete for modeled or enforced transpor
 capacity without pretending the present optical line supports simultaneous
 wavelength allocation.
 
-For the revised journal scope, the [richer allocation and learning profile](docs/old/agentic-system-method.md)
+For the revised journal scope, the richer allocation and learning profile
 is required: meaningful continuous bandwidth decisions, diverse discrete
 candidates, competing service demands, and chronological condition changes.
 Build those studies in P0 and label them as simulation. Add owner-scoped
@@ -348,8 +348,8 @@ Packet A repairs its own routes through its own controller; Optical and Packet
 B retain their existing forwarding when no local change is needed. Participation
 does not require an artificial configuration write in every domain.
 
-See the [implementation roadmap](docs/old/implementation-roadmap.md) for the adapter and
-federation work, and the [experimental validation plan](docs/old/experimental-validation.md)
+See the implementation roadmap for the adapter and
+federation work, and the experimental validation plan
 for how this fixture is used and what it cannot evidence. The 57-node DSO
 design is unchanged by any of it; the capabilities above determine which
 workflow branches can actually execute.

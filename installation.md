@@ -6,7 +6,7 @@ plane needs it, and how to prove it worked before moving on.
 
 **Environment scope:** these instructions prepare a deployment and validation
 host. A machine used only for design work does not need this emulation stack.
-See the [build phases](docs/plan.md#8-build-phases) for what runs where; Phase 0
+See the [build phases](paper-1-federated-evidence/plan.md#8-build-phases) for what runs where; Phase 0
 onward needs a host prepared as below.
 
 Three upstream projects need small local edits to build on Ubuntu 24.04. Those

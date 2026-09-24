@@ -8,7 +8,7 @@ implemented capabilities, measured improvements, formal guarantees, or acceptanc
 by the journal.
 
 The original catalogue maps 40 relevant paper records and eight networking
-specifications or drafts to the [proposed architecture](docs/old/domain-agent-architecture.md). Some records
+specifications or drafts to the proposed architecture. Some records
 belong to the same research family; they are not 40 independent implementations.
 Supplemental mechanism and conceptual references below do not change that count.
 The most important finding is that the broad combination of domain agents,
@@ -16,10 +16,10 @@ distributed orchestration, negotiation, retrieval, controller tools, and closed
 loops already has substantial precedent. The architecture needs a more precise
 networking contribution to support a strong novelty claim.
 
-The recommendations are carried into the [five paper priorities](docs/old/paper-positioning.md),
-[adaptive agent decision loop](docs/old/domain-agent-architecture.md#adaptive-agent-decision-loop),
-[existing-node responsibilities](docs/old/langgraph-node-catalog.md#research-requirements-mapped-to-existing-nodes),
-and [journal evaluation plan](docs/old/implementation-roadmap.md#journal-evaluation-plan).
+The recommendations are carried into the five paper priorities,
+adaptive agent decision loop,
+existing-node responsibilities,
+and journal evaluation plan.
 Those updates specify intended behavior and experiments; they do not turn the
 candidate contributions into verified results.
 
@@ -86,7 +86,7 @@ The design couples ACO discrete exploration, PSO continuous resource allocation,
 owner utility evaluation, weighted Nash bargaining, verified service execution,
 and continual performance-predictor updates. Retrieval grounds selected LLM
 calls. Learning must change later estimates/decisions, not owner authority or
-hard policy. None of these four mechanisms is optional in the full system. See the [node catalogue](docs/old/langgraph-node-catalog.md)
+hard policy. None of these four mechanisms is optional in the full system. See the node catalogue
 for the current workflow inventory.
 
 ```mermaid
@@ -556,7 +556,7 @@ consequences of agent count or message exchange.
 **ACO, PSO, Nash bargaining, and continual learning are all required.** Their
 specific interaction, implementation, and empirical consequences—not their mere
 coexistence—are the candidate research contribution. The
-[coupled method](docs/old/agentic-system-method.md) is the mechanism specification.
+coupled method is the mechanism specification.
 
 ### C1. An integrated cross-owner agentic networking system
 
@@ -680,7 +680,7 @@ replace its optimization and learning contribution.
 
 ## 9. Evaluation needed for a defensible paper
 
-The [experimental plan](docs/old/experimental-validation.md#5-systems-and-baselines)
+The experimental plan
 defines B0 (full), B1 (no generative reasoning, four mechanisms retained),
 B2 (centralized planning, local approval retained), B3 (fixed diagnostic order),
 and B4 (competent simpler system).

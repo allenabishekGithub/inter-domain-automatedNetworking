@@ -66,7 +66,7 @@ Everything Paper 1 builds, plus **Phase 4b**:
 
 | Section | Why it matters here |
 | --- | --- |
-| [design §9.5](../docs/design.md) | Continuous operation: no global tick, disclosure as a rate, holding as an action |
+| [design §9.5](../paper-1-federated-evidence/design.md) | Continuous operation: no global tick, disclosure as a rate, holding as an action |
 | §9.6 | The separability argument and why rate adaptation is the right capability |
 | §9.7 | Stability: hysteresis, action-rate limits, hold-down, attribution precondition |
 | §4 | Rate is **not** in the candidate space — it is a scalar control inside whichever of the eight configurations is in force |

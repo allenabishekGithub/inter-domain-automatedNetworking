@@ -1,7 +1,7 @@
 # Paper 1 — Research and validation plan
 
 **Companion to** [`design.md`](design.md).
-**Programme context:** [`docs/plan.md` §2](../docs/plan.md#2-one-body-of-work-several-papers--choose-one).
+**Programme context:** [the root README](../README.md#three-papers--choose-one).
 Nothing here is a measured result.
 
 ---

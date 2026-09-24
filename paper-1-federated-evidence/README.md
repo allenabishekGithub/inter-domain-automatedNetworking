@@ -43,7 +43,7 @@ striking result in the set.
 
 ## What it needs built
 
-Build phases **0–4** of the [shared plan](../docs/plan.md#8-build-phases). No
+Build phases **0–4** of the [shared plan](plan.md#8-build-phases). No
 capability beyond them.
 
 | Phase | Delivers |
@@ -56,7 +56,7 @@ capability beyond them.
 
 ## Architecture
 
-The full system design is [`docs/design.md`](../docs/design.md). The sections
+The full system design is [`docs/design.md`](design.md). The sections
 this paper leans on hardest:
 
 | Section | Why it matters here |
@@ -81,7 +81,7 @@ Paper 2), or evaluation of the reasoning layer (§10, Paper 3).
 **Open decision — settle before Phase 4 ends.** Whether this paper runs the
 reasoning engine at all. Deterministic agents drop Phase 5, are three to four
 months cheaper and far more reproducible, but invite *"why is this agentic?"*.
-See [plan §2](../docs/plan.md#2-one-body-of-work-several-papers--choose-one).
+See [plan §2](../README.md#three-papers--choose-one).
 
 ## Experiments
 
@@ -100,7 +100,7 @@ should be a flat line for two of the three agents.** If it is not, the premise
 is wrong.
 
 Baselines: P0 (EWMA predictor), P1 (no learning), P3 (oracle). Full definitions
-in [plan §6](../docs/plan.md#6-baselines-and-ablations).
+in [plan §6](plan.md#6-baselines-and-ablations).
 
 ## Next action
 

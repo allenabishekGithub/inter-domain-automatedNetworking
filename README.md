@@ -6,8 +6,8 @@ context database. The agents retrieve over a shared topology graph and their own
 history, negotiate one end-to-end service over **A2A**, and learn from verified
 outcomes that only their peers can observe.
 
-Start with the **[design](docs/design.md)** — it is the build reference. The
-**[research and build plan](docs/plan.md)** says what to measure and in what
+Start with the **[design](paper-1-federated-evidence/design.md)** — it is the build reference. The
+**[research and build plan](paper-1-federated-evidence/plan.md)** says what to measure and in what
 order. Those two documents are the current scope; everything in
 [`docs/old/`](docs/old) is superseded source material.
 
@@ -120,18 +120,58 @@ unanimity, and no rationale reaches a peer without resolving its citations.
 The data plane, the ownership scoping and the device adapters exist and are
 unit-tested. The agent runtime, A2A, the context store and retrieval, the
 reasoning engine and the learning layer are designed and **not yet built**; see
-the plan's [build phases](docs/plan.md#8-build-phases).
+the plan's [build phases](paper-1-federated-evidence/plan.md#8-build-phases).
 
-**This design contains more than one paper**, and one must be chosen before
-building past Phase 4 — see
-[plan §2](docs/plan.md#2-one-body-of-work-several-papers--choose-one).
-Each has its own folder so they can be worked on in parallel:
+## Three papers — choose one
 
-| Folder | Paper | Depends on |
-| --- | --- | --- |
-| [`paper-1-federated-evidence/`](paper-1-federated-evidence) | Federated outcome evidence and service attribution — **recommended first** | nothing |
-| [`paper-2-compensation/`](paper-2-compensation) | Cross-domain compensation and assurance-loop stability | Paper 1's system |
-| [`paper-3-grounded-reasoning/`](paper-3-grounded-reasoning) | Grounded agent reasoning for network operations | Paper 1's system |
+This design contains more than one paper. Ten claims is two to three papers'
+worth; a Q1 journal submission supports two to four claims well. **One must be
+chosen before building past Phase 4.**
+
+| Folder | Paper | Claims | Extra build | Venue |
+| --- | --- | --- | --- | --- |
+| [`paper-1-federated-evidence/`](paper-1-federated-evidence) | Federated outcome evidence and service attribution — **recommended first** | C1, C2, C4, C6, C7, C8 | Phases 0–4 | IEEE TNSM |
+| [`paper-2-compensation/`](paper-2-compensation) | Cross-domain compensation and assurance-loop stability | C9, C10 | Phase 4b, on P1 | TNSM / JSAC |
+| [`paper-3-grounded-reasoning/`](paper-3-grounded-reasoning) | Grounded agent reasoning for network operations | C3, C5, per-node value | Phase 5, on P1 | TNSM / agent venue |
+
+**Paper 1 is the recommended first paper.** C1 establishes that the learning
+floor is structural rather than imposed, and C7 is the same thesis expressed as
+a mechanism — *the attribution method available to an agent depends on what its
+peers disclose.* Those lock together, which is why federated learning and
+service attribution do not separate cleanly.
+
+**Paper 2 stands alone because of the separability argument:** it can prove no
+compensation exists under the provisioning action space, then show exactly one
+capability that breaks it — and that the capability is unusable without
+cross-owner disclosure.
+
+**Paper 3 is the most portable and the riskiest.** Faithfulness measured against
+records that resolve or do not, decisions against packets that arrived or did
+not. Its risk is C3, which may tie a good static rule; report it either way.
+
+**A fourth option costs weeks and needs no results:** an architecture and
+position piece for IEEE Network or Communications Magazine, staking the framing
+while the system is built.
+
+```text
+now ──► position piece (weeks, no build)
+    │
+    └──► Phases 0–1 premise checks  ──►  everything gates here
+              │
+           Phases 2–4 ──► Paper 1  (~12 months)
+              ├──► Phase 4b ──► Paper 2  (+4–6 months)
+              └──► Phase 5  ──► Paper 3  (+4–6 months)
+```
+
+Papers 2 and 3 are independent of each other and both reuse Paper 1's system.
+
+### The decision this forces
+
+**Does Paper 1 need the reasoning engine?** None of its six claims requires one.
+Deterministic agents drop Phase 5 — three to four months cheaper, far more
+reproducible — but invite *"why is this agentic at all?"*. Running the engine
+without evaluating it keeps the identity and makes Paper 3 a deepening rather
+than a retrofit. **Decide before Phase 4 ends.**
 
 **The code is shared.** The data plane, agents, MCP servers and SIMAP live at
 the repository root and are built once. Paper folders hold each paper's
@@ -141,29 +181,32 @@ system.
 ## Repository layout
 
 ```text
-design.md, plan.md            in docs/ — the shared system and the programme plan
+README.md                     start here: what this is, and the three papers
+
 installation.md               prepare a validation host from a fresh Ubuntu VM
 data-plane.md                 exact topology, addressing, ownership, capability limits
+known-issues.md               F1–F10; F2, F3 and F4 are on every paper's critical path
 mcp-server-design.md          the controller tool contract
 related-work-and-novelty.md   annotated literature, 24 references
 
-packet-network/               8 SR Linux routers, gNMI adapter, traffic  (built, tested)
-optical-network/              4-ROADM Mininet-Optical line               (built, tested)
+packet-network/               8 SR Linux routers, gNMI adapter, traffic   (built, tested)
+optical-network/              4-ROADM Mininet-Optical line                (built, tested)
 scripts/                      service-up.sh, service-down.sh, run-tests.sh
 
-paper-1-federated-evidence/   problem, design, plan, experiments, results
+paper-1-federated-evidence/   README + design + plan + experiments/ + results/
 paper-2-compensation/         "
 paper-3-grounded-reasoning/   "
-
-docs/design.md                canonical system design
-docs/plan.md                  programme plan and the paper decomposition
-docs/old/                     superseded — retained as source material
 ```
+
+**`paper-1-federated-evidence/design.md` is the canonical system design.**
+Paper 1 is the base system, so everything Papers 2 and 3 inherit is specified
+there; each of those documents is authoritative only for what it adds. The
+superseded ACO/PSO/Nash architecture is in git history at `e317844` and earlier.
 
 Two findings from the earlier assessment still block work and keep their
 original IDs: **F4** (receiver samples cannot be proven fresh, which blocks
 disruption measurement) and **F2** (repair requires the failed router to answer
-gNMI). Detail in [`docs/old/known-issues.md`](docs/old/known-issues.md).
+gNMI). Detail in [`known-issues.md`](known-issues.md).
 
 ```bash
 scripts/run-tests.sh       # 86 unit tests, both components

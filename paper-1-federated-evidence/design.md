@@ -1,9 +1,9 @@
 # Paper 1 — System design
 
 **Scope:** the architecture as Paper 1 builds and uses it.
-**Canonical source:** [`docs/design.md`](../docs/design.md) is authoritative for
-the shared system. This document is authoritative for Paper 1's scoping and
-excludes everything Papers 2 and 3 add.
+**Canonical source:** this document. Paper 1 is the base system, so its
+design is canonical for everything Papers 2 and 3 inherit; each of those is
+authoritative only for what it adds.
 
 ---
 
@@ -434,8 +434,7 @@ effectors (`E`).
 
 **This is the base graph.** Paper 2 adds a third, timer-triggered graph of seven
 more nodes; Paper 3 keeps this topology exactly and changes only what runs
-inside the `R` nodes. See the comparison in
-[`docs/design.md` §6.10](../docs/design.md).
+inside the `R` nodes. The comparison is in §7.8.
 
 **How many contact the LLM depends on the open decision in §1.** Deterministic
 P1: **zero** — every `R` node runs the rule in the right-hand column.
@@ -492,6 +491,32 @@ Deployed three times, differing by configuration and adapter:
 | `agent-packet-a` | `packet-a-mcp` | `path=primary`, `path=backup` |
 | `agent-optical` | `optical-mcp` | `channel=1`, `channel=2`, `refuse` |
 | `agent-packet-b` | `packet-b-mcp` | `path=primary`, `path=backup` |
+
+### 7.8 How the graph differs per paper
+
+The node set is not fixed across the programme. Each paper needs a different
+shape, and the differences are structural rather than cosmetic:
+
+| | Graphs | Nodes | R / G / E | What changes |
+| --- | ---: | ---: | --- | --- |
+| **Paper 1** | 2 — participant, initiator | **25** | 14 / 6 / 5 | The base. Every `R` node runs a deterministic rule unless the engine is enabled |
+| **Paper 2** | **3** — adds a timer-triggered assurance graph | **32** | 17 / 7 / 8 | Seven new nodes including `compensation_gate`, a new gate with four checks |
+| **Paper 3** | 2 — **unchanged** | **25** | 14 / 6 / 5 | No topology change. The fourteen `R` nodes gain the engine; `grounding_gate` goes from no-op to load-bearing |
+
+**Paper 2 is the only one that changes the shape.** Its assurance graph is
+entered by a timer rather than a request, which is what makes continuous
+operation possible — the other two graphs only ever run because something asked
+them to.
+
+**Paper 3 deliberately changes nothing structural.** Rules and engine execute
+the identical graph, so any measured difference is attributable to the reasoning
+rather than to a different control flow.
+
+**If Papers 2 and 3 are both built**, the assurance graph's three reasoning
+nodes become engine-capable too — but the loop runs its deterministic rules by
+default and escalates only on declared conditions, because four sequential model
+calls per tick would exceed the loop period. See
+[Paper 2 §6.3](../paper-2-compensation/design.md).
 
 ---
 
@@ -907,4 +932,4 @@ paper evidence as well as an audit trail, and both uses need that property.
 | MCP servers | to build |
 | Agent runtime, A2A, SIMAP, predictors | to build |
 
-Issue detail in [`docs/old/known-issues.md`](../docs/old/known-issues.md).
+Issue detail in [`known-issues.md`](../known-issues.md).

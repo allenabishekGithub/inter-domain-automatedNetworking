@@ -1,9 +1,9 @@
 # Paper 3 — System design
 
 **Scope:** what Paper 3 adds to Paper 1's system.
-**Canonical sources:** [`docs/design.md`](../docs/design.md) for the shared
-system; [`paper-1/design.md`](../paper-1-federated-evidence/design.md) for the
-base. This document is authoritative for Paper 3's additions.
+**Canonical source:** [`paper-1/design.md`](../paper-1-federated-evidence/design.md)
+is the base system and is authoritative for everything inherited. This document
+is authoritative for Paper 3's additions.
 
 ---
 
