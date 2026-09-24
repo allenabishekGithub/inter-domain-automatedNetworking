@@ -1,5 +1,13 @@
 # Packet–optical data plane
 
+> **Scope note, 24 September 2026.** This document predates the current scope.
+> Its topology, addressing, ownership boundaries and capability limits remain accurate and are relied on by all three papers. Passages
+> referring to ACO, PSO, Nash bargaining, an allocation simulator, or the P0/P1
+> testbed profiles describe a **superseded** design — see the
+> [root README](README.md) for the three papers now in scope and
+> [`paper-1-federated-evidence/design.md`](paper-1-federated-evidence/design.md)
+> for the canonical system design.
+
 The laboratory data plane this repository's architecture and experiments run
 on. It is implemented here, in [`packet-network/`](packet-network) and
 [`optical-network/`](optical-network), and can be deployed today:
@@ -307,7 +315,14 @@ spectrum contention. Multiple flows can compete for modeled or enforced transpor
 capacity without pretending the present optical line supports simultaneous
 wavelength allocation.
 
-For the revised journal scope, the richer allocation and learning profile
+**Superseded.** The paragraph below described an allocation-and-learning
+profile required by the earlier ACO/PSO scope. That scope is dropped: the
+current papers need no allocation simulator, because their claims are about
+evidence availability rather than search difficulty. What *is* required is the
+condition harness in
+[`paper-1-federated-evidence/design.md` §5](paper-1-federated-evidence/design.md).
+
+~~The richer allocation and learning profile
 is required: meaningful continuous bandwidth decisions, diverse discrete
 candidates, competing service demands, and chronological condition changes.
 Build those studies in P0 and label them as simulation. Add owner-scoped

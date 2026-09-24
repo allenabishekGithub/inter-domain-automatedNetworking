@@ -2,6 +2,7 @@
 
 **Companion to** [`design.md`](design.md).
 **Programme context:** [the root README](../README.md#three-papers--choose-one).
+**Target:** IEEE TNSM (Q1). Conference version first at CNSM or NOMS.
 Nothing here is a measured result.
 
 ---

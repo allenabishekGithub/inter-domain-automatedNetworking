@@ -2,6 +2,7 @@
 
 **Companion to** [`design.md`](design.md).
 **Prerequisite:** [Paper 1](../paper-1-federated-evidence) Phases 0–4 complete.
+**Target:** IEEE TNSM or JSAC (Q1).
 Nothing here is a measured result.
 
 ---

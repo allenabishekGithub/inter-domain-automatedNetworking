@@ -1,5 +1,13 @@
 # Containerlab and Mininet-Optical MCP server design
 
+> **Scope note, 24 September 2026.** This document predates the current scope.
+> Its tool contract, result-attribution rules and two-server/three-endpoint structure remain accurate and are relied on by all three papers. Passages
+> referring to ACO, PSO, Nash bargaining, an allocation simulator, or the P0/P1
+> testbed profiles describe a **superseded** design — see the
+> [root README](README.md) for the three papers now in scope and
+> [`paper-1-federated-evidence/design.md`](paper-1-federated-evidence/design.md)
+> for the canonical system design.
+
 **Status:** required design, recorded 22 September 2026. The MCP servers are
 not implemented. Specify their interfaces on the planning VM; deploy and
 validate them in the separate implementation/testbed environment.

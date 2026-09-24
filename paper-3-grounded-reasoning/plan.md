@@ -2,6 +2,7 @@
 
 **Companion to** [`design.md`](design.md).
 **Prerequisite:** [Paper 1](../paper-1-federated-evidence) Phases 0–4 complete.
+**Target:** IEEE TNSM (Q1), or an agent/AI venue where the ground-truth angle lands harder.
 Nothing here is a measured result.
 
 ---

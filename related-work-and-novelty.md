@@ -1,6 +1,16 @@
 # Related work and novelty assessment
 
-**Search date:** 16 September 2026. **Target venue:** Elsevier *Computer Networks*.
+> **Scope note, 24 September 2026.** The catalogue and citations remain
+> directly useful — §4.1, §4.2 and §4.5 are on topic for the current papers.
+> The novelty argument in §5–§10 was written for the superseded ACO/PSO/Nash
+> scope. **The current framing has not yet been checked against the
+> literature**, and doing so is the cheapest outstanding task on the programme:
+> ownership-induced label asymmetry, cross-domain service attribution, and
+> SIMAP-grounded agent reasoning are all unsearched.
+
+**Search date:** 16 September 2026. **Target venue when surveyed:** Elsevier
+*Computer Networks*. **Current target:** IEEE TNSM, with CNSM or NOMS for a
+conference version first — see the [root README](README.md).
 **Scope update, mechanism and collective-intelligence checks:** 23 September 2026;
 the original catalogue date is unchanged. This is not an exhaustive new search.
 **Project status:** architecture and research design; this report does not establish
@@ -235,7 +245,10 @@ evaluating against simpler rule-based methods.
 *Computer Networks*, 272:111647, 2025. **Evidence: Text, publisher sections and
 author manuscript.** An LLM agent with RAG operates intent creation, queries,
 and explanation through TeraFlowSDN. This is especially important because it is
-both technically close and published in our target journal.
+both technically close and published in a Q1 journal in this space. **It is the
+single most important paper to cite and distinguish from**, and the distinction
+is clean: single-operator intent handling, with no ownership boundary and no
+outcome asymmetry.
 [Publisher / DOI](https://doi.org/10.1016/j.comnet.2025.111647);
 [Author manuscript](https://research.chalmers.se/publication/550622/file/550622_Fulltext.pdf).
 
