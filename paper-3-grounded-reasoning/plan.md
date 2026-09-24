@@ -5,6 +5,15 @@
 **Target:** IEEE TNSM (Q1), or an agent/AI venue where the ground-truth angle lands harder.
 Nothing here is a measured result.
 
+> **Base-system update, 24 September 2026:** Paper 1 now targets
+> [recovery under limited disclosure and stale evidence](../paper-1-federated-evidence/tnsm-proposal.md)
+> with deterministic evidence scheduling. That adaptive method is a required
+> comparator and fallback here. Hold acquisition policy constant when isolating
+> reasoning value; evaluate any LLM change to acquisition separately.
+> Freeze the inherited graph/schema version before comparison. The claims below
+> remain proposals and need their own literature and empirical validation.
+
+
 ---
 
 ## 1. The question
@@ -37,7 +46,7 @@ but it may not assert* — stated as a design rule and measured as a rate.
 | # | Claim | Evidence |
 | --- | --- | --- |
 | **C5** | Reasoning is faithful because it is **gated**, not because it is trusted | Ungrounded-assertion rate with the gate off; firing and fallback rate with it on; decision quality unharmed |
-| **C3** | Agents reasoning about what to share approach full-disclosure quality at materially lower disclosure | S3 vs S1 and S2: quality within a declared margin at lower disclosed volume |
+| **C3** | Agents reasoning about what to share approach full-disclosure quality at materially lower disclosure | S3 versus Paper 1's adaptive scheduler, S1, and S2: recovery/risk/coverage within declared margins at lower disclosure |
 | — | Per-node reasoning value | Fourteen single-node ablations: marginal decision quality, fallback rate, divergence from rule |
 
 **Honest risk, stated up front.** C3 is the most likely null result in the
@@ -77,9 +86,12 @@ Expected shape: a few nodes carry most of the benefit — likely `diagnose`,
 `plan_observations`, `select_candidate` — and several could be rules. **Saying
 which is the contribution.**
 
-**E8 — Disclosure decision.** S3 against S2 (good static rule) and S1 (full
-disclosure). Quality within a declared margin, at what disclosed volume. Ablation
-P2 replaces S3's reasoning with its deterministic fallback. *C3.*
+**E8 — Disclosure decision.** Compare S3 with Paper 1's deterministic adaptive
+scheduler, S2 (good static rule), and S1 (full permitted disclosure). Use the
+same validity/authority checks, budgets, model access, and recovery/risk/coverage
+metrics. The deterministic fallback includes Paper 1's acquisition method.
+Any gain from changing acquisition must be distinguished from reasoning over a
+fixed evidence set. *C3.*
 
 ---
 
@@ -87,7 +99,7 @@ P2 replaces S3's reasoning with its deterministic fallback. *C3.*
 
 | Condition | What changes |
 | --- | --- |
-| **A0** — rules only | Engine disabled throughout; Paper 1's deterministic agents. Floor |
+| **A0** — rules only | Engine disabled throughout; Paper 1's deterministic adaptive scheduler and controller |
 | **A1** — engine, no retrieval | R0. Isolates what context contributes |
 | **A2** — engine, gate off | Isolates the grounding gate |
 | **A3** — full system | Engine + R3 + gate |
@@ -139,7 +151,7 @@ Indicative effort: **four to six months** after Paper 1's system is running.
 
 ## 9. Not tested in this paper
 
-- **Whether sharing helps learning.** Paper 1.
+- **Recovery under disclosure budgets and evidence-validity constraints.** Paper 1.
 - **Compensation and loop stability.** Paper 2.
 - **Model comparison or fine-tuning.** One pinned model.
 - **Prompt injection as an attack.** The boundary is a design precaution
@@ -214,7 +226,7 @@ fact rather than needing fourteen instrumented builds.
 | Claim | Release criterion |
 | --- | --- |
 | **C5** | Ungrounded-claim rate with the gate off is materially above zero, and with the gate on no ungrounded claim reaches a peer, with decision quality not significantly worse |
-| **C3** | S3 achieves quality within the declared margin of S1 at significantly lower disclosed volume, and beats S2. **If it ties S2, report the tie** |
+| **C3** | S3 achieves quality within the declared margin of S1 at significantly lower disclosed volume, and improves on both S2 and Paper 1's adaptive scheduler. **Report ties or regressions** |
 | Per-node | Each of the fourteen nodes is classified as *earns its call*, *no measurable effect*, or *harmful*, with the effect size for each |
 
 **If C3 is null, the paper's framing shifts to C5 plus the per-node

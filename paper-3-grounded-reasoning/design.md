@@ -5,6 +5,15 @@
 is the base system and is authoritative for everything inherited. This document
 is authoritative for Paper 3's additions.
 
+> **Base-system update, 24 September 2026:** Paper 1 now targets
+> [recovery under limited disclosure and stale evidence](../paper-1-federated-evidence/tnsm-proposal.md)
+> with deterministic evidence scheduling. That adaptive method is a required
+> comparator and fallback here. Hold acquisition policy constant when isolating
+> reasoning value; evaluate any LLM change to acquisition separately.
+> Freeze the inherited graph/schema version before comparison. The claims below
+> remain proposals and need their own literature and empirical validation.
+
+
 ---
 
 ## 0. At a glance
@@ -15,7 +24,7 @@ is authoritative for Paper 3's additions.
 | Graph topology | **Unchanged.** Paper 1 builds every node; this paper changes what runs inside the `R` ones |
 | New table | `reasoning_call` — prompt, response, retrieved vs cited, tokens, latency, per node |
 | Claims | **C5** faithfulness, **C3** reasoned disclosure, plus per-node value |
-| Calls per episode | **≈28** across the federation, ~40 at the three-round cap (§2.3) |
+| Calls per episode | §2.3 gives an illustrative single-pass estimate; repeated acquisition can add calls and must be measured |
 
 **The line this paper defends:** *it may reason, but it may not assert.*
 
@@ -25,12 +34,12 @@ is authoritative for Paper 3's additions.
 
 | Inherited | Summary |
 | --- | --- |
-| Three agents over A2A | Agent Cards, task per peer, six exchanges, three-round cap |
+| Three agents over A2A | Agent Cards, tasks, episode exchanges plus evidence requests/responses, three-round negotiation cap |
 | The three gates | `feasibility`, `policy`, `agreement` — deterministic, never a model call |
 | SIMAP | Two-layer service–infrastructure map, federated by signed slices |
 | Context store | SQLite + `sqlite-vec`; NetworkX projection from the records |
-| Segment attribution | Four-segment exact decomposition |
-| RLS predictors, S0–S3 | Learning stays deterministic arithmetic |
+| Segment attribution | Segment estimates from validated flow/cohort-compatible measurements |
+| Evidence scheduler and action-effect model | Deterministic adaptive acquisition and validated estimates; RLS is optional; this paper adds S3 |
 | MCP servers | Credentials held there, tool schema is the allowlist |
 
 Paper 3 adds the **reasoning layer** that sits between the evidence and the
@@ -64,8 +73,8 @@ is the difference between an agent and a pipeline, and its cost is directly
 measurable.
 
 **`select_candidate` is deliberately a reasoning node.** Its deterministic rule
-(lowest cost, predicted ratio, candidate index) is both its fallback **and its
-comparator**: divergence from the rule is journalled and is itself a result.
+(the declared risk/benefit criterion and deterministic tie-break) is both its
+fallback **and its comparator**: divergence from the rule is journalled and is itself a result.
 
 ---
 
@@ -78,17 +87,17 @@ each.
 | Node | Paper 1 (rule) | Paper 3 (engine) |
 | --- | --- | --- |
 | `triage_request` | schema + endpoint-in-my-domain check | judge coherence, remit, and whether to decline early |
-| `plan_observations` | fixed set: oper-states + segment counters | choose what is worth measuring for *this* question, within budget |
+| `plan_observations` | deterministic evidence-group scheduler | choose what is worth measuring for *this* question, within budget |
 | `formulate_queries` | fixed down-traversal from the service | choose what to traverse and what to search for |
-| `evaluate_local_actions` | all gate-passing actions, cost-ordered | characterise each contribution and its caveats |
-| `evaluate_proposal` | accept iff gates pass and predicted ≥ objective | accept, refuse or counter, with grounds |
-| `select_candidate` | lowest cost → predicted ratio → index | choose with justification; **divergence from the rule is a result** |
+| `evaluate_local_actions` | permitted actions with effect estimates and uncertainty | characterise each contribution and its caveats |
+| `evaluate_proposal` | accept iff validity, authority, and risk/benefit checks pass | accept, refuse or counter, with grounds |
+| `select_candidate` | declared risk/benefit criterion → deterministic tie-break | choose with justification; **divergence from the rule is a result** |
 | `assemble_candidates` | union of accepted actions, structured fields | interpret peers' `OPTIONS` including prose caveats |
 | `a2a_discover` | all peers on the service path | reason about which peers and skills the intent needs |
 | `intake_intent` | structured intent accepted as given | resolve endpoints via the SIMAP; normalise |
-| `diagnose` | segment decomposition, strongest method | probable cause, blast radius, next discriminating observation |
+| `diagnose` | compatible segment evidence with uncertainty | probable cause, blast radius, next discriminating observation |
 | `verify_local` | exact compare; `partial` on mismatch | judge whether the readback matches intent when ambiguous |
-| `compose_outcome` | fixed field set per condition | decide which fields a peer needs and which are sensitive |
+| `compose_outcome` | fields permitted by policy and acquisition budget | decide which fields a peer needs and which are sensitive |
 | `close_episode` | templated reason string | an explanation an operator can read |
 
 **`grounding_gate` becomes load-bearing.** In Paper 1 it is a no-op — a rule
@@ -211,7 +220,8 @@ referencing *those*. **Structure narrows, similarity ranks.**
 
 ### 5.2 What the store holds for retrieval
 
-Paper 1's `context.db` schema is reused unchanged. Its three embedded
+Paper 1's validated, versioned `context.db` schema, including evidence and
+decision records, is reused. Its three embedded
 collections are what R1 and R3 search:
 
 | Collection | Embedded on | Used by |
@@ -386,8 +396,9 @@ per-node ablation can price `plan_observations` in tool calls as well as tokens.
 
 ## 7. The disclosure decision (S3)
 
-Paper 1 runs S0–S2 with declared rules. Paper 3 adds **S3**, where the agent
-reasons about disclosure:
+Paper 1 includes fixed/full-sharing references and a deterministic adaptive
+scheduler. Paper 3 adds **S3**, where the LLM reasons about disclosure; compare
+it with that adaptive scheduler as well as static and full-sharing references:
 
 | Decision | Node | Question |
 | --- | --- | --- |
@@ -397,8 +408,9 @@ reasons about disclosure:
 
 Attribution ([Paper 1 §10](../paper-1-federated-evidence/design.md#10-attribution))
 is what makes this concrete: an agent that can name the
-**one counter** it needs is making a far cheaper request than one asking for
-everything.
+compatible evidence group it needs can avoid unnecessary disclosure. A single
+counter may be insufficient without its matching cohort and revision context.
+Measure the saving together with recovery quality and acquisition delay.
 
 ---
 

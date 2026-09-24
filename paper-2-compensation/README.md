@@ -4,6 +4,14 @@
 **Target:** IEEE TNSM or JSAC.
 **Depends on:** [Paper 1](../paper-1-federated-evidence) — Phases 0–4 complete.
 
+> **Base-system update, 24 September 2026:** Paper 1 now targets
+> [recovery under limited disclosure and stale evidence](../paper-1-federated-evidence/tnsm-proposal.md).
+> This paper remains the separate extension for rate compensation and interacting
+> continuous loops. Inherit the implemented evidence-validity rules, acquisition
+> policy, and graph/schema version after Paper 1 validation; the counts below
+> are design targets. This update does not validate Paper 2's novelty or results.
+
+
 ---
 
 ## The problem

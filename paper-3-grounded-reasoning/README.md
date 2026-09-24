@@ -4,6 +4,15 @@
 **Target:** IEEE TNSM, or an agent/AI venue where the ground-truth angle lands harder.
 **Depends on:** [Paper 1](../paper-1-federated-evidence) — Phases 0–4 complete.
 
+> **Base-system update, 24 September 2026:** Paper 1 now targets
+> [recovery under limited disclosure and stale evidence](../paper-1-federated-evidence/tnsm-proposal.md)
+> with deterministic evidence scheduling. That adaptive method is a required
+> comparator and fallback here. Hold acquisition policy constant when isolating
+> reasoning value; evaluate any LLM change to acquisition separately.
+> Freeze the inherited graph/schema version before comparison. The claims below
+> remain proposals and need their own literature and empirical validation.
+
+
 ---
 
 ## The problem
@@ -29,7 +38,7 @@ The third is the question the field mostly avoids.
 | # | Claim | Evidence |
 | --- | --- | --- |
 | **C5** | Reasoning is faithful because it is **gated**, not because it is trusted | Ungrounded-assertion rate with the gate off; firing and fallback rate with it on |
-| **C3** | Agents that reason about what to share approach full-disclosure quality at materially lower disclosure | S3 vs S1 and S2: quality within a declared margin at lower disclosed volume |
+| **C3** | Agents that reason about what to share approach full-disclosure quality at materially lower disclosure | S3 versus Paper 1's adaptive scheduler, S1, and S2: recovery/risk/coverage within declared margins at lower disclosure |
 | — | Per-node reasoning value | Fourteen single-node ablations: which nodes carry the benefit, and which could be rules |
 
 **Honest risk, stated up front.** C3 is the most likely null result in the whole
@@ -81,7 +90,7 @@ That is what makes an LLM admissible in a network control path.
 | **E5** | Grounding gate on vs off, including deliberately ambiguous evidence where a plausible-but-wrong story is available | C5 |
 | **Retrieval ablation** | R0 / R1 / R2 / R3 on the same decisions, scored on decision quality **and retrieved-context precision** — how much of what was retrieved was actually cited | Q2 |
 | **Per-node ablation** | Disable the engine at one reasoning node at a time; the other thirteen keep reasoning. Fourteen runs | Per-node value |
-| **S3 vs S2** | Agent-decided disclosure against a good static rule (ablation P2) | C3 |
+| **Disclosure comparison** | S3 against Paper 1's deterministic adaptive scheduler, a good static rule, and full permitted sharing | C3 |
 
 **Expected shape of the per-node result:** a few nodes carry most of the
 benefit — likely `diagnose`, `plan_observations`, `select_candidate` — and

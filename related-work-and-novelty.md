@@ -1,16 +1,21 @@
 # Related work and novelty assessment
 
-> **Scope note, 24 September 2026.** The catalogue and citations remain
-> directly useful — §4.1, §4.2 and §4.5 are on topic for the current papers.
-> The novelty argument in §5–§10 was written for the superseded ACO/PSO/Nash
-> scope. **The current framing has not yet been checked against the
-> literature**, and doing so is the cheapest outstanding task on the programme:
-> ownership-induced label asymmetry, cross-domain service attribution, and
-> SIMAP-grounded agent reasoning are all unsearched.
+> **Scope note, 24 September 2026.** For the current Paper 1, read the
+> [focused state-of-the-art assessment](paper-1-federated-evidence/state-of-the-art.md).
+> It finds direct precedents and rejects the broad novelty argument based on
+> label asymmetry and cross-domain evidence sharing. It proposes a conditional
+> direction and the comparisons needed to test it. The
+> [TNSM proposal](paper-1-federated-evidence/tnsm-proposal.md) and
+> [validation plan](paper-1-federated-evidence/plan.md) develop the current topic:
+> recovery under limited disclosure and stale evidence. The catalogue below remains
+> historical: its novelty argument in §5–§10 concerns the superseded
+> ACO/PSO/Nash scope. Papers 2 and 3 have not received an equivalent focused
+> reassessment here.
 
 **Search date:** 16 September 2026. **Target venue when surveyed:** Elsevier
-*Computer Networks*. **Current target:** IEEE TNSM, with CNSM or NOMS for a
-conference version first — see the [root README](README.md).
+*Computer Networks*. **Current target:** IEEE TNSM; a conference version is
+optional, subject to a distinct publishable contribution and venue rules. See
+the [root README](README.md).
 **Scope update, mechanism and collective-intelligence checks:** 23 September 2026;
 the original catalogue date is unchanged. This is not an exhaustive new search.
 **Project status:** architecture and research design; this report does not establish
@@ -31,8 +36,8 @@ and [Paper 1 validation plan](paper-1-federated-evidence/plan.md), with separate
 plans for [compensation](paper-2-compensation/plan.md) and
 [grounded reasoning](paper-3-grounded-reasoning/plan.md). Those documents specify
 intended behavior and experiments; they do not turn the candidate contributions
-into verified results. The historical comparison below still needs reassessment
-against that scope.
+into verified results. The linked Paper 1 assessment supersedes this historical
+document's novelty conclusions for that paper.
 
 ## 1. Scope and evidence
 

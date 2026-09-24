@@ -187,7 +187,7 @@ credentials and execution paths must enforce it too.
    transitions and acceptance cases before choosing server SDK/transport details.
 3. Plan the Containerlab and Mininet-Optical adapters as separate implementation
    packages, reusing schema/receipt code without sharing cross-domain authority.
-4. Cover the [known findings](known-issues.md): F2/F3/F4/F6/F10 for packet
+4. Cover the [retained implementation findings](paper-1-federated-evidence/plan.md#16-implementation-prerequisites-and-retained-findings): F2/F3/F4/F6/F10 for packet
    observation/actions; F7/F8 for optical changes/evidence; F1/F5/F9 for the
    administrative lifecycle; C1 for authorization and C2 for retained evidence.
 5. Validate in the designated testbed: wrong-domain denial, supported and

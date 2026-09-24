@@ -1,324 +1,356 @@
-# Paper 1 — Research and validation plan
+# Paper 1 — Research and build plan
 
-**Companion to** [`design.md`](design.md).
-**Programme context:** [the root README](../README.md#three-papers--choose-one).
-**Target:** IEEE TNSM (Q1). Conference version first at CNSM or NOMS.
-Nothing here is a measured result.
+**Updated:** 24 September 2026.
 
----
+**Status:** proposed; no algorithmic advantage or live recovery result established.
+
+**Target:** IEEE TNSM. Confirm the institution's required Q1 database, category,
+and edition before submission.
+
+**Research basis:** [TNSM proposal](tnsm-proposal.md) and
+[state-of-the-art assessment](state-of-the-art.md).
+
+**Implementation reference:** [shared design](design.md).
 
 ## 1. The question
 
-> In a service crossing separately owned networks, the party that can measure
-> the outcome is not the party that chose the configuration. What does sharing
-> that outcome across an ownership boundary buy each owner, what does it cost in
-> disclosure, and can agents attribute degradation to the owner who caused it?
+Can scheduling compatible cross-domain evidence for the anticipated execution
+time improve service recovery under disclosure limits, compared with established
+active diagnosis using the same validity and authority checks?
+
+The controller chooses measurements, collection order or concurrency, and when
+to act, recollect, or escalate. Changing state and delayed responses can
+invalidate a useful observation before the pending action. Merely rejecting old
+records is a baseline capability, not the proposed contribution.
 
 ## 2. What is new
 
-**1. Ownership separates features from labels.** Standard federated learning
-partitions a dataset — every party holds features *and* labels. Here one party
-holds every label and only some features, the others hold features and no label.
-The split follows from who owns the receiver.
+Novelty remains conditional. The candidate extension jointly considers:
 
-**2. Full state flooding would not dissolve it.** Delivered ratio is an endpoint
-application measurement, in no routing protocol and no LSDB. The asymmetry is
-about *service outcome evidence*, not topology or network state.
+- complementary evidence groups, such as counters for a common packet cohort;
+- owner-specific permitted fields, disclosure costs, and collection delays;
+- uncertainty about state at the anticipated execution time;
+- permitted actions and their expected service effects;
+- loss incurred while acquiring evidence, waiting, or escalating.
 
-**3. Some evidence exists only across the boundary.** Attachment-segment loss is
-`gw-a` out-packets minus `gw-b` in-packets — a subtraction neither owner can
-perform alone.
-
-**4. A fixture where local telemetry is structurally misleading.** The optical
-agent is data-richest and its strongest local feature does not predict the
-outcome.
-
-**5. A shared service–infrastructure map as the precondition for federation.**
-A peer's outcome is uninterpretable until the map says which segments it
-crossed and who owned each.
-
-**6. Ground truth.** The receiver either got the packets or it did not.
-
-**Not claimed as novel:** ridge regression, EWMA, LangGraph, A2A, MCP, the
-emulation stack, or multi-domain orchestration as a topic.
-
----
+The contribution must exceed a well-adapted decision-region method with freshness
+checks. Action-based diagnosis, EC2, HEC, vertical federated learning, and
+cross-domain telemetry are precedents documented in the review. No claim of
+being first, optimal, privacy-preserving, or unconditionally safe is authorized
+by this plan.
 
 ## 3. Claims
 
-| # | Claim | Evidence |
+The following are **testable hypotheses**, not results. H1–H3 replace the old
+C1/C2/C4/C6/C7/C8 Paper 1 claims; those IDs in historical assessments refer to the
+pre-review proposal. They are also distinct from the C1–C3 implementation
+findings in the retained implementation findings in §16.
+
+| ID | Hypothesis | Required comparison |
 | --- | --- | --- |
-| **C1** | Without sharing, two of three owners cannot learn the outcome at all | S0: flat predictor error for Packet A and Optical across the whole sequence |
-| **C2** | Sharing improves each owner's predictions and decisions | S0 vs S1: per-agent prediction error, decision regret, episodes to stable choice |
-| **C4** | The benefit is largest where local telemetry is blind | Locally-invisible vs locally-visible: the S0→S1 gap widens |
-| **C6** | Some faults are detectable only across the boundary | Attachment loss localised by counter differencing, by no owner alone |
-| **C7** | Attribution works, and the method available depends on disclosure | Accuracy per method against the injected ground-truth segment |
-| **C8** | Attribution produces correct action **and correct non-action** | Owning domain acts, others refrain, disruption avoided |
+| H1 | The method improves the recovery–disclosure tradeoff under constrained budgets | Equal-budget service loss versus strong fixed and adaptive methods; disclosure savings versus full permitted sharing at predeclared recovery/risk/coverage margins |
+| H2 | Anticipating group validity reduces wasted collection and improves timely recovery when evidence is delayed or state changes | Same execution checks throughout; ablate group scheduling and prediction of validity; include a stationary control |
+| H3 | The useful tradeoff persists in specified held-out regimes and larger configurations | Held-out incident streams, model error, refusals, and increasing domains/evidence/action counts; report failure boundaries |
 
-C2 and C4 are the contribution. C1 establishes the floor is structural. C7–C8
-are what the shared evidence is *for*. C6 is the cheapest striking result.
-
----
+Platform correctness is an E1 prerequisite, not an additional novelty claim.
+Lower predictor error or an absence of actions cannot by itself establish H1.
 
 ## 4. The core experiment
 
-Four sharing conditions, identical fixtures, seeds and schedules
-([design §11.3](design.md#113-sharing-conditions)),
-each run across stationary → drift → abrupt shift → recurrence.
+Start with three domains and the eight existing joint configurations. Build an
+offline, deterministic incident replay with explicit time, request delays,
+observation windows, counter cohorts, owner revision vectors, and policy changes.
+Allow requests for either stored records or fresh measurements; charge their
+declared costs separately.
 
-**Headline figure:** per-agent prediction error over episodes, four conditions,
-Packet A and Optical plotted separately from Packet B. **S0 should be a flat
-line for two of three agents.** If it is not, the premise is wrong and that is
-worth knowing immediately.
+Maintain uncertainty over network state and estimate action effects using a
+declared model. Calibrate that model with controlled training interventions.
+Hold evaluation incidents out, including timing patterns and impairment regimes.
+The hidden injection schedule and counterfactual outcomes belong to the evaluator
+and are never runtime features.
 
----
+For each replayed incident, run all methods with paired exogenous conditions,
+identical owner policies, action spaces, management resources, and execution
+checks. Observe consequences over a fixed horizon even after refusal or
+escalation. A no-change outcome continues to incur impairment if service remains
+degraded. Define which incidents are repairable under the allowed actions using
+evaluator-only information.
+
+Use the offline pilot to test the algorithmic idea before the complete runtime.
+Later reproduce selected conditions on the live testbed and distinguish measured
+traffic from simulated outcomes. Eight configurations bound the pilot action
+space; they do not establish scalability.
 
 ## 5. Experiments
 
-Each produces a run bundle: all three journals and `context.db`, policies,
-predictor snapshots, the schedule actually applied, and raw receiver logs.
+| ID | Experiment | Design and purpose |
+| --- | --- | --- |
+| E1 | Platform and measurement validity | Healthy provisioning, unrepairable cases, matched flow/cohort counters, resets, receiver sample freshness, approvals, local-only effects, F2 recovery, and truthful verification |
+| E2 | Recovery versus disclosure | Sweep budgets and permitted fields across healthy, repairable, and unrepairable incidents; compare cumulative loss, recovery time, risk, coverage, and disclosure |
+| E3 | Delay and changing state | Vary response and execution delays, parallel-request limits, path changes, policy revisions, and observation validity; measure expiration/recollection and run a stationary negative control |
+| E4 | Missing evidence and model error | Refusals, dropped responses, counter uncertainty, unseen impairments, incorrect priors/action effects; score missed repairs and escalation cost as well as harmful actions |
+| E5 | Generalization and scale | Hold out regimes/topologies; increase domain count, candidate configurations, and evidence sources independently; report planning time, memory, message volume, and recovery quality |
 
-**E1 — Platform.** Healthy provisioning and correct refusal. Confirms episodes
-complete with unanimous acceptance, per-domain execution and receiver-verified
-delivery; confirms an unresolvable request terminates `no_agreement`.
-*Precondition, not a result.*
-
-**E2 — Sharing conditions.** S0/S1/S2/S3 over the full schedule. Per-agent
-prediction error, decision regret against the retrospectively best
-configuration, episodes to stable choice, disclosure volume. *C1, C2.*
-
-**E3 — Visibility classes.** S0 vs S1 separately under locally-visible and
-locally-invisible impairment. The gap should be small in the first and large in
-the second. *C4 — the sharpest result available.*
-
-**E3b — Joint detection.** Inject attachment-segment loss and ask each agent to
-localise it. No owner can alone. Compare S0, counter sharing, and outcome
-sharing alone: outcome sharing says *that* service degraded, counter sharing
-says *where*. *C6.*
-
-**E3c — Attribution and action.** Inject into a known segment — Packet A's core,
-the attachment, or Packet B's core. Score: did each agent correctly determine
-whether the fault was its own; did the owning domain act; did the others
-correctly refrain; how much disruption did refraining avoid. Run under S0,
-counter sharing and full disclosure so all three attribution methods are
-exercised. *C7, C8.*
-
-**E4 — Drift and recurrence.** Abrupt shift inverting the best configuration,
-then recurrence of the earlier regime. Adaptation latency, forgetting, and
-whether the forgetting factor trades one against the other. Under S0 and S1.
-*C2.*
-
----
+The visibility classes in the shared design remain useful fixtures. Validate
+which permitted local observations each fixture actually changes; do not impose
+flat learning curves or label a condition locally invisible by assertion.
+Model-only gOSNR changes are a negative control unless a separate impairment
+coupling is implemented and identified as such.
 
 ## 6. Baselines and ablations
 
-| Condition | What changes |
-| --- | --- |
-| **P0** — EWMA predictor | Per-configuration average instead of the feature model |
-| **P1** — no learning | Predictors frozen; isolates learning from negotiation |
-| **P2** — rule-based sharing decision | S3's reasoning replaced by its deterministic fallback |
-| **P3** — oracle | Retrospectively best configuration per episode; upper bound, not achievable online |
+Baseline IDs here are local to Paper 1.
 
-S0 vs S1 is the headline. P3 bounds it. P0 shows what the trivial predictor
-already achieves — report it even when it is close.
+| ID | Method | Purpose |
+| --- | --- | --- |
+| B0 | Local/receiver evidence only, with declared permitted feedback | Operational floor; do not disable legitimate local information to manufacture an advantage |
+| B1 | Fixed matched-counter bundle plus declared alternate-path checks | Strong simple rule; use synchronized/cohort-compatible acquisition |
+| B2 | Full permitted evidence sharing, with freshness maintenance | High-disclosure reference; it obeys policies and is not an oracle |
+| B3 | Information-gain and value-of-information acquisition | Separate implementable variants with published/adapted objectives documented |
+| B4 | EC2/HEC-style decision-region acquisition plus validity checks and reacquisition | Closest methodological comparison; document assumptions, adaptations, and departures from original guarantees |
+| B5 | Periodic refresh plus adaptive diagnosis | Tests whether ordinary refresh removes the proposed advantage; tune its period fairly |
+| B6 | Proposed group scheduling for anticipated execution-time validity | Candidate method |
 
----
+All methods have the same validity predicate, authority checks, action-risk
+threshold, action-effect model access, and post-action verification. Each may
+recollect invalid evidence. Hold management concurrency limits and accounting
+constant; count refresh traffic and refused requests according to declared costs.
+
+For sufficiently small instances, compute an exact **model-based** reference
+policy or exhaustive schedule under the same information constraints. A
+clairvoyant evaluator with future fault knowledge, if shown, is a separate bound
+and must not be described as a deployable baseline.
+
+Ablate joint grouping, anticipation of expiration/invalidation, and replanning
+after responses. Keep the execution checks enabled in every acquisition ablation.
+Use shared held-out tuning budgets and state computational limits. An RLS/EWMA
+predictor comparison may be diagnostic; it is not a replacement for B1/B4/B5.
 
 ## 7. Metrics
 
-| Group | Measures |
+**Primary:** cumulative service impairment over a fixed incident horizon at
+matched disclosure budgets. Specify the service objective, weighting of waiting
+and switching disruption, and risk threshold before confirmatory runs. Also
+report the components separately and sweep weights or constraints.
+
+| Metric family | Required outputs |
 | --- | --- |
-| Learning | Prediction MAE per agent over episodes; adaptation latency; error on a recurring regime |
-| Decision | Regret vs P3; episodes to stable choice; refusal correctness |
-| Attribution | Segment-localisation accuracy by method; correct-action and correct-non-action rate; disruption avoided |
-| Disclosure | Records, fields and bytes per episode and cumulatively; split by knowledge kind |
-| Negotiation | Rounds, refusals by reason, agreement rate, `no_agreement` rate |
-| Cost | Transactions, disruption datagrams, occupancy; A2A messages and bytes |
+| Recovery | Time to receiver-verified recovery; success rate; time outside the objective; unresolved loss through the full horizon |
+| Action risk and coverage | Harmful actions under a prespecified operational/counterfactual definition; attempted repairs; avoidable abstention and missed repair opportunities; risk–coverage curves |
+| Disclosure | Requests, fields/records, bytes, owner-specific sensitivity costs, and amortized refresh traffic; this is an exposure proxy, not a privacy guarantee |
+| Acquisition efficiency | Expired or incompatible records, rejected groups, recollections, response latency, and collection-to-execution delay |
+| Decision quality | Regret against the declared model-based reference where computable; calibration and prediction error only where models are used |
+| System cost | Planner runtime, memory, messages, model-training cost, and action-verification overhead |
 
-**Per agent, always.** The three are differently positioned and an aggregate
-hides the result. Service delivery and correct refusal are reported
-**separately** — a refusal is not a failure.
-
----
+A live incident cannot reveal the outcomes of both changing and retaining the
+configuration simultaneously. Identify counterfactual estimates from controlled
+replay separately from measured live outcomes. Do not censor unresolved incidents
+out of recovery-time plots or present abstention as successful recovery.
 
 ## 8. Build phases
 
-**Phase 0 — unblock measurement.** Close **F4** so a receiver sample can be
-proven to postdate a change. Run `sudo scripts/service-up.sh` end to end and
-capture the first run bundle. **Never yet done.**
+### Phase 0 — Measurement contract and live prerequisites
 
-**Phase 1 — condition harness and segment attribution.** `tc netem` profiles,
-the three visibility classes, the schedule driver; segment counter collection at
-the four bracketing interfaces.
+Define packet cohorts/windows, counter semantics, timestamps, revisions, and
+fresh receiver evidence. Resolve and validate F4, F3, F2, and F6 as required for
+the live experiments; retain other findings in [§16](#16-implementation-prerequisites-and-retained-findings).
+Run the lab and capture an E1 bundle before claiming live recovery.
 
-**Then verify the premise, before building any agent.** Three checks, each able
-to kill a claim cheaply:
+**Exit:** documented measurement limits and reproducible platform checks.
+The offline pilot may begin while live prerequisites are being resolved.
 
-1. **Delivered ratio varies by configuration** under the schedule. If not, there
-   is nothing to learn.
-2. **A locally-invisible impairment is absent from every domain's counters** and
-   present at the receiver. If a domain sees it locally, C4 evaporates.
-3. **Segment losses sum to end-to-end loss** within tolerance. If not, exact
-   attribution is unavailable and C7 falls back to statistical methods.
+### Phase 1 — Harness and comparative pilot
 
-Fix **F3** here if check 3 fails for parsing rather than physical reasons — the
-telemetry extractor has never run against the pinned SR Linux image.
+Build the condition harness and offline event replay. Provide healthy,
+repairable, and unrepairable cases, delays, state changes, owner refusals, and
+model error. Separate runtime inputs from evaluator truth.
 
-**Phase 2 — MCP server and one agent.** `packet-a-mcp` first, with device
-credentials held there rather than in the agent. Then `agent-packet-a` as its
-only client: gates, journal, context store, SIMAP projection.
+Implement B1, B4, and the proposed method first, plus the small-instance
+reference where feasible. Define the objective, permissible evidence, action
+model, and validity predicate before tuning. Add B0/B2/B3/B5 to confirm that any
+advantage survives stronger comparisons.
 
-**Phase 3 — three agents over A2A.** Agent Cards, task lifecycle, six exchanges,
-round cap, unanimous commit. Deterministic decisions. Delivers E1.
+**Exit/go-no-go:** a reproducible comparison showing where the proposed method
+helps, ties, and fails. Proceed if a meaningful recovery/disclosure advantage
+survives common execution checks and realistic collection accounting. If fixed
+bundles or adapted HEC match it across the relevant regime, revise the
+contribution before building the complete agent stack. Publishable novelty
+cannot be inferred from implementing the protocol.
 
-**Phase 4 — predictors and sharing.** RLS with forgetting, EWMA baseline,
-`OUTCOME` publication, S0–S3 switches. Delivers E2, E3, E3b, E3c, E4.
+### Phase 2 — One controller and scoped MCP access
 
-Close **F2** before Phase 4: a repair requiring the failed router to answer gNMI
-cannot support the assurance episodes.
+Build one deterministic controller, the local tool server, evidence records, and
+the acquisition loop. Enforce credentials and authorization below caller-supplied
+domain labels. Implement request/response validity and journaling before writes.
 
-**Open decision — settle before Phase 4 ends.** Whether this paper runs the
-reasoning engine. Deterministic agents drop Phase 5 entirely, are three to four
-months cheaper and far more reproducible, but invite *"why is this agentic?"*.
+**Exit:** replayable decisions, rejected stale/incompatible/unauthorized inputs,
+idempotent effects, and verified local execution with retained evidence.
 
-**Reproducibility.** Pin netem profiles, forgetting factor, seeds, A2A spec
-version and — if the engine runs — model id, version and temperature. A result
-that cannot be replayed from the journal is not a result.
+### Phase 3 — Three controllers and live recovery
 
----
+Add peer identity, A2A application messages, scoped evidence requests, approval
+dependencies, relevant revision invalidations, and receiver verification.
+Record what was approved separately from what was applied. Exercise refusal,
+timeout, partial application, and unavailable-device recovery.
+
+**Exit:** selected E1–E4 scenarios reproduced live with accurate unresolved and
+partial outcomes, no cross-owner writes, and attributable measurement records.
+
+### Phase 4 — Expanded evaluation and research artifact
+
+Freeze the algorithm, graph/schema version, baselines, tuning protocol, primary
+metrics, and statistical analysis. Run E2–E5 on held-out incidents and release
+configs, traces, analysis, and limitations.
+
+**Exit:** claim-to-evidence review in §14, reproducible figures, and an updated
+literature/venue check. Phase 4b (Paper 2) and Phase 5 (Paper 3) inherit this
+validated base; neither is required for Paper 1.
 
 ## 9. Threats to validity
 
-| Threat | Mitigation |
-| --- | --- |
-| **Trivial decision space** — eight configurations | State it. The claim is about evidence availability, not search difficulty |
-| **Host limits mistaken for network effects** | Calibrate reference traffic; confirm the host is not the bottleneck before attributing loss |
-| **Predictor circularity** | The label comes from the receiver, never from a model |
-| **Correlated episodes** | The independent unit is a complete chronological stream, not an episode |
-| **Future-data leakage** | Chronological evaluation only; no best-checkpoint selection on the test stream |
-| **Per-interface ≈ per-flow** | Holds only because there is one service. Stated, not assumed away |
-| **Full topology replication** | An assumption, declared. Whether operators would agree is a policy question |
-
----
+- An artificial disclosure policy can manufacture the benefit. Justify policies
+  and include permissive, restrictive, and no-budget controls.
+- Absolute timestamps do not establish compatible packet cohorts. Account for
+  clock uncertainty, propagation, resets, duplicates, and background traffic.
+- Each owner has its own revision sequence. Use scoped revision dependencies;
+  identical numbers from different owners do not imply a common network state.
+- The scheduler can be advantaged by access to the simulator's future state or
+  true fault class. Enforce and audit the runtime/evaluator boundary.
+- Priors or action-effect models may be wrong. Use training interventions,
+  calibration checks, held-out regimes, and explicit uncertainty.
+- A three-domain emulator is a feasibility test. Simulated scaling is useful
+  but cannot establish carrier-scale live performance.
+- Signatures establish provenance under their assumptions, not telemetry truth.
+  Freshness/approval checks leave a validation-to-execution interval that must
+  be modelled, bounded, or handled by recollection/abstention.
 
 ## 10. Not tested in this paper
 
-- **Bandwidth allocation.** One flow, no policing. Offered load is never
-  reported as a reservation.
-- **Compensation and loop stability.** Paper 2.
-- **Evaluation of the reasoning layer.** Paper 3.
-- **Optical restoration.** One fibre chain; a cut is unrecoverable by design.
-- **Scale.** Three owners, eight configurations. No scalability claim.
-- **Adversarial peers.** Honest but self-interested; a lying peer is out of
-  scope.
-- **Privacy guarantees.** Disclosure volume is measured, not defended.
+Continuous interacting assurance loops and rate compensation are Paper 2.
+LLM reasoning, semantic retrieval, and their incremental value are Paper 3.
+Byzantine owners, cryptographic privacy, unconditional physical safety, and
+production-scale deployment are outside the initial Paper 1 scope.
 
----
+The current optical model does not make a changed gOSNR cause real packet loss,
+and two wavelengths on one fibre do not provide fibre-cut restoration. Do not
+claim those capabilities from the pilot.
 
 ## 11. Statistical design
 
-**The independent unit is a complete chronological stream**, not an episode, not
-a packet, not a predictor update. Episodes within a stream are correlated by
-construction: the predictor carries state across them and the condition schedule
-is ordered.
+Use independent incident streams/seeds as experimental units, with paired
+conditions across methods. Split training, tuning, and final evaluation by
+incident stream and, where appropriate, topology/regime; packets within an
+incident are not independent replications.
 
-- Use **matched exogenous streams and seeds** across conditions, and paired
-  effect estimates. S0 and S1 must see the identical condition sequence.
-- Preserve within-stream dependence when bootstrapping; do not resample episodes
-  independently.
-- **Predeclare** the primary endpoint (per-agent prediction MAE for Packet A and
-  Optical), the meaningful effect size, and the number of streams, from a pilot.
-- Report uncertainty, distributions and stream counts — not point estimates
-  alone. Adjust for multiple confirmatory contrasts or label the rest
-  exploratory.
-- **Do not stop when significance appears.** Stopping rules are fixed before the
-  grid runs.
+Use pilot variance and a prespecified practically meaningful effect to determine
+sample size. Declare primary budgets, risk limits, recovery noninferiority
+margins, coverage requirements, and analysis before final runs. Report paired
+effect sizes and confidence intervals, including uncertainty around harmful
+action rates and unresolved incidents. Correct or clearly label exploratory
+multiple comparisons.
 
-**Learning curves** are plotted with regime boundaries marked, showing both the
-predictive metric (MAE) and the service metric (delivered ratio), because a
-better predictor that does not change decisions is not a result.
-
-**No finite error-free run proves a guarantee.** Every claim is scoped to the
-tested owners, objectives, workload and emulator fidelity.
-
----
+A nonsignificant difference is not proof of equal recovery. Claims of reduced
+disclosure at comparable performance require the declared margin and adequate
+precision. Report null and adverse results and identify where method overhead
+outweighs its benefit.
 
 ## 12. Run bundle and reproducibility
 
-Every experiment emits one bundle. A result that cannot be replayed from it is
-not a result.
+Every run must identify simulated versus live execution and include:
 
 ```text
-run-<id>/
-  manifest.json        seeds, versions, git SHA, condition schedule id, sharing condition
-  conditions/
-    schedule.yaml      the chronological sequence actually applied
-    netem.yaml         per-link profiles, per visibility class
-  agents/
-    agent-packet-a/    policy.yaml, predictor.json snapshots, journal.jsonl, context.db
-    agent-optical/     ...
-    agent-packet-b/    ...
-  raw/
-    receiver.log       iperf3 interval output, unmodified
-    segment-counters/  four bracketing interfaces, timestamped
-  analysis/
-    metrics.parquet    one row per episode per agent
-    figures/
+manifest.json          code/config/schema versions, seeds, dependencies, mode
+topology.json          owner slices, service path, action space, revision scope
+policy.json            permitted evidence/actions, budgets, approval requirements
+conditions.json        evaluator-only injections and exogenous timing
+training-manifest.json training/tuning split, interventions, fitted model version
+requests.jsonl         request groups, issue/completion times, cost, refusals
+evidence.jsonl         values, owners, cohorts, windows, revisions, uncertainty
+decisions.jsonl        estimates, eligible actions, selected request/action, stop reason
+approvals.jsonl        owner authorization and exact action dependencies
+effects.jsonl          attempted/applied changes and pre-execution checks
+verification.jsonl    fresh receiver outcomes and unresolved/partial states
+metrics.json           declared metrics and incident-level outcomes
+analysis/              scripts and parameters that reproduce figures
 ```
 
-**Pinned per run:** netem profiles, forgetting factor `lambda`, RLS
-regularisation, seeds, A2A specification version, SR Linux and Mininet-Optical
-image digests, and — if the reasoning engine is enabled — model id, version and
-temperature.
-
-**`context.db` is archived whole.** It is one SQLite file, which is why the
-embedded store was chosen over separate database servers.
-
----
+Paths are a proposed artifact contract, not existing output files. Retain enough
+raw counter/traffic data to audit derived measurements, plus the command,
+environment, tool versions, and errors needed to replay the run. Keep evaluator
+files inaccessible to runtime policies. Store credentials outside artifacts.
+Record model assumptions and exact-baseline limitations.
 
 ## 13. Figures and tables
 
-Planned up front so the experiments produce what the paper needs:
-
-| # | Figure | Shows |
-| --- | --- | --- |
-| **F1** | Per-agent prediction MAE over episodes, four sharing conditions | **The headline.** S0 flat for Packet A and Optical |
-| F2 | The same, split by visibility class | C4 — the gap widens where telemetry is blind |
-| F3 | Decision regret vs the P3 oracle, by condition | C2 |
-| F4 | Attribution accuracy by method and by disclosure level | C7 |
-| F5 | Correct-action / correct-non-action rates, and disruption avoided | C8 |
-| F6 | Disclosure volume against decision quality | The cost axis |
-| F7 | Learning curves across the regime shift and recurrence | C2, adaptation vs forgetting |
-
-| # | Table | Shows |
-| --- | --- | --- |
-| T1 | Segment-localisation accuracy, per owner, per method | C6, C7 |
-| T2 | Refusals by reason, per agent | Correct refusal as correct behaviour |
-| T3 | Cost vector per episode: transactions, disruption, occupancy | §9 of the design |
-
----
+1. Recovery/service impairment versus disclosure, with uncertainty and coverage.
+2. Recovery-time distributions including unresolved incidents.
+3. Collection waste and recollection versus delay and state-change rate.
+4. Harmful-action risk versus attempted-repair coverage.
+5. Mechanism ablations under stationary and changing-state conditions.
+6. Planner/system scaling and held-out-regime performance.
+7. Prior-work comparison, baseline adaptations, and live-platform limitations.
 
 ## 14. Claim-to-evidence release criteria
 
-A claim is reportable only when its criterion is met. Otherwise it is reported
-as unresolved — **not quietly dropped**.
-
-| Claim | Release criterion |
+| Item | Release criterion |
 | --- | --- |
-| **C1** | Packet A and Optical prediction MAE shows no significant improvement over the full stream under S0, across all matched streams |
-| **C2** | S1 beats S0 on per-agent MAE **and** on decision regret, with the effect exceeding the predeclared size |
-| **C4** | The S0→S1 gap under locally-invisible impairment significantly exceeds the gap under locally-visible impairment |
-| **C6** | Attachment-segment loss is localised under counter sharing and not localised by any agent under S0 |
-| **C7** | Attribution accuracy is ordered exact > conditional > correlational, with the exact method unavailable under S0 |
-| **C8** | Non-owning domains refrain in the large majority of injected faults, and the disruption avoided is quantified |
+| E1 prerequisite | Measurement compatibility, receiver freshness, authorization, and applied-state verification are demonstrated within stated limits |
+| H1 | Benefit survives B1/B4/B5 comparisons and full accounting for waiting, refresh traffic, disruption, and missed repairs |
+| H2 | Gains persist with the same execution checks and are attributable to acquisition decisions; report stationary-case overhead |
+| H3 | Held-out and scale results establish the stated domain of usefulness and expose failure boundaries |
+| Reproducibility | An independent replay reproduces the tables/figures from retained artifacts |
+| Novelty | Updated literature assessment supports a specific extension beyond active diagnosis plus freshness checking |
 
----
+If the evidence supports only a subset, narrow the title, abstract, and claims.
+If the pilot is negative, retain the useful platform work and revise the method;
+do not substitute an architecture-only novelty claim.
 
-## 15. Open decisions
+## 15. Open decisions and defaults
 
-| Decision | Deadline | Default if unmade |
+| Decision | Default / resolution point |
+| --- | --- |
+| Controller engine | Deterministic for Paper 1; LLM evaluation deferred to Paper 3 |
+| Objective and risk definition | Fixed-horizon operational loss with disclosure constraint; fix terms and thresholds during the pilot |
+| Evidence validity | Cohort, revision, and uncertainty dependencies; calibrate timing assumptions, with no universal fixed freshness window |
+| Action-effect model | Controlled training interventions and held-out validation; no hidden injection labels at runtime |
+| Strong adaptive baseline | Implement and document EC2/HEC adaptations before claiming an advantage |
+| Pilot expansion | Scale domains, evidence sources, and actions after Phase 1 justifies it |
+| Statistical sample size | Determine from pilot variance and meaningful effects before confirmatory evaluation |
+| Journal/Q1 check | TNSM on scope; verify ranking source/category/year and current submission requirements before submission |
+
+## 16. Implementation prerequisites and retained findings
+
+These open findings were recorded in the 17 September 2026 repository assessment
+against commit `57755d478efb1984fc3438eca8d6342c31e441ca`. The assessment passed
+86 component tests (46 packet, 40 optical) and exercised synthetic inputs/fake
+devices; it did not validate a live lab. This table preserves the prerequisites
+after removal of the standalone issue document. No item is closed by this
+documentation update.
+
+The current workspace is for planning and design. Run live checks in the
+designated validation environment. Before closing an item, record its chosen
+approach, resolving commit, and verification evidence. An unsupported capability
+may instead remain explicitly excluded from the experiments and claims.
+
+| ID | Open finding and required behaviour | Acceptance evidence and source |
 | --- | --- | --- |
-| Agentic or deterministic P1 (design §1) | end of Phase 4 | Deterministic — cheaper and more reproducible |
-| Sharing conditions: is S3 in P1 or deferred to P3? | end of Phase 4 | Run S3, report it, do not claim it |
-| Number of matched streams per condition | after the Phase 1 pilot | Set by the predeclared effect size |
-| Loop period for observation refresh | Phase 2 | 10 s tick, 15 s freshness bound |
+| F1 | Optical lifecycle cleanup and process signalling can affect unrelated instances. Track owned resources and validate process identity; keep global cleanup an explicit exclusive-host maintenance operation. | Start/stop leaves an unrelated fixture untouched; a stale PID cannot signal an unrelated process. [Optical lifecycle](../optical-network/topology.py), [startup](../scripts/service-up.sh), [shutdown](../scripts/service-down.sh). |
+| F2 | Backup activation reads the primary core before writing, so gNMI failure can prevent repair even with a healthy backup. Distinguish forwarding failure, management-only failure, and unknown state; define corroborating evidence and policy. | Separate link failure, primary-router unavailability, and management-only failure yield a verified permitted action or explicit deferral. [Backup path](../packet-network/backup_path.py). |
+| F3 | Telemetry parsing can drop path-keyed or module-prefixed responses without reporting incomplete coverage. Normalize supported forms and retain missing-data reasons. | Capture fixtures from the pinned image; supported responses produce attributed counters and malformed/partial responses cannot look complete. [Telemetry](../packet-network/telemetry.py), [gNMI](../packet-network/gnmi.py). |
+| F4 | Whole-run receiver summaries can replace interval samples; stored logs can appear current; relative interval identities repeat across sessions. Add session identity, observation bounds, and explicit freshness. | Summaries cannot replace intervals; restarted sessions differ; stale/no-traffic is explicit; recovery evidence covers the required post-effect window. Merely seeing a previously unseen interval is insufficient. [Traffic](../packet-network/traffic.py). |
+| F5 | Startup may report success before fresh delivery/attachment readiness, and partial failures or teardown errors may be obscured. Add preflight, bounded verification, owned-resource cleanup, deadlines, and aggregated status. | Failures at each stage produce truthful non-success outcomes and identify remaining resources; delayed attachment is handled. [Startup](../scripts/service-up.sh), [shutdown](../scripts/service-down.sh), [optical lifecycle](../optical-network/topology.py). |
+| F6 | A failed second packet-route write can leave mixed state without durable receipts or reconciliation. Record progress and operation identity; do not claim atomic multi-router changes. | Second-write failure, lost response, and restart permit explicit reconciliation or unresolved reporting without blind repetition; verify delivery independently. [Backup path](../packet-network/backup_path.py), [controller contract](../mcp-server-design.md#shared-tool-and-result-contract). |
+| F7 | Repeating an unchanged optical request can reset ROADMs and repeat disruptive writes. Add verified retain-current behaviour and partial-operation reconciliation. | Unchanged verified requests avoid resets; retunes are receiver-verified; failure at each step is partial/unresolved. [Optical client](../optical-network/client.py), [tests](../optical-network/tests/test_optical.py). |
+| F8 | Optical `configured` status does not prove installed rules, supported-channel health, adequate monitor coverage, or service delivery. Keep observed configuration and verified health separate. | Missing/contradictory monitors yield unknown/degraded status; success cannot follow from `configured` alone. [Client](../optical-network/client.py), [CLI](../optical-network/main.py). |
+| F9 | Attachment command failures can be unchecked and partial setup can leave resources behind. Track command status and owned-resource progress. | Failures at every attachment stage are reported and partial resources are removed or identified without global reset. [Attachment](../optical-network/packet_bridge.py), [lifecycle](../optical-network/topology.py). |
+| F10 | CLI JSON can be mixed with prose, expected operational errors can escape handling, and one-shot telemetry cannot calculate rates. Define structured result/error and sampling contracts. | JSON commands decode as one result, failures have stable exit/error behaviour, and rates use at least two samples with unavailable/reset counters explicit. [Packet CLI](../packet-network/main.py), [telemetry](../packet-network/telemetry.py). |
+| C1 | Caller-side inventory scoping and shared lab privileges do not establish independent operator authority. Add scoped credentials, certificate/identity checks, server-side enforcement, and separate bootstrap powers. | Wrong-domain requests denied at MCP, adapter, and device boundaries; document actual optical API binding/access. [Control boundary](../data-plane.md#control-boundary). |
+| C2 | Retain independent evidence for the live fixture and claimed recovery/disruption results. Aggregate loss alone does not establish a contiguous outage duration. | Reproducible deploy–traffic–retune–packet-repair–optical-cut–teardown bundle with raw receiver, route, monitor, timing, version, and host records; see §12. |
+| C3 | Keep capability claims, study scope, and provisioning semantics consistent. Paper 1 now studies evidence scheduling for recovery; Paper 2 adds continuous compensation; Paper 3 evaluates reasoning. | Review docs and manifests against implemented capabilities; use a policy-approved healthy-path provisioning action instead of relying on a repair command's rehearsal `--force` flag. |
+
+Resolve F1–F5 before treating affected fixture output as reliable automated
+experiment evidence. Resolve F6–F10 and C1 with the scoped controller/effect
+workflows. C2/C3 are required before freezing claims and manifests. Existing
+unit-test success alone does not close these findings. The explicit validity and
+request-group mechanisms in this plan introduce further checks beyond this
+historical list.

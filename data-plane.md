@@ -23,14 +23,15 @@ references; this document is the specification the experiments pin against.
 
 **Status:** deployable. The data plane and its domain-scoped operations exist
 and are tested. The agent federation above it — A2A, signed exchanges,
-per-domain MCP servers and continual predictor learning — does not, and is the
+per-domain MCP servers and evidence scheduling for recovery — does not, and is the
 work in the [Paper 1 build plan](paper-1-federated-evidence/plan.md#8-build-phases).
 Nothing here supplies those mechanisms.
 
-The [known issues and follow-up register](known-issues.md) qualifies the current
+The [retained implementation findings](paper-1-federated-evidence/plan.md#16-implementation-prerequisites-and-retained-findings)
+qualify the current
 implementation: unit tests pass, but lifecycle handling, recovery, telemetry and
 service verification have open findings. Its assessment did not run a live lab.
-Consult the register before relying on CLI success, optical `configured` status
+Consult those prerequisites before relying on CLI success, optical `configured` status
 or receiver interval identity as evidence that a service is healthy or recovered.
 
 ## What is fixed

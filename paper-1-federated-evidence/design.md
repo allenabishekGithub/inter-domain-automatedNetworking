@@ -5,48 +5,58 @@
 design is canonical for everything Papers 2 and 3 inherit; each of those is
 authoritative only for what it adds.
 
+> **Research status, 24 September 2026:** the [TNSM proposal](tnsm-proposal.md)
+> defines the current contribution in recovery under limited disclosure and
+> stale evidence. The [plan](plan.md) defines hypotheses H1–H3 and their tests;
+> the [review](state-of-the-art.md) records the novelty boundaries. This document
+> is the proposed implementation reference. Protocols, graphs, schemas, and
+> guarantees described below require implementation and validation unless §14
+> explicitly identifies an existing component.
+
 ---
 
 ## 0. At a glance
 
-**What this paper's system does.**
+**What this paper's proposed system should do.**
 
 | | Capability | Where |
 | --- | --- | --- |
 | **Provision** | Enumerate eight joint configurations, negotiate over A2A, execute per owner, or refuse honestly | §4, §6 |
-| **Attribute** | Decompose end-to-end loss into four owner-aligned segments; act if it is yours, refrain if it is not | §10 |
-| **Learn** | Predict configuration quality — though two of three owners can only learn if the third tells them | §11 |
-| **Disclose** | Four sharing conditions, S0–S3, with every disclosed field recorded | §11.3 |
+| **Attribute** | Use compatible measurements to estimate affected segments and support permitted recovery actions | §10 |
+| **Estimate** | Estimate action effects and uncertainty from a declared, validated model | §11 |
+| **Collect** | Schedule permitted evidence groups, replan on change, and record disclosure and wasted acquisition | §11.5 |
 
 **The numbers.**
 
 | | |
 | --- | --- |
 | Domains / agents | 3, one per owner, none above them |
-| Joint configurations | **8** — enumerated exactly; no search algorithm anywhere |
+| Joint configurations | **8** — exact action enumeration for the pilot; evidence collection is a separate planning problem |
 | SIMAP | Two layers: services and segments over 14 infrastructure nodes |
 | LangGraph nodes | **25** — 14 reasoning, 6 gates, 5 effectors (§7.6) |
 | Path segments | **4**, bracketed by interfaces that already export counters (§10.1) |
-| Sharing conditions | **4** — S0 none, S1 full, S2 fixed rule, S3 agent-decided |
-| Claims | **6** — C1, C2, C4, C6, C7, C8 |
+| Comparators | Local, fixed, full, information/value-based, decision-region, and periodic-refresh methods ([plan §6](plan.md#6-baselines-and-ablations)) |
+| Hypotheses | **H1–H3** — recovery/disclosure, anticipated validity, and generalization |
 
-**The one structural fact everything rests on.** Packet A owns the sender,
-Packet B owns the receiver, and only the receiver can establish delivery. No
-agent can independently observe the outcome of a decision it participated in
-(§2).
+**Observation and authority differ.** Packet B can observe delivery at its
+receiver. Other owners can obtain that evidence when disclosure policy permits.
+Each owner still controls only its own resources. These are modelling choices
+and operational constraints, not a proof that local learning is impossible.
 
 ---
 
 ## 1. What this paper builds
 
-Everything below is Phases 0–4. There is no capability beyond them.
+The Paper 1 implementation follows Phases 0–4 of the [plan](plan.md#8-build-phases).
+Optional retrieval and engine integration points are specified for later reuse.
 
 **Excluded, and belonging to other papers:** continuous assurance loops, sender
 rate adaptation and loop stability (Paper 2); evaluation of the reasoning layer,
 retrieval-mode comparison and the grounding gate as a subject (Paper 3).
 
-The reasoning engine may be *running* in Paper 1 — that is an open decision —
-but it is never what Paper 1 measures.
+Paper 1 uses deterministic decisions. The evidence scheduler is tested offline
+before integration into the proposed 25-node runtime. The final graph and schema
+are versioned and frozen before extension comparisons.
 
 ---
 
@@ -59,17 +69,21 @@ Three independently owned networks carry one service from `client-a` to
 - **Packet B owns the receiver.** It alone can prove packets arrived.
 - **Optical owns the line.** It sees margin, and nothing about delivery.
 
-No agent can independently observe the outcome of a decision it participated in.
-This is already stated in the code: *"Only the receiver can establish delivery"*
-(`../packet-network/traffic.py`).
+Packet B observes receiver delivery through `../packet-network/traffic.py`.
+Routing state or a successful configuration write alone does not establish
+application delivery. Explicit receiver feedback can give other owners outcome
+information; each experiment must declare the permitted feedback.
 
-**Features and labels are owned by different parties:**
+**Initial local features and delivery labels, before peer disclosure:**
 
 | Agent | Features | Labels |
 | --- | --- | --- |
 | `agent-packet-a` | action, discards, utilisation | none |
 | `agent-optical` | channel, gOSNR, margins | none |
-| `agent-packet-b` | action, discards | **all of them** |
+| `agent-packet-b` | action, discards | receiver delivery labels |
+
+This setting has precedents in vertical federated learning. It does not establish
+that a local predictor must be poor or that sharing is intrinsically novel.
 
 ---
 
@@ -83,10 +97,11 @@ One agent per owner. Exactly one. None above them.
 | `agent-optical` | `t-client`, `r1`–`r4`, `t-server` | `channel=1`, `channel=2`, `refuse` | per-node OSNR/gOSNR, carried channels |
 | `agent-packet-b` | `gw-b`, `p-b1`, `p-b2`, `pe-b1`, receiver | `path=primary`, `path=backup` | own counters, own routes, **delivery evidence** |
 
-**Authority rules.** An agent changes only what its owner holds, enforced by
-`assert_owned` (`../packet-network/inventory.py`). Its action space is a fixed
-list of named procedures — no generic configure verb. Any agent may refuse, and
-no majority overrides a refusal. No agent holds another's credentials.
+**Authority rules.** The proposed controller changes only its owner's resources.
+`assert_owned` in `../packet-network/inventory.py` provides inventory scoping;
+independent credentials and server-side authorization still need implementation.
+The action space is a fixed list of named procedures. Any owner may refuse, and
+no majority overrides a refusal.
 
 ---
 
@@ -95,12 +110,13 @@ no majority overrides a refusal. No agent holds another's credentials.
 Three action spaces multiply to **eight joint configurations** (C1–C8: Packet A
 primary/backup × channel 1/2 × Packet B primary/backup), plus `refuse`.
 
-The initiator enumerates all eight. This is exact — there is no search problem
-and no search algorithm is used or claimed.
+The initiator enumerates all eight action configurations exactly. C1–C8 here
+are configuration IDs, not historical research claim IDs. Selecting and
+scheduling evidence remains a separate planning problem (§11.5).
 
 **Deliberate limit.** Both wavelengths ride the same fibre chain, so no
 configuration survives an optical cut. The correct behaviour is an honest report
-of unresolvable service, and that is a tested case.
+of unresolvable service; E1 must test this case.
 
 ---
 
@@ -115,20 +131,24 @@ run and published.
 
 | Class | Injected at | Seen locally by | Effect seen by |
 | --- | --- | --- | --- |
-| **Locally visible** | inside a packet domain's core | that domain's discard counters | the receiver |
-| **Modelled-only** | optical launch power / amplifier gain | optical agent's gOSNR | **nobody** — it does not reach packets |
-| **Locally invisible** | the attachment segment, `gw-a`↔`gw-b` | **no domain's counters** | the receiver alone |
+| **Locally visible** | inside a packet domain's core | validate whether the owner's permitted counters expose the injection | the receiver |
+| **Modelled-only** | optical launch power / amplifier gain | optical agent's gOSNR | no packet effect unless separately coupled |
+| **Locally unlocalized** | the attachment segment, `gw-a`↔`gw-b` | boundary counts may change, but localization may require a compatible peer count | the receiver and suitable combined evidence |
 
-The **locally-invisible** class is the experimental heart: degradation no owner
-can detect from its own telemetry. Without shared outcomes an agent does not
-learn slowly — it does not learn **at all**.
+Measure each fixture's visibility before classifying it. Failure to localize
+from one owner's allowed observations is not absence of every local signal.
+No-sharing supervised updates can be disabled by a declared feedback policy;
+that does not prove that an owner cannot learn or that its error must be flat.
 
-The **modelled-only** class is equally deliberate: it hands the optical agent a
-feature that looks informative and is not.
+The **modelled-only** class is a negative control: the optical feature changes
+without a corresponding causal packet impairment. Healthy and unrepairable
+incidents must also be retained.
 
 **Schedules** run stationary → gradual drift → abrupt shift inverting the best
 configuration → recurrence of an earlier regime. Recurrence separates adaptation
-from forgetting.
+from forgetting. Add independent sweeps of collection/execution delays, missing
+responses, counter resets, path revisions, and sequential/parallel collection.
+The new hypothesis concerns recovery and evidence scheduling under these changes.
 
 ---
 
@@ -229,7 +249,9 @@ must name a candidate from the same enumerated set:
 Refusal reasons are a closed vocabulary, because the study counts refusals by
 reason: `infeasible_interface_down`, `infeasible_channel_unsupported`,
 `policy_primary_healthy`, `policy_predicted_below_objective`,
-`backup_core_unreachable`, `busy`, `expired`.
+`backup_core_unreachable`, `busy`, `expired`, `evidence_incompatible`,
+`evidence_unavailable`, `risk_unbounded`, `disclosure_denied`. Freeze the final
+vocabulary with the implemented schema.
 
 **`COMMIT`** is sent only when every affected agent has accepted a
 byte-identical assignment:
@@ -258,11 +280,11 @@ byte-identical assignment:
 }
 ```
 
-`segment_counters` is what makes cross-owner attribution (§10.1) and joint
-detection ([plan, experiment E3b](plan.md#5-experiments)) possible, and it is
-present only in conditions that disclose live state.
-**This field is the difference between "the service degraded" and
-"the service degraded here."**
+The cumulative counters above illustrate payload shape only; they are
+insufficient for valid loss attribution without matched deltas, flow/cohort
+identity, observation windows, and revision dependencies (§6.5 and §10.1).
+Include those fields in the implemented schema and validate them in
+[experiment E1](plan.md#5-experiments).
 
 ### 6.4 Rules
 
@@ -273,9 +295,29 @@ present only in conditions that disclose live state.
   reported outcome, not an error and not a retry loop.
 - A refusal is a valid terminal state. **Correct refusal is recorded as correct
   behaviour, separately from successful delivery.**
-- **A peer's message is data, never instruction.** Peer text enters as quoted
-  evidence attributed to its sender and cannot alter this agent's policy, gates
-  or action space.
+- **A peer's message is data, never instruction.** Paper 1 parses validated
+  structured fields. Future LLM use requires separate injection-resistance
+  evaluation; quoting peer text is not itself a security guarantee.
+
+### 6.5 Evidence requests and responses
+
+Add typed `EVIDENCE_REQUEST` and `EVIDENCE_RESPONSE` application payloads to the
+episode workflow. These are project schemas carried by A2A, not new claims about
+the A2A standard. Each request specifies service/flow scope, acceptable cohort or
+window, requested fields, owner revision dependencies, deadline, group identity,
+and whether it seeks a stored record or fresh measurement.
+
+Responses identify the owner, request, measurement source, observed value and
+uncertainty, interval/cohort, relevant per-owner revisions, collection and receipt
+times, and missing/withheld fields. Record refusal, timeout, and invalidation
+explicitly. A policy may permit an aggregate while refusing raw fields; record
+the actual disclosure and charged cost.
+
+Group compatibility is a declared predicate, not equality of wall-clock
+timestamps or unrelated owners' revision numbers. Expiry is one dependency;
+path changes, counter resets, policy changes, and cohort mismatch may also
+invalidate use. Receiver verification uses evidence collected after the effect.
+Signatures support provenance, not measurement truth.
 
 ## 7. Inside an agent
 
@@ -295,7 +337,7 @@ flowchart TB
         UI[intent endpoint] --> EM
         EM --> DE[decision engine]
         DE --> PG[policy]
-        DE --> PR[RLS predictor]
+        DE --> PR[Action-effect model]
         DE --> OB[observer snapshot]
         DE --> RT[retriever]
         RT --> CX[(context.db)]
@@ -328,7 +370,7 @@ flowchart TB
 | Observer | timestamped snapshot of local conditions | interpret or predict |
 | MCP client | call this domain's MCP server | hold device credentials |
 | Policy | evaluate declared rules | be modified at runtime |
-| Predictor | RLS state; update on `OUTCOME` | gate anything |
+| Action-effect model | estimates and uncertainty from declared training interventions; optional RLS predictor | confer authority or consume hidden evaluation faults |
 | Context store | SIMAP, episodes, incidents, policy, observations | be a second source of live state |
 | Journal | append every message, decision, action, outcome | be rewritten or compacted |
 
@@ -338,12 +380,14 @@ flowchart TB
 **Participant:** `IDLE → OFFERED → EVALUATING → ACCEPTED → EXECUTING → REPORTING → CLOSED`
 
 Terminal states: `delivered`, `no_agreement`, `refused`, `expired`,
-`unresolved`. The middle three are **correct outcomes**, not errors.
+`unresolved`. Refusal and expiry are valid protocol outcomes. Their operational
+cost and any missed repair opportunity remain part of the evaluation.
 
 ### 7.3 The three gates
 
-Every candidate passes these before any agent acts. All three are arithmetic and
-comparison — never a model call.
+Every candidate passes these before any agent acts. Gates use deterministic
+checks. They do not call an LLM; risk estimates supplied to them still depend on
+explicit model assumptions.
 
 - **`feasibility_gate`** — can this domain physically do it *now*? From the
   observer snapshot, never from a prediction or a retrieved record.
@@ -355,13 +399,23 @@ comparison — never a model call.
 `cost_and_predict` is also deterministic: the cost vector and the predictor
 read, no judgment.
 
-**Selection.** Among candidates all peers accepted, lowest total cost, predicted
-delivered ratio as first tie-break, candidate index last.
+**Selection.** Apply the declared risk/benefit criterion to permitted candidates
+and continued observation/escalation (§11.5). Report cost components separately.
+Use a declared deterministic tie-break, ending with candidate index. A point
+prediction above the objective is insufficient without its uncertainty and
+validity dependencies.
 
 ### 7.4 Observation freshness
 
-The observer keeps one timestamped snapshot. **The feasibility gate requires it
-younger than 15 s** and forces a refresh otherwise.
+The observer retains source-specific windows, cohorts, uncertainties, and
+revision dependencies (§8.3). The gates reject incompatible or invalidated
+evidence and recheck relevant dependencies immediately before effects. A fixed
+15-second age limit is not a justified universal validity rule.
+
+Calibrate any time bounds from the pilot and propagate uncertainty over
+collection and execution delay. If state evolution cannot be bounded, require
+new evidence or abstain. Record the remaining validation-to-execution interval;
+these checks do not establish unconditional physical safety.
 
 Two implementation notes from the existing code: a full `BackupPath.state()`
 opens six gNMI sessions and `_move_to` calls it twice — about fourteen per path
@@ -385,41 +439,41 @@ actions had already landed.
 
 **Kinds.** `G` gate and `E` effector are **deterministic by construction in every
 paper**. `R` nodes are where judgment lives — in Paper 1 they run their
-deterministic rule unless the engine is enabled (§1).
+deterministic algorithm or baseline (§1). Engine evaluation belongs to Paper 3.
 
 **Participant graph**
 
-| Node | Kind | Does | P1 rule when engine is off |
+| Node | Kind | Does | P1 deterministic behaviour |
 | --- | --- | --- | --- |
 | `a2a_receive` | E | Accept an A2A message, resolve task and `contextId`, journal | — |
 | `triage_request` | R | Is this request coherent and addressed to this domain? | Schema + endpoint-in-my-domain check |
-| `plan_observations` | R | Which telemetry is worth gathering for this question | Fixed set: oper-states + segment counters |
+| `plan_observations` | R | Which telemetry is worth gathering for this question | Evidence-group scheduler (§11.5); fixed bundle in B1 |
 | `refresh_observations` | E | Execute that plan via the MCP server | — |
 | `formulate_queries` | R | What to traverse and search for | Fixed: down-traversal from the service |
 | `retrieve_context` | E | Run the requested retrieval | — |
-| `evaluate_local_actions` | R | Which actions to offer, and how to characterise each | All gate-passing actions, cost-ordered |
+| `evaluate_local_actions` | R | Which actions to offer, and how to characterise each | Permitted actions with effect estimates and uncertainty |
 | `feasibility_gate` | **G** | Live oper-state and channel support. No prediction, no retrieval | always deterministic |
 | `policy_gate` | **G** | The owner's declared rules | always deterministic |
-| `cost_and_predict` | **G** | Cost vector (§9) and the RLS read (§11.1). Arithmetic only | always deterministic |
-| `evaluate_proposal` | R | Accept, refuse or counter, and on what grounds | Accept iff gates pass and predicted ratio ≥ objective |
+| `cost_and_predict` | **G** | Cost vector (§9) and declared action-model estimates (§11.1) | always deterministic |
+| `evaluate_proposal` | R | Accept, refuse or counter, and on what grounds | Accept iff validity, authority, and declared risk/benefit checks pass |
 | `grounding_gate` | **G** | Resolve citations; accept the judgment or fall back | always deterministic; a no-op when the engine is off |
 | `a2a_dialogue` | R | Compose outgoing, interpret incoming | Template out; parse structured fields only |
-| `diagnose` | R | Probable cause, blast radius, next observation | Segment decomposition (§10.1), strongest method available |
+| `diagnose` | R | Probable cause, blast radius, next observation | Compatible segment evidence (§10.1), with uncertainty and limitations |
 | `execute_local` | E | `commit_change` on the MCP server for the agreed action | — |
 | `verify_local` | R | Does the readback match what was agreed? | Exact compare; `partial` on mismatch |
-| `compose_outcome` | R | What to publish and what it means | Fixed field set per sharing condition |
+| `compose_outcome` | R | What to publish and what it means | Fields permitted by policy and acquisition budget; all disclosure recorded |
 | `publish_outcome` | E | Emit the A2A artifact | — |
 | `update_predictor` | **G** | RLS update. Arithmetic only | always deterministic |
 | `close_episode` | R | Journal the terminal state with an explanation | Templated reason string |
 
 **Initiator graph** adds five and reuses the rest:
 
-| Node | Kind | Does | P1 rule when engine is off |
+| Node | Kind | Does | P1 deterministic behaviour |
 | --- | --- | --- | --- |
 | `a2a_discover` | R | Fetch peer cards; which peers and skills this intent needs | All peers on the service path |
 | `intake_intent` | R | Turn the request into the §6.3 structure | Structured intent accepted as given |
 | `assemble_candidates` | R | Enumerate the eight; interpret each peer's `OPTIONS` | Union of accepted actions; structured fields only |
-| `select_candidate` | R | Choose among accepted candidates, with justification | Lowest total cost → predicted ratio → candidate index |
+| `select_candidate` | R | Choose among accepted candidates, with justification | Declared risk/benefit criterion → documented tie-break |
 | `agreement_gate` | **G** | Byte-identical unanimity, round cap, expiry | always deterministic |
 
 **Conditional edges:** `grounding_gate` (accept / refuse / counter / fall back),
@@ -437,14 +491,10 @@ effectors (`E`).
 more nodes; Paper 3 keeps this topology exactly and changes only what runs
 inside the `R` nodes. The comparison is in §7.8.
 
-**How many contact the LLM depends on the open decision in §1.** Deterministic
-P1: **zero** — every `R` node runs the rule in the right-hand column.
-Agentic P1: up to fourteen are capable, and roughly **ten fire per participant
-episode** on the healthy path (`diagnose` is fault-only), **eight per
-initiator episode**, plus two per extra negotiation round — about **28 per
-episode across the federation**, rising to ~40 at the three-round cap.
-
-Gates and effectors contact the LLM in **neither** option, in **any** paper.
+**Paper 1 makes zero LLM calls.** Its acquisition loop reuses planning,
+collection, and evaluation nodes until an action or stop condition is selected.
+Node counts are an implementation target; record the actual graph version used.
+Gates and effectors remain deterministic in the later engine comparison.
 
 **Paper 1 builds every node above.** Paper 3 replaces the `R` rules with the
 reasoning engine and evaluates the difference; Paper 2 adds a third graph.
@@ -465,7 +515,10 @@ agent/
   nodes/           one module per node, grouped by kind
   gates.py         feasibility, policy, agreement, cost_and_predict, update_predictor
   policy.py        policy.yaml loader and rule evaluation
-  predictor.py     RLS with exponential forgetting (§11.1)
+  predictor.py     optional RLS with exponential forgetting (§11.1)
+  action_model.py  action-effect estimates and uncertainty from training data
+  evidence.py      typed records, cohort/revision compatibility, invalidation
+  acquisition.py   group scheduling, budgets, replanning, and stopping (§11.5)
   observe.py       snapshot loop (§7.4)
   journal.py       append-only JSONL, hash-chained
   mcp_client.py    typed client for this domain's MCP server
@@ -482,7 +535,8 @@ mcp/
 harness/
   conditions.py    netem profiles, the three visibility classes
   schedule.py      chronological condition driver
-  segments.py      four-segment counter collection (§10.1)
+  segments.py      matched-cohort segment counter collection (§10.1)
+  replay.py        offline event replay; runtime inputs separate from evaluator truth
 ```
 
 Deployed three times, differing by configuration and adapter:
@@ -500,7 +554,7 @@ shape, and the differences are structural rather than cosmetic:
 
 | | Graphs | Nodes | R / G / E | What changes |
 | --- | ---: | ---: | --- | --- |
-| **Paper 1** | 2 — participant, initiator | **25** | 14 / 6 / 5 | The base. Every `R` node runs a deterministic rule unless the engine is enabled |
+| **Paper 1** | 2 — participant, initiator | **25** | 14 / 6 / 5 | The base. Every `R` node runs the deterministic algorithm or comparator |
 | **Paper 2** | **3** — adds a timer-triggered assurance graph | **32** | 17 / 7 / 8 | Seven new nodes including `compensation_gate`, a new gate with four checks |
 | **Paper 3** | 2 — **unchanged** | **25** | 14 / 6 / 5 | No topology change. The fourteen `R` nodes gain the engine; `grounding_gate` goes from no-op to load-bearing |
 
@@ -552,14 +606,21 @@ The map is **structure**, so it replicates in every condition including S0.
 > the map says which segments the service crossed and who owned each. **The
 > shared map is the precondition for federated evidence meaning anything.**
 
-**Substrate.** SQLite + `sqlite-vec` for records and vectors; NetworkX projected
-from those records at load. Fourteen infrastructure nodes — traversal is
-microseconds, and a derived projection cannot drift from its source.
+**Substrate.** SQLite records and a versioned NetworkX projection; vector
+indexing is optional future Paper 3 work. Rebuild or update the projection when
+source revisions change and bind decisions to its snapshot version. Measure
+traversal latency; no performance result is established by this design.
+
+Service–infrastructure maps have prior art; see the [review](state-of-the-art.md).
+The shared pilot map is an explicit disclosure assumption, with its cost
+reported separately from dynamic evidence.
 
 ### 8.1 Context store schema
 
-One SQLite file per agent, `context.db`. Vector search via `sqlite-vec`; the
-SIMAP is projected into NetworkX at load and never stored separately.
+One proposed SQLite file per agent, `context.db`. The following is the base
+schema sketch; §8.3 specifies additional evidence and decision records required
+by the current proposal. Freeze and version the complete schema in Phase 2.
+Vector fields support later Paper 3 work and need not be populated in Paper 1.
 
 ```sql
 -- SIMAP: infrastructure layer
@@ -603,8 +664,7 @@ rather than hard-coded.
 telemetry read is distinguishable from an absent one. F3 exists precisely
 because that distinction was not made before.
 
-`disclosure` is both a security control and **the study's headline
-measurement** — disclosure volume cannot be reconstructed after the fact, so
+`disclosure` is an audit record and **one of the study's required measurements** — disclosure volume cannot be reconstructed after the fact, so
 every field sent to a peer is recorded as it is sent.
 
 **Embedded:** `episode`, `incident`, `policy`. **Not embedded:** SIMAP tables
@@ -623,15 +683,32 @@ rules), `journal.jsonl` (hash-chained, append-only). The journal plus
 | **Live state** (oper-state, counters, gOSNR) | local, disclosable by decision | BGP: internals hidden |
 | **Service outcome** (delivered ratio, loss) | one owner only | none — it is in no routing protocol |
 
-**Full state flooding would not dissolve the problem.** An LSDB carries
-adjacency, metrics and up/down. Delivered ratio is an endpoint application
-measurement on a host one owner operates — in no routing protocol, no LSDB, no
-standard telemetry export.
+Routing adjacency and reachability alone do not establish application delivery.
+Receiver feedback and telemetry exports can convey that outcome when permitted.
+Full sharing is therefore an informative comparator, subject to collection delay,
+state changes, and the same validity checks.
+
+### 8.3 Evidence and decision records
+
+The implementation must retain these typed fields, in versioned records linked
+from the base tables and append-only journal:
+
+| Record | Required content |
+| --- | --- |
+| Observation | Owner/source, service/flow, value and uncertainty, counter semantics, interval/cohort, per-owner revision dependencies, collection/receipt times, missing fields, invalidations |
+| Request/group | Requested fields and permitted disclosure level, stored/fresh mode, group dependencies, issue/deadline/completion times, expected and actual cost, response/refusal status |
+| Decision | Model/version, considered actions and request groups, estimates and uncertainty, anticipated execution time, compatibility checks, selected action/request, stop reason |
+| Authorization/effect | Exact approved assignment, affected owners, approval revisions/expiry, pre-execution revalidation, applied state, partial failure |
+| Verification | Fresh receiver evidence, observation interval, applied configuration reference, recovery/unresolved outcome |
+
+Observation expiry alone is not the validity predicate. Preserve dependencies
+needed to replay cohort/revision compatibility and model assumptions. Keep
+evaluator-only injection truth outside the runtime store.
 
 ### 8.4 Retrieval over the map
 
-Paper 1 uses retrieval; Paper 3 *evaluates* it. Three modes exist, and the
-deterministic rules use the graph half only:
+Paper 1 uses deterministic graph traversal. Paper 3 proposes and evaluates
+vector and hybrid retrieval; these are not required for the Paper 1 pilot:
 
 | Mode | Context |
 | --- | --- |
@@ -655,8 +732,9 @@ provenance and are never silently merged.
 
 ## 9. Cost
 
-Three terms, each measurable on this testbed, reported as a **vector** and never
-summed into a single currency.
+Report the following physical cost components separately. The research objective
+also accounts for service impairment while waiting, disclosure, and acquisition
+delay; specify any weighting or constrained optimization explicitly (§11.5).
 
 | Term | Unit | Obtained from |
 | --- | --- | --- |
@@ -664,19 +742,19 @@ summed into a single currency.
 | `disruption` | datagrams lost | Receiver-side loss attributable to the change window, from interval samples |
 | `occupancy` | fraction | Discrete resource committed: 1 of 2 wavelengths, 1 of 2 core routers |
 
-All three are **zero or unchanged for retain-current**, which is what stops the
-system reconfiguring a healthy service for a marginal gain — and what makes
-"correct non-action" (§10.3) quantifiable rather than merely describable.
+Retaining the current configuration avoids switching cost but may sustain service
+loss. Report that loss across the same incident horizon as every other action.
+Do not reward indefinite abstention by excluding its operational cost.
 
-**No energy, risk-probability or opportunity-cost term.** Nothing in this
-environment can populate them honestly: there is no power model, one
-deterministic fault class, and no enforced capacity against which to define
-utilisation. Three terms that can be measured beat five that cannot.
+No measured energy saving or monetary opportunity cost is claimed. Any estimated
+action-risk probability comes from the declared model and requires calibration;
+it is not a directly observed physical cost.
 
 **Measuring `disruption` depends on F4.** A receiver sample must be provable to
 postdate the change that caused it; `Receiver.log_modified_at()` has one-second
 resolution and a path switch takes well under a second. `Sample.identity` is the
-intended mechanism and is not yet wired up.
+starting point; session identity and post-event window validation are also
+required by F4 in the [plan](plan.md#16-implementation-prerequisites-and-retained-findings).
 
 ---
 
@@ -694,38 +772,43 @@ Four interfaces bracket the path, all already exporting counters through
 | Packet B | B | `gw-b` eth-1/1 in − `pe-b1` eth-1/3 out |
 | Last mile | B | `pe-b1` eth-1/3 out − receiver datagrams |
 
-This **exactly partitions** end-to-end loss by owner. A subtraction, not a
-correlation — four counter values plus the receiver count.
+Interpret these as **matched deltas**, not differences between unrelated
+cumulative totals. A valid decomposition requires the same flow and packet
+cohort, compatible observation windows and path revisions, accounted propagation,
+no unhandled resets/wraps/duplication, and consistent packet-count semantics.
+A telescoping sum alone does not validate those assumptions.
 
-**Honest limit.** These are per-*interface* counters, so the decomposition holds
-because the fixture carries one flow. Multiple services need per-flow
-accounting, and the paper must say so.
+Per-interface counters can include background traffic even in a nominally
+single-service fixture. Validate against independent traffic evidence in E1;
+otherwise use per-flow accounting or report an uncertainty bound. Attachment
+loss identifies a segment, not necessarily a failed optical device or its cause.
 
 ### 10.2 Three methods, strongest first
 
 | Method | Needs | Strength |
 | --- | --- | --- |
-| Segment decomposition | peer counters | **exact**, one episode |
+| Segment decomposition | matched peer measurements | conditional on cohort, counter, and revision validity |
 | Configuration-conditional | outcome history | statistical, needs repetition |
 | Predictor coefficients | local model only | weakest, correlational |
 
-**The ordering is the finding.** The exact method is unavailable without
-cross-owner disclosure, so an isolated agent is pushed onto its weakest
-evidence — and for the optical agent that evidence is modelled-only, so it does
-not predict the outcome at all.
+This is a practical preference for validated evidence, not a new theorem or a
+guaranteed ranking. History and coefficients alone do not establish causal action
+effects. Validate information availability and uncertainty per incident; missing
+peer evidence can require recollection or escalation.
 
 ### 10.3 What follows
 
-| Attribution | Correct behaviour |
+| Evidence and action support | Behaviour to evaluate |
 | --- | --- |
-| mine, remediable | act locally, through the gates |
-| mine, no remedy | report unresolvable, escalate |
-| **not mine** | **do not act**; inform the owner, with evidence |
-| unattributable | request exactly the disclosure that would resolve it |
+| Permitted action has sufficient expected benefit at declared risk | Obtain approvals, revalidate, execute locally, and verify |
+| No allowed action can remedy the incident | Report unresolved service and escalate; retain continued loss in metrics |
+| Cause is elsewhere | Share permitted evidence; consider only supported actions within local authority |
+| Evidence is inadequate or incompatible | Request a useful valid group, recollect, or stop under the declared budget/deadline |
 
-**Correct non-action is measured, not absent.** A domain that leaves a healthy
-configuration alone while another repairs itself has behaved correctly, and the
-disruption it avoided is counted.
+Fault ownership alone does not determine the best recovery action: an authorized
+reroute in another domain may help in a richer topology. Score action utility,
+risk, and missed repairs. Avoided disruption is meaningful only alongside the
+cost of leaving a repairable service impaired.
 
 ---
 
@@ -733,23 +816,26 @@ disruption it avoided is counted.
 
 ### 11.1 The predictor
 
-Each agent predicts **delivered ratio** for a candidate from a feature vector,
-using **online ridge regression with exponential forgetting** (RLS): closed-form
-per-observation update, one forgetting factor `lambda`, no framework,
-reproducible from a seed.
+An optional diagnostic predictor estimates delivered ratio using online ridge
+regression with exponential forgetting (RLS), compared with a per-configuration
+EWMA. This is established machinery, not the proposed algorithmic contribution.
 
-Features: own action, joint candidate id, own telemetry summary, and — when
-sharing is on — peers' declared actions and telemetry summaries from `OPTIONS`
-plus the delivered ratio from `OUTCOME`.
+Features must be available before the predicted outcome: candidate actions,
+permitted telemetry, and past verified outcomes. The current outcome is a target,
+never a feature used to predict itself.
 
-**Baseline:** per-configuration EWMA over the eight candidates, reported
-alongside.
+Recovery decisions require an **action-effect model** with uncertainty. Develop
+and validate it using controlled training interventions and held-out cases;
+correlational RLS coefficients alone do not justify causal recovery predictions.
+The simplest pilot may use an explicit calibrated model without online learning.
 
 ### 11.2 What sharing changes
 
-With sharing off, `agent-packet-a` and `agent-optical` have **no target
-variable**. Their predictors do not converge slowly — they do not update. That
-is condition S0, and it is a property of the topology.
+Under a deliberately declared no-feedback condition, Packet A and Optical lack
+receiver targets for that supervised update. This follows from the experiment's
+feedback policy, not an impossibility theorem about ownership. Fixed parameters
+do not imply flat prediction error as conditions change. Declare and retain any
+permitted local proxies or feedback in all relevant comparisons.
 
 ### 11.3 Sharing conditions
 
@@ -758,10 +844,15 @@ is condition S0, and it is a property of the topology.
 | **S0** | none | nothing beyond replicated structure |
 | **S1** | full | every outcome and telemetry summary, every episode |
 | **S2** | fixed rule | a declared static policy |
-| **S3** | agent-decided | reasoned (Paper 3 evaluates this; P1 reports it) |
+| **S3** | LLM-decided | reserved for Paper 3 |
 
-Disclosure spans live state and service outcome. Structure replicates in all
-four, so the comparison isolates evidence sharing rather than map sharing.
+S0–S2 are legacy sharing references; the current Paper 1 comparators are B0–B6
+in [plan §6](plan.md#6-baselines-and-ablations). Its deterministic adaptive
+scheduler is not the LLM S3 condition. Full sharing means all **permitted**
+evidence and is charged for collection/refresh traffic.
+
+Structure replication is a pilot assumption, not zero disclosure. Report its
+setup cost separately and document policies that would restrict it.
 
 ### 11.4 Boundaries
 
@@ -769,6 +860,45 @@ Learning changes **estimates**. It never changes an action space, relaxes a
 gate, edits a policy, or authorises a commit.
 
 ---
+
+### 11.5 Evidence collection for recovery
+
+The [proposal](tnsm-proposal.md) defines the research method; this section maps
+it to the runtime. The method and any guarantees remain to be developed.
+
+1. Resolve the service path and candidate actions from a versioned map. Maintain
+   uncertainty over current state using permitted evidence and a declared
+   transition/action-effect model. Hidden fault schedules are evaluator-only.
+2. Form complementary request groups needed to resolve action questions, such
+   as paired boundary counters for a common cohort or alternate-path evidence.
+   Respect each owner's disclosure policy and management-resource limits.
+3. Estimate whole-group completion time, expected operational value, disclosure
+   cost, and the chance that records will require recollection before execution.
+   Propagate uncertainty over collection, approvals, and action delay.
+4. Choose a feasible group, sequential or parallel schedule, or a stopping
+   decision under the declared budget/risk criterion. Replan on responses,
+   refusals, timeouts, and relevant invalidations.
+5. Act only when the evidence supports the declared benefit/risk criterion and
+   affected owners approve. Revalidate dependencies immediately before effects,
+   then obtain fresh receiver evidence. Otherwise recollect or escalate.
+
+The objective includes service impairment over a fixed incident horizon,
+switching disruption, and waiting. Report disclosure and action risk separately
+and evaluate the tradeoff. An unrepairable case and an avoidable missed repair
+are distinct outcomes; both retain their service-loss cost.
+
+Implement this loop inside `plan_observations`, collection, evaluation, and
+candidate selection. The initiator coordinates request groups; each peer filters
+requests through its own policy and performs only its own measurements/effects.
+Relevant rechecks belong in deterministic gates, regardless of which acquisition
+method chose the records.
+
+Compare against fixed matched bundles, information/value-based acquisition,
+EC2/HEC-style decision-region methods, full sharing, and periodic refresh.
+**Every method uses the same validity and authority checks.** The contribution
+must come from better acquisition decisions, not a comparator allowed to execute
+on invalid evidence. Greedy group selection has no automatic optimality or
+approximation guarantee.
 
 ## 12. Controller access: the domain MCP server
 
@@ -902,21 +1032,22 @@ scope, and the obvious follow-on study.
 
 ### 13.5 Reasoning and retrieval boundaries
 
-8. **Peer content is data, never instruction.** Peer prose enters as quoted
-   evidence attributed to its sender, inside a delimited field, and cannot alter
-   policy, action space, gates, or what this agent discloses. Injection attempts
-   are journalled, not obeyed.
+8. **Peer content is data, never instruction.** Paper 1 uses validated typed
+   fields. Later LLM integrations must test prompt-injection resistance; a
+   delimited quotation alone does not guarantee it. Policy, action space, and
+   gates remain outside model control.
 9. **Retrieved records cannot authorise.** A record may inform a judgment and
    must be cited; it can never satisfy `feasibility_gate`.
 10. **Every disclosure is journalled** with recipient, episode and
-    justification — a security control and simultaneously **the study's headline
-    measurement**, which is why it cannot be reconstructed after the fact.
+    justification — an audit record needed for disclosure accounting and
+    replay. Recovery quality is measured separately.
 
 ### 13.6 Journal integrity
 
-Entries are hash-chained: each record commits to its predecessor, so the
-correlation chain cannot be rewritten after an episode closes. Run bundles are
-paper evidence as well as an audit trail, and both uses need that property.
+Entries are hash-chained. Detecting a rewritten chain requires a trusted
+retained checkpoint or signature; chaining alone does not prevent an owner from
+replacing the entire journal. Declare the retained integrity evidence in each
+run bundle.
 
 ## 14. Build status
 
@@ -925,12 +1056,15 @@ paper evidence as well as an audit trail, and both uses need that property.
 | Packet topology, gNMI adapter, path switching | **exists** |
 | Optical line, channel programming, monitors | **exists** |
 | Traffic sender/receiver, interval parsing | **exists** |
-| Ownership scoping and action allowlists | **exists** |
+| Inventory scoping and named adapter actions | **exists; independent credential enforcement remains to build** |
 | Receiver freshness proof | **open — F4** |
 | Telemetry parsing against the pinned image | **open — F3** |
 | Recovery when the primary router is unreachable | **open — F2** |
-| Condition harness, segment counters | to build |
+| Condition harness, validated matched segment counters | to build |
+| Offline replay, action-effect model, strong adaptive baselines | to build |
+| Evidence-group scheduler, invalidation, and recovery evaluation | to build |
 | MCP servers | to build |
 | Agent runtime, A2A, SIMAP, predictors | to build |
 
-Issue detail in [`known-issues.md`](../known-issues.md).
+Open findings and acceptance criteria are retained in the
+[plan's implementation prerequisites](plan.md#16-implementation-prerequisites-and-retained-findings).

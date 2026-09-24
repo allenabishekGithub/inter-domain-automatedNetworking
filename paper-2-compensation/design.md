@@ -5,6 +5,14 @@
 is the base system and is authoritative for everything inherited. This document
 is authoritative for Paper 2's additions.
 
+> **Base-system update, 24 September 2026:** Paper 1 now targets
+> [recovery under limited disclosure and stale evidence](../paper-1-federated-evidence/tnsm-proposal.md).
+> This paper remains the separate extension for rate compensation and interacting
+> continuous loops. Inherit the implemented evidence-validity rules, acquisition
+> policy, and graph/schema version after Paper 1 validation; the counts below
+> are design targets. This update does not validate Paper 2's novelty or results.
+
+
 ---
 
 ## 0. At a glance
@@ -31,11 +39,11 @@ Paper 1 delivers all of this and Paper 2 changes none of it:
 | --- | --- |
 | Three agents, one per owner | Sovereign, no agent above them, any may refuse |
 | Eight joint configurations | Packet A path × channel × Packet B path; enumerated exactly |
-| A2A peer communication | Agent Cards, task per peer per episode, six exchanges |
+| A2A peer communication | Agent Cards, task per peer, episode exchanges and typed evidence requests/responses |
 | The three gates | `feasibility` (live observation), `policy` (declared rules), `agreement` (byte-identical unanimity) |
 | SIMAP | Two-layer service–infrastructure map, federated by signed slices |
-| Segment attribution | Four-segment exact decomposition from bracketing interface counters |
-| RLS predictors, S0–S3 sharing | Online ridge regression with forgetting; four disclosure conditions |
+| Segment attribution | Segment estimates from validated flow/cohort-compatible measurements |
+| Evidence scheduler and action-effect model | Paper 1's deterministic acquisition policy and validated estimates; RLS is optional, S3 belongs to Paper 3 |
 | MCP servers | Three endpoints; device credentials held there, not in the agent |
 | Security | mTLS, signed and bound exchanges, hash-chained journal |
 
@@ -279,7 +287,8 @@ LLM-capable node count.
 
 ## 7. Storage additions
 
-Paper 1's `context.db` schema is reused unchanged. Paper 2 adds two tables and
+Paper 1's versioned `context.db` schema, including its evidence/decision records,
+is reused from the validated base. Paper 2 adds two tables and
 extends `policy.yaml`.
 
 ```sql

@@ -5,6 +5,14 @@
 **Target:** IEEE TNSM or JSAC (Q1).
 Nothing here is a measured result.
 
+> **Base-system update, 24 September 2026:** Paper 1 now targets
+> [recovery under limited disclosure and stale evidence](../paper-1-federated-evidence/tnsm-proposal.md).
+> This paper remains the separate extension for rate compensation and interacting
+> continuous loops. Inherit the implemented evidence-validity rules, acquisition
+> policy, and graph/schema version after Paper 1 validation; the counts below
+> are design targets. This update does not validate Paper 2's novelty or results.
+
+
 ---
 
 ## 1. The question
@@ -124,7 +132,7 @@ Indicative effort: **four to six months** after Paper 1's system is running.
 
 ## 9. Not tested in this paper
 
-- **Whether sharing helps learning.** Paper 1.
+- **Recovery under disclosure budgets and evidence-validity constraints.** Paper 1.
 - **Whether the reasoning layer helps.** Paper 3.
 - **Bandwidth allocation or reservation.** Rate is offered load under closed-loop
   control, never a reserved allocation.
