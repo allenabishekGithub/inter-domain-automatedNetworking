@@ -48,6 +48,7 @@ Everything Paper 1 builds, plus **Phase 5**:
 | Typed judgment contract | `decision`, `rationale`, `citations[]`, `confidence` |
 | Grounding gate | Citation resolution and direction checking; fallback on failure |
 | Retrieval modes | R0 none, R1 flat vector, R2 graph only, R3 GraphRAG |
+| Tool-selection surface | `plan_observations` chooses among **read-only** MCP tools within a declared budget; named actions are never shown to the engine ([design §6](design.md)) |
 | S3 disclosure decision | What to disclose, what to request, what a disclosure licenses |
 
 ## Architecture

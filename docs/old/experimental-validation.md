@@ -11,7 +11,7 @@ removal is an ablation. The [paper plan](paper-positioning.md) and
 [coupled method](agentic-system-method.md) define the research design.
 
 Plan on the current VM; deploy and measure in the separate environment described
-by the [installation guide](installation.md). The current data plane exists; the
+by the [installation guide](../../installation.md). The current data plane exists; the
 agent federation, full allocation capability, and learned decision system do not
 become implemented through this document.
 
@@ -81,7 +81,7 @@ matched comparisons; do not pool only favorable old/new results.
 
 ## 3. Testbed and independent measurement
 
-Use [data-plane.md](data-plane.md) for exact nodes, addresses, ownership, and
+Use [data-plane.md](../../data-plane.md) for exact nodes, addresses, ownership, and
 current capabilities. Packet A owns sender operations; Packet B owns fresh
 receiver measurements; Optical owns the fixed optical line. A2A carries peer
 evidence and local MCP instances expose owned observations/actions.
@@ -547,10 +547,10 @@ All four methods being mandatory does not make their superiority predetermined.
 
 ## 15. Method and comparison references
 
-Use the [literature assessment](related-work-and-novelty.md) for algorithm and
+Use the [literature assessment](../../related-work-and-novelty.md) for algorithm and
 agentic-system precedents. Existing ACO packet–optical and Nash multi-domain
 optical research prevents novelty claims based only on applying their names.
-The [collective-intelligence positioning](related-work-and-novelty.md#collective-intelligence-positioning)
+The [collective-intelligence positioning](../../related-work-and-novelty.md#collective-intelligence-positioning)
 records conceptual and cross-domain agent precedents; the term itself is not
 the novelty claim.
 

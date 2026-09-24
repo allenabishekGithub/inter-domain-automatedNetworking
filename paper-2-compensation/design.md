@@ -141,7 +141,7 @@ disclosure rate does it settle?**
 
 ---
 
-## 5.1 The control law
+### 5.1 The control law
 
 Deliberately the simplest thing that can work, because the paper is about
 *federation enabling the control*, not about control design.
@@ -330,18 +330,95 @@ sweep varies exactly these fields.
 
 ---
 
-## 8. Components to build
+## 8. MCP: the `set_offered_rate` tool
+
+Paper 1's three MCP servers and their contract are inherited unchanged. Paper 2
+adds **one named action, on one server**.
+
+### 8.1 Why only `packet-a-mcp`
+
+Packet A owns `client-a` and therefore the offered load. Packet B owns the
+receiver and cannot change what is sent; the optical domain has no rate control
+at all. The tool exists on exactly one endpoint because exactly one owner holds
+the capability — the same reason `get_service_evidence` returns delivery data
+only from `packet-b-mcp`.
+
+### 8.2 Tool specification
+
+```json
+{
+  "name": "set_offered_rate",
+  "description": "Set the offered load of this domain's service sender.",
+  "inputSchema": {
+    "type": "object",
+    "required": ["service_id", "mbps"],
+    "properties": {
+      "service_id": {"type": "string"},
+      "mbps": {"type": "number", "minimum": 0.2, "maximum": 1.0},
+      "reason": {"type": "string"},
+      "citations": {"type": "array", "items": {"type": "string"}}
+    }
+  }
+}
+```
+
+Returns the applied rate, the previous rate, and a readback taken from the
+sender itself — **never an echo of the request**.
+
+| Property | Behaviour |
+| --- | --- |
+| **Bounds** | `rate_floor_mbps` ≤ mbps ≤ originally requested load. A request below the floor is **refused**, not clamped — the service is declared failed rather than silently degraded further |
+| **Idempotency** | Setting the current rate is a no-op returning `changed: false`, and costs no `transactions` |
+| **Verification** | Readback from the sender process, plus the next receiver interval. An acknowledgement is not verification (P1 §12.3) |
+| **Failure** | If the sender is not running, return `failed` with the observed state. Never start a stopped sender as a side effect |
+| **Cost** | One `transaction`; `disruption` measured from the receiver across the change window |
+| **Provenance** | `reason` and `citations` are required and journalled, so every rate change is traceable to the peer evidence that triggered it |
+
+### 8.3 The implementation problem, and three options
+
+**`traffic.py` drives iperf3, and iperf3 cannot change `-b` mid-run.** A naive
+implementation stops and restarts the sender, which puts a gap in the stream —
+roughly 9 datagrams at 1 Mbps with a 1400-byte payload and a ~100 ms restart.
+That gap is indistinguishable from network loss at the receiver, which would
+**contaminate the very measurement this paper depends on**.
+
+| Option | Cost | Consequence |
+| --- | --- | --- |
+| **A. Restart and account** | none | The gap is attributed explicitly and excluded from the loss window. Cheapest, but every rate change carries an artefact that must be argued away |
+| **B. Shape at the sender's egress** (`tc tbf` on `client-a`) | small | No restart, no gap. But shaped-away packets never enter the network, so "loss" becomes sender-side and the delivered-ratio denominator needs redefining |
+| **C. Replace the generator** with a small Python UDP sender reading its rate from a control socket | ~100 lines | Dynamic rate, no restart, no denominator ambiguity. It can also carry **sequence numbers**, making segment attribution exact rather than counter-differenced |
+
+**Recommended: C.** It removes an artefact from the paper's central measurement,
+and the sequence numbers are worth having independently — they would let
+attribution (P1 §10.1) localise loss without relying on counter differencing at
+all. The cost is replacing a working, well-understood generator, so the decision
+belongs at the **start** of Phase 4b, not midway through it.
+
+Whichever is chosen, **state it and show the artefact is controlled**: option A
+needs the excluded window reported per change; option B needs the denominator
+defined in the metrics section.
+
+### 8.4 What does not change
+
+`packet-b-mcp` and `optical-mcp` gain nothing. The read-only tool set is
+unchanged on all three. No new gate tool: `compensation_gate` runs inside the
+agent, not in the MCP server, because it reads the agent's own hysteresis and
+attribution state.
+
+---
+
+## 9. Components to build
 
 | Component | Where | Detail |
 | --- | --- | --- |
 | Assurance graph | `agent/graphs/assurance.py` | Seven new nodes (§6); per-domain period, no global tick |
-| `set_offered_rate(mbps)` | `mcp/packet_server.py` | New named action, `packet-a-mcp` only |
+| `set_offered_rate(mbps)` | `mcp/packet_server.py` | New named action, `packet-a-mcp` only (§8) |
 | Congestion netem profiles | condition harness | Rate-limited bottleneck **with a queue** |
 | `compensation_gate` | `agent/gates.py` | Four checks (§6.1); refusal routes to `hold` |
 | `tick`, `control_state` tables | `agent/context/store.py` | §7; `evidence_age_ms` and `reverted_from` are required for C10 |
 | Periodic state summaries | `agent/peers.py` | Disclosure **rate** as a run parameter |
 
-### 8.1 Changes to inherited components
+### 9.1 Changes to inherited components
 
 | Component | Change |
 | --- | --- |
@@ -354,7 +431,7 @@ Everything else — gates, SIMAP, predictors, A2A, security — is used as inher
 
 ---
 
-## 9. The premise that gates this paper
+## 10. The premise that gates this paper
 
 **Reducing offered load must actually reduce loss under the netem profile.**
 
@@ -368,7 +445,7 @@ this paper does not exist in its current form.**
 
 ---
 
-## 9.1 Interaction with Paper 1's episode path
+### 10.1 Interaction with Paper 1's episode path
 
 Three rules keep the continuous loop and the episodic negotiation from
 interfering:
@@ -385,12 +462,13 @@ doing nothing. That transition is a tested behaviour.
 
 ---
 
-## 10. Build status
+## 11. Build status
 
 | Component | Status |
 | --- | --- |
 | Everything in Paper 1's Phases 0–4 | prerequisite, not started |
 | Assurance graph: 6 new nodes and `compensation_gate` | to build |
 | `tick` and `control_state` tables | to build |
-| `set_offered_rate` and congestion netem profiles | to build |
+| `set_offered_rate` tool and its generator decision (§8.3) | to build |
+| Congestion netem profiles | to build |
 | Periodic state summaries with rate as a parameter | to build |

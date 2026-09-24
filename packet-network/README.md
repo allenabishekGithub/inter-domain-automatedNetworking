@@ -72,7 +72,7 @@ another.
 
 Docker, Containerlab, and the two images
 (`ghcr.io/nokia/srlinux:24.10.1`, `alpine:3.20`). Starting from a fresh Ubuntu
-VM, the [installation guide](../docs/installation.md) covers all of it. Then,
+VM, the [installation guide](../installation.md) covers all of it. Then,
 from this directory:
 
 ```bash

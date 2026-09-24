@@ -58,7 +58,7 @@ claim an optical condition affected the service, show it at the receiver.
 ## Prerequisites
 
 Mininet, Mininet-Optical (`mnoptical`) and Open vSwitch, installed
-system-wide, plus root. The [installation guide](../docs/installation.md) walks
+system-wide, plus root. The [installation guide](../installation.md) walks
 through building them on a fresh Ubuntu VM, including the edits they need on
 24.04. `main.py start` and `main.py clean` need all of that; every other command
 only needs `requests` and talks to a running line over HTTP:

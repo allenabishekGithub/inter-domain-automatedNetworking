@@ -324,7 +324,7 @@ Consequently, “agents + swarm methods + bargaining + learning” is insufficie
 a novelty claim. We must distinguish the actual mechanism and demonstrate its
 consequences. We should not claim the first networking “hivemind.”
 
-The [literature assessment](related-work-and-novelty.md) records access limits
+The [literature assessment](../../related-work-and-novelty.md) records access limits
 and evidence levels; these brief comparisons do not establish that prior work
 lacks a particular feature. The [paper plan](paper-positioning.md) defines the
 candidate contribution and its evidence requirements.
@@ -513,7 +513,7 @@ The study therefore needs complementary environments:
 Simulation findings must remain clearly distinguished from measured network
 results. If allocation is only simulated, report it as simulation.
 
-See the [data-plane specification](data-plane.md) and
+See the [data-plane specification](../../data-plane.md) and
 [known-issues register](known-issues.md).
 
 ## 9. What we do next, and how the manuscript comes together

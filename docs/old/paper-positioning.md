@@ -103,14 +103,14 @@ Candidate contributions are:
 These are hypotheses to substantiate, not established novelty. ACO has already
 been studied for distributed IP/MPLS-over-optical routing/restoration, and Nash
 bargaining for multi-domain optical services. See the
-[targeted literature assessment](related-work-and-novelty.md). Separate ownership,
+[targeted literature assessment](../../related-work-and-novelty.md). Separate ownership,
 agent frameworks, or putting four known algorithms together is not by itself a
 new contribution. The final paper must identify a substantive difference and
 demonstrate its consequences.
 
 Collective intelligence itself is not new. Distributed domain agents and
 cross-domain negotiation with collective memory have precedents in
-[EDAIR and the collective-memory work](related-work-and-novelty.md#collective-intelligence-positioning).
+[EDAIR and the collective-memory work](../../related-work-and-novelty.md#collective-intelligence-positioning).
 Claim the specific implemented mechanism and measured effects, not a first
 networking "hivemind" or guaranteed emergent superiority.
 

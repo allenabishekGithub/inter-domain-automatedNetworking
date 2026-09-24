@@ -111,6 +111,7 @@ Indicative effort: **four to six months** after Paper 1's system is running.
 | Threat | Mitigation |
 | --- | --- |
 | **Compensation is an artefact of the netem profile** | Report the profile in full; show the same control does nothing under random-drop loss |
+| **Rate changes create a stream gap read as loss** | Resolve the generator decision (design §8.3) before Phase 4b; whichever option is chosen, report the artefact and how it is excluded |
 | **Instability is a tuning artefact** | Sweep hysteresis and rate limits rather than reporting one chosen setting |
 | **Host limits mistaken for congestion** | Calibrate the bottleneck; confirm the host is not the limiting element |
 | **Correlated loop ticks** | The independent unit is a complete run, not a tick |
@@ -208,4 +209,5 @@ publishable and more useful than a tuned positive one.**
 | Loop period | Phase 4b start | 10 s |
 | Control law: fixed multiplicative vs AIMD | Phase 4b start | Fixed multiplicative (design §5.1) |
 | Does the loop escalate to the engine at all? | Phase 4b start | Rules only; escalation conditions per design §6.3 |
+| **Traffic generator**: keep iperf3, shape at egress, or replace it | **Phase 4b start** | Replace it (design §8.3) — removes a measurement artefact and enables sequence-numbered attribution |
 | Is B2 (centralised reference) built? | before evaluation | Yes — it is what quantifies the price of ownership |

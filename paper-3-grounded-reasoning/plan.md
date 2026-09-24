@@ -106,6 +106,7 @@ its tokens.
 | Diagnosis | Cause correctness; next-observation usefulness; time to correct diagnosis |
 | Retrieval | Retrieved-context precision; recall of the resource actually at fault; records per decision |
 | Per-node | Marginal decision quality, fallback rate and token cost for each of the 14 nodes |
+| Tool use | Read-only MCP calls per decision; budget utilisation; observations requested but never cited |
 | Cost | Tokens and latency **per node**; disclosure volume; A2A messages |
 
 ---
@@ -129,6 +130,7 @@ Indicative effort: **four to six months** after Paper 1's system is running.
 | **Model version drift** | Pin id and version; a change invalidates prior runs |
 | **Cherry-picked ambiguity** | Predeclare the ambiguous scenarios and their discriminating observations |
 | **Grounding gate scores itself** | The gate is deterministic code, never a model call; its checks are citation resolution and direction only |
+| **Tool selection confounded with reasoning quality** | `plan_observations` is ablated separately (E7); tool calls are recorded per node so observation cost is attributable |
 | **Retrieval precision gamed by retrieving less** | Report precision **and** recall of the resource actually at fault |
 | **Single model does not generalise** | Scope every claim to the pinned model; a second model is a separate study |
 

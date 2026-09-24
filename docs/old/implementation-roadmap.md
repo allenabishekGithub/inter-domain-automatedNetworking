@@ -13,7 +13,7 @@ This roadmap is a plan, not evidence that the agents or optimizers exist.
 
 The current VM remains a planning/design workspace. Deployment, emulation, and
 measured runs belong in a separate environment prepared with the
-[installation guide](installation.md). Missing lab dependencies here are expected.
+[installation guide](../../installation.md). Missing lab dependencies here are expected.
 
 **Next deliverable: coupled ACO–PSO–Nash–learning design and evaluation fixtures.**
 
@@ -110,7 +110,7 @@ are available as comparators, not merely weaker error-prone scripts.
 
 ## Phase 2 — local Controller MCP Server and transaction safety
 
-Implement the two [MCP server types](mcp-server-design.md) as three independently
+Implement the two [MCP server types](../../mcp-server-design.md) as three independently
 scoped instances: Packet A, Optical, Packet B. Wrap existing gNMI/optical adapters.
 Expose only supported observations and named local actions. Readback and fresh
 receiver evidence determine success; an API acknowledgement does not.

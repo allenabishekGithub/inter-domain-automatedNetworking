@@ -17,7 +17,7 @@ evaluation. This architecture is not evidence of implementation or novelty.
 The data plane is implemented in this repository, in **`packet-network/`** and
 **`optical-network/`**, with eight SR Linux routers, two traffic endpoints, and
 the fixed four-ROADM Mininet-Optical line. The
-[data-plane specification](data-plane.md) records the exact topology,
+[data-plane specification](../../data-plane.md) records the exact topology,
 addressing, ownership boundary and capability limits. The capability
 table below describes the broader architecture; the initial executable profile
 is limited to the reference's named packet-route recovery and one optical route
@@ -282,7 +282,7 @@ are not allowed.
 
 Each DSO uses only its own Controller MCP Server. Two implementations serve three
 instances: Packet MCP for Packet A and Packet B, Optical MCP for the optical owner.
-See the [server design](mcp-server-design.md).
+See the [server design](../../mcp-server-design.md).
 
 | Interface group | Role |
 | --- | --- |
@@ -361,7 +361,7 @@ flowchart LR
 ```
 
 This overview groups alternatives and the ROADM chain for readability. The
-[exact baseline diagram](data-plane.md#topology-and-ownership) expands
+[exact baseline diagram](../../data-plane.md#topology-and-ownership) expands
 all 20 entities and packet links. Replicate the individual nodes and typed
 relationships, not a single synthetic node named “p-a1 or p-a2.”
 

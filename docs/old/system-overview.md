@@ -29,7 +29,7 @@ orchestrator. Numerical optimizers, the learner, policy checks, graph retrieval,
 and conditional LLM calls are capabilities of that runtime.
 
 A2A provides peer communication. MCP exposes local supported observations and
-actions. There are two [MCP server types](mcp-server-design.md), instantiated
+actions. There are two [MCP server types](../../mcp-server-design.md), instantiated
 separately for Packet A, Optical, and Packet B. An owner can accept a candidate,
 request evidence, counteroffer, or refuse. Relaying a message does not transfer
 authority. No agent can directly change a peer's network.
@@ -114,8 +114,8 @@ has no per-service bandwidth isolation, no alternate optical route, and no
 simultaneous multi-channel allocation. Both wavelengths use the same fiber
 chain, so retuning cannot repair a cut.
 
-Use [data-plane.md](data-plane.md) for topology, addresses, ownership, actions,
-and fidelity, and [installation.md](installation.md) for the separate testbed.
+Use [data-plane.md](../../data-plane.md) for topology, addresses, ownership, actions,
+and fidelity, and [installation.md](../../installation.md) for the separate testbed.
 The [known issues](known-issues.md) include measurement freshness, unavailable
 routers, disruptive optical no-op updates, and control-boundary enforcement.
 Resolve them before treating agent outcomes as experimental evidence.
@@ -172,5 +172,5 @@ learning cost. Correct refusal is distinct from delivered service. Negative
 findings are valid; the presence of all four methods does not prove their value.
 
 The [roadmap](implementation-roadmap.md) turns these requirements into staged
-work. The [literature assessment](related-work-and-novelty.md) identifies prior
+work. The [literature assessment](../../related-work-and-novelty.md) identifies prior
 work and the comparison needed before making a novelty claim.

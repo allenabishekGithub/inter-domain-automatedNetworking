@@ -98,7 +98,7 @@ sudo scripts/service-up.sh
 ```
 
 Starting from a fresh Ubuntu VM, work through the
-[installation guide](docs/installation.md) first.
+[installation guide](installation.md) first.
 
 Each domain has a real provisioning choice — both packet domains can move the
 service between a primary and a backup core router, and the optical domain can
@@ -137,6 +137,28 @@ Each has its own folder so they can be worked on in parallel:
 the repository root and are built once. Paper folders hold each paper's
 documentation, experiment configurations and results — never a fork of the
 system.
+
+## Repository layout
+
+```text
+design.md, plan.md            in docs/ — the shared system and the programme plan
+installation.md               prepare a validation host from a fresh Ubuntu VM
+data-plane.md                 exact topology, addressing, ownership, capability limits
+mcp-server-design.md          the controller tool contract
+related-work-and-novelty.md   annotated literature, 24 references
+
+packet-network/               8 SR Linux routers, gNMI adapter, traffic  (built, tested)
+optical-network/              4-ROADM Mininet-Optical line               (built, tested)
+scripts/                      service-up.sh, service-down.sh, run-tests.sh
+
+paper-1-federated-evidence/   problem, design, plan, experiments, results
+paper-2-compensation/         "
+paper-3-grounded-reasoning/   "
+
+docs/design.md                canonical system design
+docs/plan.md                  programme plan and the paper decomposition
+docs/old/                     superseded — retained as source material
+```
 
 Two findings from the earlier assessment still block work and keep their
 original IDs: **F4** (receiver samples cannot be proven fresh, which blocks

@@ -37,7 +37,7 @@ evidence continue to travel over A2A.
 
 ## Observation support for the agentic decision loop
 
-The [adaptive decision loop](domain-agent-architecture.md#adaptive-agent-decision-loop)
+The [adaptive decision loop](docs/old/domain-agent-architecture.md#adaptive-agent-decision-loop)
 requires a versioned catalogue of permitted read/validate operations, separate
 from mutation candidates. Entries specify tool ID, owning domain, typed bounded
 parameters, returned evidence schema, freshness, and query cost/budget accounting.
@@ -60,7 +60,7 @@ the same authorized observation/action capabilities and declared query budgets.
 ## Required allocation support for the full system
 
 ACO, PSO, Nash bargaining, and continual learning are all required by the
-[coupled method](agentic-system-method.md). The current tools cannot enforce
+[coupled method](docs/old/agentic-system-method.md). The current tools cannot enforce
 PSO's continuous per-service bandwidth allocations. Implement the resource
 simulator first; measured allocation claims additionally require owner-scoped
 service classification, packet shaping/scheduling, capacity accounting, readback,
@@ -76,10 +76,10 @@ predictor releases do not change the MCP action allowlist or another owner's pol
 
 Containerlab supplies topology and node lifecycle. Router configuration and
 telemetry use the existing gNMI adapter, rather than treating Containerlab as a
-routing controller. Reuse [inventory.py](../../packet-network/inventory.py),
-[gnmi.py](../../packet-network/gnmi.py),
-[backup_path.py](../../packet-network/backup_path.py) and
-[telemetry.py](../../packet-network/telemetry.py) behind a typed, domain-scoped
+routing controller. Reuse [inventory.py](packet-network/inventory.py),
+[gnmi.py](packet-network/gnmi.py),
+[backup_path.py](packet-network/backup_path.py) and
+[telemetry.py](packet-network/telemetry.py) behind a typed, domain-scoped
 service interface.
 
 Each instance must bind its domain, inventory, credentials, receipt store and
@@ -103,8 +103,8 @@ reservation, VPN creation and QoS programming remain unsupported in this fixture
 
 ## Mininet-Optical MCP
 
-Wrap [spec.py](../../optical-network/spec.py) and
-[client.py](../../optical-network/client.py) for inventory, supported channels,
+Wrap [spec.py](optical-network/spec.py) and
+[client.py](optical-network/client.py) for inventory, supported channels,
 observed optical state, monitor readings, retaining a verified channel and
 configuring/retuning to channel 1 or 2. Bind the backend address and permitted
 resources in deployment configuration; tools must not accept arbitrary backend
@@ -179,7 +179,7 @@ credentials and execution paths must enforce it too.
    transitions and acceptance cases before choosing server SDK/transport details.
 3. Plan the Containerlab and Mininet-Optical adapters as separate implementation
    packages, reusing schema/receipt code without sharing cross-domain authority.
-4. Cover the [known findings](known-issues.md): F2/F3/F4/F6/F10 for packet
+4. Cover the [known findings](docs/old/known-issues.md): F2/F3/F4/F6/F10 for packet
    observation/actions; F7/F8 for optical changes/evidence; F1/F5/F9 for the
    administrative lifecycle; C1 for authorization and C2 for retained evidence.
 5. Validate in the designated testbed: wrong-domain denial, supported and
@@ -188,6 +188,6 @@ credentials and execution paths must enforce it too.
    MCP success and preserve outcomes after server restart.
 
 This supplies the backend-specific design for
-[roadmap Phase 2](implementation-roadmap.md#phase-2--local-controller-mcp-server-and-transaction-safety)
-and the [local controller contract](domain-agent-architecture.md#local-sdn-controller-mcp-servers).
+[roadmap Phase 2](docs/old/implementation-roadmap.md#phase-2--local-controller-mcp-server-and-transaction-safety)
+and the [local controller contract](docs/old/domain-agent-architecture.md#local-sdn-controller-mcp-servers).
 Server implementation and live validation remain future work.

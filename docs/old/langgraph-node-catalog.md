@@ -17,13 +17,13 @@ learning are required. Numerical learning remains active in the no-LLM baseline.
 refines existing nodes without changing their count.
 
 The workflows target both the required allocation simulator and the
-[packet–optical data plane](data-plane.md). Current emulation admits only
+[packet–optical data plane](../../data-plane.md). Current emulation admits only
 implemented operations; the richer allocation profile needs additional adapters.
 This does not add nodes: capabilities determine permitted workflow branches.
 `local_candidate_generation` and `candidate_verification` admit only the
 reference's supported packet actions and retention or channel selection on the
 single optical route. These use the planned [Containerlab Packet and
-Mininet-Optical MCP servers](mcp-server-design.md), with one instance per domain.
+Mininet-Optical MCP servers](../../mcp-server-design.md), with one instance per domain.
 `local_reservation` and `controller_transaction` need scoped MCP adapters around
 the existing packet recovery and optical configuration procedures; the listed
 generic transaction tools are a target contract, not existing reference tool

@@ -56,7 +56,7 @@ Everything Paper 1 builds, plus **Phase 4b**:
 | Component | Detail |
 | --- | --- |
 | Loop scheduler | Per-domain period, independent — there is no global tick |
-| `set_offered_rate(mbps)` | New named action in `packet-a-mcp` (design §13.2) |
+| `set_offered_rate(mbps)` | New named action on `packet-a-mcp` only, fully specified in [design §8](design.md) — including the **generator decision**: iperf3 cannot change rate mid-run, and a naive restart puts a gap in the stream that is indistinguishable from loss |
 | Congestion netem profiles | Rate-limited bottleneck **with a queue**. Random drop will not work |
 | Hysteresis | Separate act and revert thresholds, declared in `policy.yaml` |
 | Action-rate limit, hold-down | Per domain, published in the run bundle |

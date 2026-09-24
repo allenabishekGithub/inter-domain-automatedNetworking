@@ -257,7 +257,7 @@ requiring fourteen separate instrumented builds.
 
 ---
 
-## 5.4 Prompt construction
+### 5.4 Prompt construction
 
 Every reasoning call is assembled from four labelled blocks, in this order, and
 the assembly is code rather than a template string a node can vary:
@@ -287,7 +287,7 @@ run, not a fix — otherwise prompt tuning is indistinguishable from capability.
 
 ---
 
-## 5.5 Fallback semantics
+### 5.5 Fallback semantics
 
 Each of the fourteen `R` nodes has the deterministic rule listed in §2.2. A
 fallback fires when any of these happen, and each is recorded distinctly:
@@ -316,7 +316,75 @@ per-node fallback rate is a reported metric and a headline one for C5.
 
 ---
 
-## 6. The disclosure decision (S3)
+## 6. MCP: tools the engine may select
+
+Paper 1's three MCP servers, their contract and their credentials boundary are
+inherited unchanged. **Paper 3 adds no tool.** What it adds is a model choosing
+among the tools that already exist — which is the one place in this system where
+an LLM performs tool selection, and it is worth specifying precisely.
+
+### 6.1 Only one node selects tools
+
+| Node | May call | May not |
+| --- | --- | --- |
+| `plan_observations` | any **read-only** tool, within budget | anything that mutates |
+| `execute_local` | the agreed **named action**, once, after all gates | choose which action — the agreement fixed it |
+
+**No reasoning node ever selects a named action.** `plan_observations` produces
+an observation *plan*; the effector `refresh_observations` executes it. The
+engine decides what to look at, never what to change. That separation is what
+keeps the safety argument in §4.1 intact when tool selection is introduced.
+
+### 6.2 What the engine sees
+
+The model is shown the read-only tool list from `get_capabilities`, which
+**declares what is unsupported explicitly** (P1 §12.3). This matters more here
+than elsewhere: a model asked to plan observations will otherwise invent
+plausible ones. Tool descriptions are part of the frozen prompt surface (§5.4)
+and change only as a new run.
+
+Named-action tools are **not shown to the engine at all**. They are not
+described, not listed, and not reachable from a reasoning node's output schema.
+
+### 6.3 Observation budget
+
+`plan_observations` is bounded per decision, and the bound is a pinned run
+parameter:
+
+| Bound | Purpose |
+| --- | --- |
+| `max_tool_calls` | Caps the plan's breadth |
+| `max_result_tokens` | Caps what enters `[FACTS]`; a large telemetry dump would crowd out the question |
+| `freshness_s` | Inherited: a snapshot older than the bound forces a refresh rather than being reused |
+
+Budget exhaustion is a **conditional edge**, not an error: the node proceeds on
+the facts already held and records that it did. An agent that plans beyond its
+budget is itself a finding — and one of the per-node metrics is how much of the
+budget each node actually uses.
+
+### 6.4 Where results land
+
+Tool results enter the prompt as **`[FACTS]`**, never as `[CONTEXT]` (§5.4).
+They carry their timestamps, coverage and missing-data reasons from the MCP
+contract, so the model can see that a read was partial rather than assuming it
+was complete.
+
+This is the same rule that keeps a remembered value from being read as a current
+one, and it is why the MCP contract's attribution requirement matters to this
+paper specifically: **a tool result without coverage metadata is indistinguishable
+from a confident one.**
+
+### 6.5 Grounding tool results
+
+An observation obtained through a tool call is citable as
+`observation:<id>` exactly like any other live observation — the grounding gate
+does not distinguish a fact the engine asked for from one the observer collected
+on its tick. What it does record is **which node caused the call**, so the
+per-node ablation can price `plan_observations` in tool calls as well as tokens.
+
+---
+
+## 7. The disclosure decision (S3)
 
 Paper 1 runs S0–S2 with declared rules. Paper 3 adds **S3**, where the agent
 reasons about disclosure:
@@ -333,7 +401,7 @@ everything.
 
 ---
 
-## 7. Injection boundary
+## 8. Injection boundary
 
 `a2a_dialogue` feeds peer prose — a refusal reason, a caveat on an offer — into
 a reasoning engine. That text enters as **quoted evidence, attributed to its
@@ -345,7 +413,7 @@ This is a design precaution, not a defence this paper evaluates.
 
 ---
 
-## 8. Reproducibility
+## 9. Reproducibility
 
 Stricter here than elsewhere, because the reasoning is the subject.
 
@@ -358,7 +426,7 @@ Stricter here than elsewhere, because the reasoning is the subject.
 
 ---
 
-## 9. Build status
+## 10. Build status
 
 | Component | Status |
 | --- | --- |
@@ -367,5 +435,6 @@ Stricter here than elsewhere, because the reasoning is the subject.
 | Typed judgment contract and validation | to build |
 | Grounding gate: citation resolution and direction checking | to build |
 | Retrieval modes R0–R3 | to build |
+| Tool-selection surface and observation budget (§6) | to build |
 | S3 disclosure decision | to build |
 | `reasoning_call` table: prompts, retrieved vs cited, tokens, latency | to build |

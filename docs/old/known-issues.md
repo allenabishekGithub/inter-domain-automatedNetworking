@@ -241,7 +241,7 @@ additional reproduced runtime defects. They remain open.
   credentials and enforced controller scopes before claiming sovereignty.
   Verify wrong-domain denial at the MCP, adapter and device boundaries, and
   exclude global bootstrap powers from runtime DSOs. See the
-  [control boundary](data-plane.md#control-boundary).
+  [control boundary](../../data-plane.md#control-boundary).
 - **C2 — Retain reproducible live evidence.** No tracked run bundle supports
   independent reproduction of the reported retune loss/gOSNR pilot. Archive
   raw receiver data, fault/action times, route and monitor observations, host
@@ -264,8 +264,8 @@ additional reproduced runtime defects. They remain open.
   packet provisioning action for healthy-path selection rather than relying on
   a repair command's rehearsal `--force` flag. Close with consistent capability
   and study profiles across the [architecture](domain-agent-architecture.md),
-  [node catalogue](langgraph-node-catalog.md), [data-plane specification](data-plane.md),
-  [installation guide](installation.md), component READMEs and
+  [node catalogue](langgraph-node-catalog.md), [data-plane specification](../../data-plane.md),
+  [installation guide](../../installation.md), component READMEs and
   [validation plan](experimental-validation.md).
 
 Resolve F1–F5 before treating fixture output as reliable automated experiment

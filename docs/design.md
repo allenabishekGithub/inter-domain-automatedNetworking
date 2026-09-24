@@ -1320,7 +1320,7 @@ observations, and `packet-a-mcp` has no delivery evidence to return at all.
 ### 13.3 Contract rules
 
 Carried from the previous design's tool contract
-([`old/mcp-server-design.md`](old/mcp-server-design.md)), which survives the
+([`mcp-server-design.md`](../mcp-server-design.md)), which survives the
 scope reduction intact:
 
 1. **`get_capabilities` declares what is unsupported**, explicitly. An agent must

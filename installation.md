@@ -6,7 +6,7 @@ plane needs it, and how to prove it worked before moving on.
 
 **Environment scope:** these instructions prepare a deployment and validation
 host. A machine used only for design work does not need this emulation stack.
-See the [build phases](plan.md#8-build-phases) for what runs where; Phase 0
+See the [build phases](docs/plan.md#8-build-phases) for what runs where; Phase 0
 onward needs a host prepared as below.
 
 Three upstream projects need small local edits to build on Ubuntu 24.04. Those
@@ -134,7 +134,7 @@ script, the traffic tooling and the optical attachment all call `docker exec`.
 > Membership of the `docker` group is equivalent to root on this host. That is
 > expected for a lab, and it is also why the data plane's per-domain scoping is
 > documented as a correctness guard rather than isolation — see
-> [the data-plane specification](old/data-plane.md#control-boundary).
+> [the data-plane specification](data-plane.md#control-boundary).
 
 ## 2. Containerlab and the node images
 
