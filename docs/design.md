@@ -22,7 +22,7 @@ and in what order to build.
 | | Capability | Where |
 | --- | --- | --- |
 | **Provision** | Enumerate the joint options, negotiate, execute per owner, or refuse honestly | §4, §5 |
-| **Assure** | Attribute degradation to a segment; act if it is yours, refrain if it is not | §9 |
+| **Assure** | A continuous per-domain loop: attribute degradation to a segment, act if it is yours, refrain if it is not, compensate by rate where possible | §9 |
 | **Learn** | Predict configuration quality — though two of three owners can only learn if the third tells them | §8 |
 | **Disclose** | Decide what evidence a peer needs, and what to keep | §8.4, §11.3, §12.5 |
 
@@ -32,8 +32,8 @@ and in what order to build.
 | --- | --- |
 | Domains / agents | 3, one per owner, none above them |
 | Joint configurations | **8** — small enough to enumerate exactly, so no search algorithm appears anywhere |
-| Graph nodes (topology) | 14 — 8 routers, 4 ROADMs, 2 hosts |
-| LangGraph nodes | **21** — 13 reasoning, 4 gates, 4 effectors (§6.9) |
+| SIMAP | Two layers — services and segments over 14 infrastructure nodes (§11.1) |
+| LangGraph nodes | **25** — 14 reasoning, 6 gates, 5 effectors (§6.9). Paper 2 adds a third graph and 7 more; Paper 3 changes none (§6.10) |
 | Path segments for attribution | **4**, bracketed by interfaces that already export counters (§9.1) |
 | MCP servers | **3** endpoints from 2 implementations, one per domain (§13) |
 | Knowledge kinds | **3** — structure replicated, state local, outcome held by one owner (§11.3) |
@@ -71,7 +71,7 @@ testbed could not evidence. Removing them costs no demonstrable result:
 | Nash bargaining | Requires commensurable cross-owner utilities and numeric disagreement values. Neither can be measured here. Replaced by explicit accept/refuse plus transparent cost comparison. |
 | Allocation simulator | No longer needed. Every claim below is evaluable on the emulator that already exists. |
 | Neo4j + pgvector as separate servers | Kept the capability, changed the substrate: one embedded SQLite store per agent with a graph projected from it (§11). RAG and GraphRAG remain central to reasoning. |
-| 57-node workflow catalogue | Replaced by 21 nodes across two graphs (§6.9), of which 13 are reasoning nodes and 4 are the gates that make the rest safe. |
+| 57-node workflow catalogue | Replaced by 25 nodes across two graphs (§6.9), of which 14 are reasoning nodes and 6 are the gates that make the rest safe. |
 
 **Kept.** One agent per owner with exclusive local authority. Federated
 evidence. Negotiation where any owner may refuse. Continual learning. Receiver-
@@ -106,7 +106,7 @@ One agent per owner. Exactly one. No agent above them.
 
 | Agent | Owns | Action space | Observes |
 | --- | --- | --- | --- |
-| `agent-packet-a` | `pe-a1`, `p-a1`, `p-a2`, `gw-a`, sender on `client-a` | `path=primary`, `path=backup` | Own interface counters, own route state, sender liveness |
+| `agent-packet-a` | `pe-a1`, `p-a1`, `p-a2`, `gw-a`, sender on `client-a` | `path=primary`, `path=backup`; **`set_offered_rate`** (assurance control, §9.6) | Own interface counters, own route state, sender liveness |
 | `agent-optical` | `t-client`, `r1`–`r4`, `t-server` | `channel=1`, `channel=2`, `refuse` | Per-node OSNR/gOSNR, carried channels |
 | `agent-packet-b` | `gw-b`, `p-b1`, `p-b2`, `pe-b1`, receiver on `server-b` | `path=primary`, `path=backup` | Own counters and routes, **receiver delivery evidence** |
 
@@ -143,6 +143,11 @@ which either packet domain may return for any candidate.
 
 The initiating agent enumerates all eight. This is exact: there is no search
 problem, and no search algorithm is required or claimed.
+
+**Rate is not part of this space.** `set_offered_rate` (§9.6) is a continuous
+assurance control adjusted *inside* whichever configuration is in force, by
+closed-loop feedback rather than search. Provisioning negotiates over eight
+discrete options; assurance regulates one scalar.
 
 **Known limit, retained deliberately.** Both wavelengths ride the same fibre
 chain, so no configuration survives an optical cut. The correct behaviour for a
@@ -430,7 +435,7 @@ Terminal states are `delivered`, `no_agreement`, `refused`, `expired`,
 
 ### 6.4 The three gates
 
-Reasoning happens at thirteen nodes (§6.9). Three gates constrain all of it, and
+Reasoning happens at fourteen nodes (§6.9). Three gates constrain all of it, and
 every candidate passes them before any agent acts on it. They are arithmetic and
 comparison — never a model call.
 
@@ -548,7 +553,11 @@ recovery (§6.7) needs to report *which* actions had already landed.
 | **Gate** | Never | Safety, arithmetic and equality. An LLM cannot check its own grounding, and unanimity is a byte comparison |
 | **Effector** | Never | Sending a message or invoking a named adapter action |
 
-**Thirteen of twenty-one nodes are reasoning nodes.** Each is followed by
+**Fourteen of twenty-five nodes are reasoning nodes.** Node count is not call
+count: on a healthy participant episode about ten fire, eight on an initiator
+episode, roughly **28 per episode across the federation**. Per-paper accounting
+is in [Paper 3 §2.3](../paper-3-grounded-reasoning/design.md) and, for the
+continuous loop, [Paper 2 §6.3](../paper-2-compensation/design.md). Each is followed by
 `grounding_gate`, each returns the typed judgment of §10.2, and each has a
 deterministic fallback — so both graphs execute unchanged with the engine
 disabled (ablation A1).
@@ -608,6 +617,32 @@ entire safety argument, and it is four nodes wide.
 **Checkpointing does not license auto-resume.** It tells the agent where it
 stopped; it cannot make a half-applied device change safe. §6.7 stands: closed
 as `unresolved`, reported, not retried.
+
+### 6.10 How the graph differs per paper
+
+The node set is not fixed across the programme. Each paper needs a different
+shape, and the differences are structural rather than cosmetic:
+
+| | Graphs | Nodes | R / G / E | What changes |
+| --- | ---: | ---: | --- | --- |
+| **Paper 1** | 2 — participant, initiator | **25** | 14 / 6 / 5 | The base. Every `R` node runs a deterministic rule unless the engine is enabled |
+| **Paper 2** | **3** — adds a timer-triggered assurance graph | **32** | 17 / 7 / 8 | Seven new nodes including `compensation_gate`, a new gate with four checks |
+| **Paper 3** | 2 — **unchanged** | **25** | 14 / 6 / 5 | No topology change. The fourteen `R` nodes gain the engine; `grounding_gate` goes from no-op to load-bearing |
+
+**Paper 2 is the only one that changes the shape.** Its assurance graph is
+entered by a timer rather than a request, which is what makes continuous
+operation possible — the other two graphs only ever run because something asked
+them to.
+
+**Paper 3 deliberately changes nothing structural.** Rules and engine execute
+the identical graph, so any measured difference is attributable to the reasoning
+rather than to a different control flow.
+
+**If Papers 2 and 3 are both built**, the assurance graph's three reasoning
+nodes become engine-capable too — but the loop runs its deterministic rules by
+default and escalates only on declared conditions, because four sequential model
+calls per tick would exceed the loop period. See
+[Paper 2 §6.3](../paper-2-compensation/design.md).
 
 ---
 
@@ -803,6 +838,97 @@ what to look at, `formulate_queries` and `a2a_dialogue` request what is missing,
 `diagnose` attributes, the three gates constrain acting, `verify_local` and the
 receiver's `OUTCOME` close it, and `update_predictor` learns from it.
 
+### 9.5 Continuous operation
+
+Provisioning is an episode. **Assurance is a loop that never stops.** Each agent
+runs its own loop on its own period, independently of the others:
+
+```text
+every period:
+    refresh local observations
+    publish a state summary to peers          (content and rate are decisions)
+    ingest peer summaries and outcomes
+    attribute current quality to a segment
+    act, inform, escalate, or hold
+```
+
+Three properties follow, and each is a measurement:
+
+- **Nobody is in charge of the loop.** There is no global tick. Agents observe,
+  decide and act on their own schedules, so evidence always arrives late and
+  partial.
+- **State exchange becomes a rate, not just a content choice.** "What to
+  disclose" (§8.4) gains "how often". Sharing everything every second and
+  sharing a summary on threshold crossing have very different costs and
+  possibly similar value.
+- **Holding is an action.** An agent that observes degradation it did not cause
+  and correctly does nothing has acted correctly (§9.3), and the loop records
+  it as such.
+
+### 9.6 Compensation: why it needs one more capability
+
+An honest statement of a limit, because it shapes what the system can claim.
+
+End-to-end loss decomposes as `1 − (1 − l_A)(1 − l_attach)(1 − l_B)`. Under the
+provisioning action space alone, the terms are **separable**:
+
+| Agent | Action | Affects |
+| --- | --- | --- |
+| Packet A | primary ↔ backup core | `l_A` only |
+| Optical | channel 1 ↔ 2 | nothing measurable — gOSNR is decoupled from packet loss (§4.1) |
+| Packet B | primary ↔ backup core | `l_B` only |
+
+No domain's action reduces another domain's term. If Packet A degrades and
+cannot repair itself, switching a wavelength or a far-end core router recovers
+nothing. Each domain minimising its own term is already globally optimal, and
+there is nothing left to coordinate about.
+
+**One action breaks the separability: sender rate adaptation.**
+
+Packet A owns the sender and therefore the offered load. Where the impairment is
+*congestion* — a rate-limited link with a queue, not random drop — reducing
+offered load reduces loss **downstream as well as locally**. Packet A's action
+now moves `l_attach` and `l_B`.
+
+The structural point is why it is the right capability rather than merely a
+sufficient one:
+
+> **The sender is owned by Packet A. The evidence that the rate should change is
+> owned by Packet B.** Rate adaptation cannot happen without cross-owner
+> disclosure. The control action does not merely benefit from federation — it
+> does not exist without it.
+
+`set_offered_rate` is therefore an **assurance control**, not a provisioning
+choice. The negotiated candidate space stays at eight configurations (§4); rate
+is a scalar adjusted inside whichever configuration is in force. It is a
+closed-loop control variable, not a search dimension — one variable, one
+feedback signal, no optimiser.
+
+Adding it makes QoS genuinely multi-objective: reducing rate trades delivered
+throughput against loss ratio, so a service can now fail the intent in two
+directions instead of one.
+
+### 9.7 Stability
+
+Three independent control loops acting on delayed, partial evidence can
+oscillate: Packet A lowers its rate, loss falls, Packet A raises it, loss
+returns. This is a real risk and it is also a result worth reporting.
+
+Required controls, declared per domain in `policy.yaml` and published:
+
+| Control | Purpose |
+| --- | --- |
+| **Hysteresis** | Separate thresholds for acting and for reverting, so a boundary condition does not flap |
+| **Action-rate limit** | A maximum number of changes per unit time per domain |
+| **Hold-down after change** | A settling window before the same domain acts again |
+| **Attribution precondition** | Do not act on a degradation attributed to another domain (§9.3) |
+
+Measure oscillation and unnecessary changes directly: changes per hour, reverted
+changes, and time spent outside the objective. **Does independent per-domain
+control remain stable when the evidence each agent acts on is late and
+incomplete?** That question only exists once the loops run continuously, and it
+is one the study can answer.
+
 ---
 
 ## 10. Reasoning engine
@@ -884,56 +1010,76 @@ mode.
 Each agent owns one embedded context store. It is the agent's memory and the
 substrate for both retrieval modes.
 
-### 11.1 Why embedded
+### 11.1 The SIMAP: a service–infrastructure map
 
-The old design specified PostgreSQL, Neo4j and pgvector per agent — nine
-services for three agents, and two sources of topological truth that can drift.
-This graph has **fourteen nodes** (eight routers, four ROADMs, two hosts).
+The graph is not a topology map. It is a **two-layer Service–Infrastructure Map**
+in which service-layer objects are linked to the infrastructure that carries
+them. That linkage is what lets an agent answer the questions this system exists
+to answer — *which of my resources carries this service*, and *which services
+does this resource affect*.
 
-| Layer | Choice | Rationale |
+```text
+SERVICE LAYER     Service ──has_segment──> Segment ──bounded_by──> Interface
+                     │                        │
+                     ├──objective──> QoSTarget├──traverses──> Link
+                     └──assigned──> Channel   └──owned_by──> Domain
+
+INFRASTRUCTURE    Node ──has_interface──> Interface ──connects──> Link
+LAYER               │                                    │
+                    └──owned_by──> Domain          Channel ──carried_on──> Link
+```
+
+| Object | Layer | Key fields |
 | --- | --- | --- |
-| Records and vectors | SQLite + `sqlite-vec` | One file, no server, trivially archived into a run bundle |
-| Graph | NetworkX, **projected from the records at load** | Traversal on 14 nodes is microseconds; a derived projection cannot drift from its source |
+| `Service` | service | id, intent, current configuration, state |
+| `QoSTarget` | service | min delivered ratio, max loss, max latency |
+| `Segment` | **both** | service, owning domain, ingress interface, egress interface |
+| `Channel` | both | index, carried_on link, currently assigned service |
+| `Node` | infra | router / ROADM / host, domain, role |
+| `Interface` | infra | node, name, address, domain |
+| `Link` | infra | endpoints, kind (ethernet / WDM span) |
 
-The graph being derived rather than stored is the substantive improvement: there
-is exactly one authoritative topology record set, and the graph is a view of it.
+**`Segment` is the join.** It belongs to a service *and* names the two
+interfaces that bracket it, so the four-segment decomposition of §9.1 stops
+being a hard-coded table and becomes a derived property of the map. Add a
+service, and its segments and bracketing interfaces follow from the graph.
 
-### 11.2 Collections
+### 11.2 What the map is asked
 
-| Collection | Holds | Embedded |
+| Direction | Query | Used by |
 | --- | --- | --- |
-| `topology` | Nodes, interfaces, links, ownership, revision — **all three domains** | no |
-| `episodes` | Past negotiations: intent, candidates, decisions, outcomes | yes |
-| `incidents` | Faults: symptoms, diagnosis, action, resolution | yes |
-| `policy` | The owner's declared rules **with their rationale text** | yes |
-| `observations` | Evidence snapshots, bounded retention | no |
+| **Down** — service → infrastructure | Which of my elements carry this service? | `feasibility_gate`, attribution (§9) |
+| **Up** — infrastructure → service | Which services does this element affect? | `diagnose`, blast radius |
+| **Across** — end to end | Which domains and segments does this service cross? | `intake_intent`, `assemble_candidates` |
+| **Sideways** — service → service | Which services share this element? | Contention. Unused with one service; the schema supports it |
+
+A downward traversal returns the resource set an agent is accountable for. An
+upward traversal from a degraded element returns what it is breaking. Those two
+are the whole of local assurance reasoning.
 
 ### 11.3 Three kinds of knowledge, three disclosure regimes
 
-The old design said "the topology database is federated" and left it there.
-That conflates three things which behave very differently, and the distinction
-is what the study measures.
+The SIMAP is one of three things an agent knows, and they behave very
+differently. The distinction is what the study measures.
 
 | Kind | Example | Default | Analogy |
 | --- | --- | --- | --- |
-| **Structure** | Nodes, interfaces, links, ownership, addressing | **Fully replicated**, revision-signed by each owner | OSPF: every participant holds the whole map |
-| **Live state** | Interface oper-state, route state, counters, gOSNR | **Local**, disclosable by decision | BGP: reachability is announced, internals are hidden |
+| **Structure** | The SIMAP: nodes, interfaces, links, segments, ownership | **Fully replicated**, revision-signed by each owner | OSPF: every participant holds the whole map |
+| **Live state** | Interface oper-state, route state, counters, gOSNR | **Local**, disclosable by decision | BGP: reachability announced, internals hidden |
 | **Service outcome** | Delivered ratio, loss, jitter at the receiver | **Held by one owner only** | No analogy — it is in no routing protocol |
 
-A graph query may traverse the whole `client-a → server-b` path across owner
-boundaries. A state query stops at the border. Reasoning about another domain's
-*structure* is always permitted; asserting another domain's current *condition*
-requires that domain to have disclosed it, and the claim must cite the
-disclosure (§10.3).
+A map traversal may cross owner boundaries freely. A state query stops at the
+border. Reasoning about another domain's *structure* is always permitted;
+asserting another domain's current *condition* requires that domain to have
+disclosed it, and the claim must cite the disclosure (§10.3).
 
 **Why full state replication would not dissolve the problem.** Suppose every
 agent streamed its live state to the others, OSPF-style. A link-state database
 carries adjacency, metrics and up/down. Delivered ratio, loss and jitter are an
 **endpoint application measurement** at a host one owner operates. They appear
-in no routing protocol, no LSDB, and no standard telemetry export. The
-asymmetry this study is about is not topological and not even about network
-state — it is specifically about *service outcome evidence*, and no amount of
-routing-protocol-style flooding produces it.
+in no routing protocol, no LSDB, and no standard telemetry export. The asymmetry
+this study is about is not topological and not even about network state — it is
+specifically about *service outcome evidence*.
 
 ### 11.4 Evidence that exists only across the boundary
 
@@ -944,17 +1090,58 @@ jointly**. The gateway transit prefix `10.10.4.0/30` spans the optical line:
 gw-a ethernet-1/3 (10.10.4.1)  ))) optical (((  gw-b ethernet-1/1 (10.10.4.2)
 ```
 
-Those two interfaces bracket the attachment segment. Packets lost on it appear
-as `gw-a` out-packets exceeding `gw-b` in-packets — a difference **neither owner
-can compute alone**, because neither holds the other's counters. Both counters
-are already collected by `../packet-network/telemetry.py`.
+In SIMAP terms those two interfaces `bounded_by` the attachment segment.
+Packets lost on it appear as `gw-a` out-packets exceeding `gw-b` in-packets — a
+difference **neither owner can compute alone**, because neither holds the
+other's counters. Both are already collected by
+`../packet-network/telemetry.py`.
 
 This gives the study a second evidence type alongside the receiver's outcome,
 and a stronger framing than one-way disclosure: collaboration reveals a fault
-that is genuinely invisible to every party acting alone. It is also cheap —
-the impairment is `tc netem` on one segment, and the detector is a subtraction.
+genuinely invisible to every party acting alone. It is also cheap — the
+impairment is `tc netem` on one segment, and the detector is a subtraction.
 
-### 11.5 Retrieval modes
+### 11.5 How the map is federated
+
+Each owner maintains **its own slice** — its nodes, interfaces, links, and the
+segments of services crossing it — and signs it with a revision. Agents exchange
+slices over A2A, so every agent holds the whole map while no agent authors
+another's part of it.
+
+The map is **structure**, so it replicates in every experimental condition
+including S0 (§11.3). Live state does not.
+
+This is what makes a peer's evidence interpretable. An `OUTCOME` saying
+"delivered ratio 0.94" is a number without a referent until the map says which
+segments the service crossed and who owned each. **The shared map is the
+precondition for federated evidence meaning anything** — and it is why full
+topology replication is an assumption this design makes explicit rather than
+quietly.
+
+### 11.6 Why embedded, not Neo4j
+
+The map has **14 infrastructure nodes** plus a handful of service objects.
+
+| Layer | Choice | Rationale |
+| --- | --- | --- |
+| Records and vectors | SQLite + `sqlite-vec` | One file, no server, archived whole into a run bundle |
+| Graph | NetworkX, **projected from the records at load** | Traversal at this size is microseconds; a derived projection cannot drift from its source |
+
+The projection being derived is the substantive point: there is one
+authoritative record set, and the SIMAP is a view of it. The previous design's
+separate Neo4j store could disagree with its own source.
+
+### 11.7 Collections
+
+| Collection | Holds | Embedded |
+| --- | --- | --- |
+| `simap` | Service and infrastructure objects and their edges — **all three domains** | no |
+| `episodes` | Past negotiations: intent, candidates, decisions, outcomes | yes |
+| `incidents` | Faults: symptoms, attributed segment, action, resolution | yes |
+| `policy` | The owner's declared rules **with their rationale text** | yes |
+| `observations` | Evidence snapshots, bounded retention | no |
+
+### 11.8 Retrieval modes
 
 **Vector RAG** — similarity over `episodes`, `incidents`, `policy`. Answers
 *"what happened in situations like this one?"*
@@ -968,7 +1155,7 @@ identify the resources structurally implicated, then retrieve episodes and
 incidents that reference *those* resources. Structure narrows the search;
 similarity ranks what survives.
 
-### 11.6 What each decision point retrieves
+### 11.9 What each decision point retrieves
 
 | Decision point | Graph step | Vector step |
 | --- | --- | --- |
@@ -976,7 +1163,7 @@ similarity ranks what survives.
 | `evaluate_proposal` | Resources this candidate commits in **my** domain, and what else they carry | Episodes using the same candidate; policy rules touching those resources |
 | `diagnose` | Service path traversal; resources shared with the reported symptom | Incidents with similar symptom signatures on overlapping resources |
 
-### 11.7 Rules
+### 11.10 Rules
 
 1. **Retrieval informs; it never authorises.** No retrieved record can satisfy a
    feasibility gate. Gates read live observation.
@@ -1122,7 +1309,8 @@ Per domain, the named actions reduce to a very short list:
 
 | Domain | Actions |
 | --- | --- |
-| `packet-a-mcp`, `packet-b-mcp` | `path_set(primary\|backup)` |
+| `packet-a-mcp` | `path_set(primary\|backup)`, `set_offered_rate(mbps)` |
+| `packet-b-mcp` | `path_set(primary\|backup)` |
 | `optical-mcp` | `set_channel(1\|2)` |
 
 `get_service_evidence` is where the asymmetry of §2 shows up in the interface:
@@ -1188,10 +1376,12 @@ shown and every disclosure it made.
 | Recovery when the primary router is unreachable | **Open — F2** |
 | Agent runtime, protocol, policy gates, predictor, journal | **To build** |
 | Domain MCP servers (packet ×2, optical ×1) | **To build** |
-| Context store, graph projection, retrieval | **To build** |
+| Context store, SIMAP projection, retrieval | **To build** |
 | Reasoning engine and grounding gate | **To build** |
 | Condition harness: netem profiles, visibility classes, schedules | **To build** |
 | Segment attribution and the assurance loop | **To build** |
+| Continuous loop scheduler, hysteresis, action-rate limits | **To build** |
+| `set_offered_rate` and congestion-based netem profiles | **To build** |
 | mTLS, message signing, journal hash-chaining | **To build** |
 
 Carried-over issues keep their original IDs; their detail is in

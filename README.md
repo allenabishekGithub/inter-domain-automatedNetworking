@@ -45,7 +45,7 @@ the study asks.
 | | Capability |
 | --- | --- |
 | **Provision** | Enumerate the eight joint configurations, negotiate over A2A, execute per owner — or refuse, honestly |
-| **Assure** | Attribute degradation to a path segment: act if it is yours, **refrain if it is not**, escalate if nothing can fix it |
+| **Assure** | A continuous loop per domain: attribute degradation to a path segment, act if it is yours, **refrain if it is not**, compensate by rate where a peer cannot repair itself |
 | **Learn** | Predict how a configuration will perform — though two of the three owners can only learn if the third tells them what happened |
 | **Disclose** | Decide what evidence a peer actually needs, rather than sharing everything or nothing |
 
@@ -73,12 +73,18 @@ counters, and only the receiver can see them. The optical agent's gOSNR is
 changed optical margin does not automatically change packet loss in this
 emulator.
 
-Each agent holds a **context database**: the federated topology of all three
-domains, its own history, and its owner's policy. It retrieves over that with
-vector search, graph traversal and the hybrid of the two — needed because a
-peer's outcome is a number without a referent until you know which resources it
-traversed. Every claim an agent makes must cite what it was shown; claims that
-cite nothing are rejected to a deterministic fallback.
+Each agent holds a **SIMAP** — a two-layer service–infrastructure map linking
+services and their per-domain segments to the routers, interfaces, links and
+channels that carry them. Each owner authors and signs only its own slice; the
+union is what makes a peer's evidence mean anything, because "delivered ratio
+0.94" is a number without a referent until the map says which segments the
+service crossed and who owned each. Attribution and blast radius are traversals
+of it, not hard-coded tables.
+
+Agents retrieve over that map and their own history with vector search, graph
+traversal and the hybrid of the two. Every claim an agent makes must cite what
+it was shown; claims that cite nothing are rejected to a deterministic
+fallback.
 
 ## The data plane
 
@@ -105,8 +111,8 @@ count as correct behaviour — reported separately from successful delivery.
 
 ## Status
 
-Each agent is two LangGraphs over **21 nodes**: 13 reasoning nodes with the
-engine behind them, 4 gates that are deterministic by construction, and 4
+Each agent is two LangGraphs over **25 nodes**: 14 reasoning nodes with the
+engine behind them, 6 gates that are deterministic by construction, and 5
 effectors. The gates are the whole safety argument — nothing reaches a device
 without live-observation feasibility, declared policy and byte-identical
 unanimity, and no rationale reaches a peer without resolving its citations.
@@ -114,7 +120,23 @@ unanimity, and no rationale reaches a peer without resolving its citations.
 The data plane, the ownership scoping and the device adapters exist and are
 unit-tested. The agent runtime, A2A, the context store and retrieval, the
 reasoning engine and the learning layer are designed and **not yet built**; see
-the plan's [build phases](docs/plan.md#6-build-phases).
+the plan's [build phases](docs/plan.md#8-build-phases).
+
+**This design contains more than one paper**, and one must be chosen before
+building past Phase 4 — see
+[plan §2](docs/plan.md#2-one-body-of-work-several-papers--choose-one).
+Each has its own folder so they can be worked on in parallel:
+
+| Folder | Paper | Depends on |
+| --- | --- | --- |
+| [`paper-1-federated-evidence/`](paper-1-federated-evidence) | Federated outcome evidence and service attribution — **recommended first** | nothing |
+| [`paper-2-compensation/`](paper-2-compensation) | Cross-domain compensation and assurance-loop stability | Paper 1's system |
+| [`paper-3-grounded-reasoning/`](paper-3-grounded-reasoning) | Grounded agent reasoning for network operations | Paper 1's system |
+
+**The code is shared.** The data plane, agents, MCP servers and SIMAP live at
+the repository root and are built once. Paper folders hold each paper's
+documentation, experiment configurations and results — never a fork of the
+system.
 
 Two findings from the earlier assessment still block work and keep their
 original IDs: **F4** (receiver samples cannot be proven fresh, which blocks
