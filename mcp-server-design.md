@@ -196,6 +196,6 @@ credentials and execution paths must enforce it too.
    MCP success and preserve outcomes after server restart.
 
 This supplies the backend-specific design for
-roadmap Phase 2
-and the local controller contract.
+[Paper 1's Phase 2](paper-1-federated-evidence/plan.md#8-build-phases)
+and the [local controller contract](paper-1-federated-evidence/design.md#123-contract-rules).
 Server implementation and live validation remain future work.

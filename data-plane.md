@@ -22,11 +22,10 @@ prepares a fresh Ubuntu VM to run it; the component READMEs are the operating
 references; this document is the specification the experiments pin against.
 
 **Status:** deployable. The data plane and its domain-scoped operations exist
-and are tested. The DSO federation above it — A2A, signed contracts, per-domain
-Controller MCP servers, ACO/PSO optimization, Nash bargaining, and continual
-predictor learning — does not, and is the work in the
-implementation roadmap. Nothing here supplies
-those mechanisms.
+and are tested. The agent federation above it — A2A, signed exchanges,
+per-domain MCP servers and continual predictor learning — does not, and is the
+work in the [Paper 1 build plan](paper-1-federated-evidence/plan.md#8-build-phases).
+Nothing here supplies those mechanisms.
 
 The [known issues and follow-up register](known-issues.md) qualifies the current
 implementation: unit tests pass, but lifecycle handling, recovery, telemetry and
@@ -197,7 +196,7 @@ tooling cannot address Packet B's four routers. The optical line is a single
 owner with its own control API.
 
 That scoping is a correctness guard, not an isolation boundary, and the
-distinction matters for E01.
+distinction matters for [Paper 1's platform experiment E1](paper-1-federated-evidence/plan.md#5-experiments).
 Both packet domains are emulated on one host, addressed through one management
 subnet, and reached with one set of device credentials; the emulation host's
 container runtime is root-equivalent and is required by anything that drives
@@ -210,8 +209,8 @@ item.
 The device interface is gNMI on port **57400**; the optical control API is
 HTTP on **8080**, bound to loopback. There are no other network services: the
 per-domain Controller MCP servers, their typed transaction tools and their
-authorization are Phase 2
-work, and this data plane is what they will wrap.
+authorization are [Phase 2 work](paper-1-federated-evidence/plan.md#8-build-phases),
+and this data plane is what they will wrap.
 
 A trusted **lab bootstrap** — `scripts/service-up.sh` — creates the shared
 environment, joins the attachment namespaces and installs initial
@@ -363,8 +362,11 @@ Packet A repairs its own routes through its own controller; Optical and Packet
 B retain their existing forwarding when no local change is needed. Participation
 does not require an artificial configuration write in every domain.
 
-See the implementation roadmap for the adapter and
-federation work, and the experimental validation plan
-for how this fixture is used and what it cannot evidence. The 57-node DSO
-design is unchanged by any of it; the capabilities above determine which
-workflow branches can actually execute.
+See the [Paper 1 build phases](paper-1-federated-evidence/plan.md#8-build-phases)
+for the adapter and federation work, and its
+[experiments](paper-1-federated-evidence/plan.md#5-experiments) and
+[limits](paper-1-federated-evidence/plan.md#10-not-tested-in-this-paper)
+for how this fixture is used and what it cannot evidence. The
+[shared 25-node agent design](paper-1-federated-evidence/design.md#76-the-langgraph-node-set)
+defines the base workflows; the capabilities above determine which branches
+can actually execute.

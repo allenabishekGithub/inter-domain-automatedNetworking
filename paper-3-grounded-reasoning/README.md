@@ -30,7 +30,7 @@ The third is the question the field mostly avoids.
 | --- | --- | --- |
 | **C5** | Reasoning is faithful because it is **gated**, not because it is trusted | Ungrounded-assertion rate with the gate off; firing and fallback rate with it on |
 | **C3** | Agents that reason about what to share approach full-disclosure quality at materially lower disclosure | S3 vs S1 and S2: quality within a declared margin at lower disclosed volume |
-| — | Per-node reasoning value | Thirteen single-node ablations: which nodes carry the benefit, and which could be rules |
+| — | Per-node reasoning value | Fourteen single-node ablations: which nodes carry the benefit, and which could be rules |
 
 **Honest risk, stated up front.** C3 is the most likely null result in the whole
 programme: with eight configurations and a modest episode count, a good static
@@ -44,22 +44,22 @@ Everything Paper 1 builds, plus **Phase 5**:
 
 | Component | Detail |
 | --- | --- |
-| Reasoning engine | At its fourteen nodes (design §6.9, §10.1) |
+| Reasoning engine | At its fourteen nodes ([design §2](design.md#2-where-reasoning-sits)) |
 | Typed judgment contract | `decision`, `rationale`, `citations[]`, `confidence` |
 | Grounding gate | Citation resolution and direction checking; fallback on failure |
 | Retrieval modes | R0 none, R1 flat vector, R2 graph only, R3 GraphRAG |
-| Tool-selection surface | `plan_observations` chooses among **read-only** MCP tools within a declared budget; named actions are never shown to the engine ([design §6](design.md)) |
+| Tool-selection surface | `plan_observations` chooses among **read-only** MCP tools within a declared budget; named actions are never shown to the engine ([design §6](design.md#6-mcp-tools-the-engine-may-select)) |
 | S3 disclosure decision | What to disclose, what to request, what a disclosure licenses |
 
 ## Architecture
 
 | Section | Why it matters here |
 | --- | --- |
-| [design §6.9](../paper-1-federated-evidence/design.md) | The node taxonomy: 14 reasoning, 6 gates, 5 effectors — and why the gates can never be a model call |
-| §10 | The reasoning engine: what it decides, the contract, the grounding gate, the boundaries |
-| §11.1–11.2 | The SIMAP and the four traversal directions that ground retrieval |
-| §11.8–11.9 | Retrieval modes, and what each decision point retrieves |
-| §12.5 | Peer content is data, never instruction — the injection boundary |
+| [Paper 1 §7.6](../paper-1-federated-evidence/design.md#76-the-langgraph-node-set) | The node taxonomy: 14 reasoning, 6 gates, 5 effectors — and why the gates can never be a model call |
+| [§2–§4](design.md#2-where-reasoning-sits) | The reasoning engine: what it decides, the contract, the grounding gate, the boundaries |
+| [Paper 1 §8](../paper-1-federated-evidence/design.md#8-the-simap) | The SIMAP and the four traversal directions that ground retrieval |
+| [§5](design.md#5-retrieval) | Retrieval modes, and what each decision point retrieves |
+| [§8](design.md#8-injection-boundary) | Peer content is data, never instruction — the injection boundary |
 
 This paper's [`design.md`](design.md) specifies **what changes inside each of
 the fourteen reasoning nodes** relative to Paper 1's rules (§2.2) and the
@@ -80,7 +80,7 @@ That is what makes an LLM admissible in a network control path.
 | --- | --- | --- |
 | **E5** | Grounding gate on vs off, including deliberately ambiguous evidence where a plausible-but-wrong story is available | C5 |
 | **Retrieval ablation** | R0 / R1 / R2 / R3 on the same decisions, scored on decision quality **and retrieved-context precision** — how much of what was retrieved was actually cited | Q2 |
-| **Per-node ablation** | Disable the engine at one reasoning node at a time; the other twelve keep reasoning. Thirteen runs | Per-node value |
+| **Per-node ablation** | Disable the engine at one reasoning node at a time; the other thirteen keep reasoning. Fourteen runs | Per-node value |
 | **S3 vs S2** | Agent-decided disclosure against a good static rule (ablation P2) | C3 |
 
 **Expected shape of the per-node result:** a few nodes carry most of the
@@ -106,9 +106,10 @@ move.
 | [`design.md`](design.md) | System architecture as this paper builds and uses it |
 | [`plan.md`](plan.md) | Claims, experiments, baselines, metrics, build phases, threats |
 
-`../docs/design.md` remains **canonical for the shared system**; this folder's
-`design.md` is authoritative for what this paper adds or scopes out. If they
-disagree, the shared document wins and this one is stale.
+The [Paper 1 design](../paper-1-federated-evidence/design.md) is **canonical for
+the shared system**. This folder's [`design.md`](design.md) is authoritative for
+Paper 3's additions; inherited behavior follows Paper 1. This folder's
+[`plan.md`](plan.md) defines the reasoning and retrieval evaluations.
 
 ## Working here
 

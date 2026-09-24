@@ -62,7 +62,8 @@ are what the shared evidence is *for*. C6 is the cheapest striking result.
 
 ## 4. The core experiment
 
-Four sharing conditions, identical fixtures, seeds and schedules (design §10.3),
+Four sharing conditions, identical fixtures, seeds and schedules
+([design §11.3](design.md#113-sharing-conditions)),
 each run across stationary → drift → abrupt shift → recurrence.
 
 **Headline figure:** per-agent prediction error over episodes, four conditions,

@@ -23,7 +23,7 @@ the claim's direction or it does not. Binary, checkable, automatable.
 **2. Decision quality against physical ground truth.** The receiver either got
 the packets or it did not. No LLM judge, no human rater.
 
-**3. Per-node accounting.** Thirteen reasoning nodes, ablated one at a time.
+**3. Per-node accounting.** Fourteen reasoning nodes, ablated one at a time.
 Which steps carry the benefit and which could be rules is a question the field
 mostly avoids, and answering it is more useful than "agents work".
 
@@ -143,7 +143,7 @@ Indicative effort: **four to six months** after Paper 1's system is running.
 - **Compensation and loop stability.** Paper 2.
 - **Model comparison or fine-tuning.** One pinned model.
 - **Prompt injection as an attack.** The boundary is a design precaution
-  (design §7), not an evaluated defence.
+  ([design §8](design.md#8-injection-boundary)), not an evaluated defence.
 - **Natural-language intent from real operators.** Intents are structured or
   templated; conversational intake is a separate study.
 - **Scale.** Three agents, eight configurations, fourteen infrastructure nodes.

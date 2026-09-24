@@ -56,7 +56,7 @@ Everything Paper 1 builds, plus **Phase 4b**:
 | Component | Detail |
 | --- | --- |
 | Loop scheduler | Per-domain period, independent — there is no global tick |
-| `set_offered_rate(mbps)` | New named action on `packet-a-mcp` only, fully specified in [design §8](design.md) — including the **generator decision**: iperf3 cannot change rate mid-run, and a naive restart puts a gap in the stream that is indistinguishable from loss |
+| `set_offered_rate(mbps)` | New named action on `packet-a-mcp` only, fully specified in [design §8](design.md#8-mcp-the-set_offered_rate-tool) — including the **generator decision**: iperf3 cannot change rate mid-run, and a naive restart puts a gap in the stream that is indistinguishable from loss |
 | Congestion netem profiles | Rate-limited bottleneck **with a queue**. Random drop will not work |
 | Hysteresis | Separate act and revert thresholds, declared in `policy.yaml` |
 | Action-rate limit, hold-down | Per domain, published in the run bundle |
@@ -66,10 +66,10 @@ Everything Paper 1 builds, plus **Phase 4b**:
 
 | Section | Why it matters here |
 | --- | --- |
-| [design §9.5](../paper-1-federated-evidence/design.md) | Continuous operation: no global tick, disclosure as a rate, holding as an action |
-| §9.6 | The separability argument and why rate adaptation is the right capability |
-| §9.7 | Stability: hysteresis, action-rate limits, hold-down, attribution precondition |
-| §4 | Rate is **not** in the candidate space — it is a scalar control inside whichever of the eight configurations is in force |
+| [§4](design.md#4-continuous-operation) | Continuous operation: no global tick, disclosure as a rate, holding as an action |
+| [§2–§3](design.md#2-the-problem-the-action-space-is-separable) | The separability argument and why rate adaptation is the right capability |
+| [§5](design.md#5-stability-controls) | Stability: hysteresis, action-rate limits, hold-down, attribution precondition |
+| [§3.1](design.md#31-what-it-is-not) | Rate is **not** in the candidate space — it is a scalar control inside whichever of the eight configurations is in force |
 
 This paper's [`design.md`](design.md) specifies the **assurance graph** — a
 third, timer-triggered graph of **seven new nodes** including the new
@@ -100,8 +100,8 @@ oscillates, **and at what disclosure rate it stops**.
 
 ## The premise that gates this paper
 
-**Phase 1, check 4: reducing offered load must actually reduce loss under the
-netem profile.** With random-drop netem it will not — loss ratio stays flat and
+**Additional premise check during Paper 1's Phase 1: reducing offered load must
+actually reduce loss under the netem profile.** With random-drop netem it will not — loss ratio stays flat and
 the sender simply delivers less for nothing. The profile must be a rate-limited
 bottleneck with a queue so the loss is congestion.
 
@@ -116,9 +116,10 @@ anything here is built.
 | [`design.md`](design.md) | System architecture as this paper builds and uses it |
 | [`plan.md`](plan.md) | Claims, experiments, baselines, metrics, build phases, threats |
 
-`../docs/design.md` remains **canonical for the shared system**; this folder's
-`design.md` is authoritative for what this paper adds or scopes out. If they
-disagree, the shared document wins and this one is stale.
+The [Paper 1 design](../paper-1-federated-evidence/design.md) is **canonical for
+the shared system**. This folder's [`design.md`](design.md) is authoritative for
+Paper 2's additions; inherited behavior follows Paper 1. This folder's
+[`plan.md`](plan.md) defines the compensation and stability experiments.
 
 ## Working here
 

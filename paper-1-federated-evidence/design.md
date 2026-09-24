@@ -14,9 +14,9 @@ authoritative only for what it adds.
 | | Capability | Where |
 | --- | --- | --- |
 | **Provision** | Enumerate eight joint configurations, negotiate over A2A, execute per owner, or refuse honestly | §4, §6 |
-| **Attribute** | Decompose end-to-end loss into four owner-aligned segments; act if it is yours, refrain if it is not | §9 |
-| **Learn** | Predict configuration quality — though two of three owners can only learn if the third tells them | §10 |
-| **Disclose** | Four sharing conditions, S0–S3, with every disclosed field recorded | §10.3 |
+| **Attribute** | Decompose end-to-end loss into four owner-aligned segments; act if it is yours, refrain if it is not | §10 |
+| **Learn** | Predict configuration quality — though two of three owners can only learn if the third tells them | §11 |
+| **Disclose** | Four sharing conditions, S0–S3, with every disclosed field recorded | §11.3 |
 
 **The numbers.**
 
@@ -185,7 +185,7 @@ Payloads travel as `DataPart`; human-readable rationale as `TextPart` alongside.
 }
 ```
 
-**`OPTIONS`** — costs in the units of §8, never a blended score:
+**`OPTIONS`** — costs in the units of §9, never a blended score:
 
 ```json
 {
@@ -259,8 +259,9 @@ byte-identical assignment:
 ```
 
 `segment_counters` is what makes cross-owner attribution (§10.1) and joint
-detection (§8.3) possible, and it is present only in conditions that disclose
-live state. **This field is the difference between "the service degraded" and
+detection ([plan, experiment E3b](plan.md#5-experiments)) possible, and it is
+present only in conditions that disclose live state.
+**This field is the difference between "the service degraded" and
 "the service degraded here."**
 
 ### 6.4 Rules
@@ -399,7 +400,7 @@ deterministic rule unless the engine is enabled (§1).
 | `evaluate_local_actions` | R | Which actions to offer, and how to characterise each | All gate-passing actions, cost-ordered |
 | `feasibility_gate` | **G** | Live oper-state and channel support. No prediction, no retrieval | always deterministic |
 | `policy_gate` | **G** | The owner's declared rules | always deterministic |
-| `cost_and_predict` | **G** | Cost vector (§7 of docs) and the RLS read. Arithmetic only | always deterministic |
+| `cost_and_predict` | **G** | Cost vector (§9) and the RLS read (§11.1). Arithmetic only | always deterministic |
 | `evaluate_proposal` | R | Accept, refuse or counter, and on what grounds | Accept iff gates pass and predicted ratio ≥ objective |
 | `grounding_gate` | **G** | Resolve citations; accept the judgment or fall back | always deterministic; a no-op when the engine is off |
 | `a2a_dialogue` | R | Compose outgoing, interpret incoming | Template out; parse structured fields only |
@@ -464,7 +465,7 @@ agent/
   nodes/           one module per node, grouped by kind
   gates.py         feasibility, policy, agreement, cost_and_predict, update_predictor
   policy.py        policy.yaml loader and rule evaluation
-  predictor.py     RLS with exponential forgetting (§10.1)
+  predictor.py     RLS with exponential forgetting (§11.1)
   observe.py       snapshot loop (§7.4)
   journal.py       append-only JSONL, hash-chained
   mcp_client.py    typed client for this domain's MCP server
@@ -516,7 +517,7 @@ rather than to a different control flow.
 nodes become engine-capable too — but the loop runs its deterministic rules by
 default and escalates only on declared conditions, because four sequential model
 calls per tick would exceed the loop period. See
-[Paper 2 §6.3](../paper-2-compensation/design.md).
+[Paper 2 §6.3](../paper-2-compensation/design.md#63-how-often-the-loop-thinks--and-why-it-must-not-always).
 
 ---
 

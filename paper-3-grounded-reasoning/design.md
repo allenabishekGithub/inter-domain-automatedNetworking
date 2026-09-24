@@ -1,7 +1,7 @@
 # Paper 3 — System design
 
 **Scope:** what Paper 3 adds to Paper 1's system.
-**Canonical source:** [`paper-1/design.md`](../paper-1-federated-evidence/design.md)
+**Canonical source:** [`paper-1-federated-evidence/design.md`](../paper-1-federated-evidence/design.md)
 is the base system and is authoritative for everything inherited. This document
 is authoritative for Paper 3's additions.
 
@@ -395,7 +395,8 @@ reasons about disclosure:
 | What to request | `formulate_queries`, `a2a_dialogue` | Which peer holds evidence that would resolve my uncertainty? |
 | How to use it | `evaluate_proposal` | What does a peer's disclosure actually license me to conclude? |
 
-Attribution (Paper 1 §9) is what makes this concrete: an agent that can name the
+Attribution ([Paper 1 §10](../paper-1-federated-evidence/design.md#10-attribution))
+is what makes this concrete: an agent that can name the
 **one counter** it needs is making a far cheaper request than one asking for
 everything.
 

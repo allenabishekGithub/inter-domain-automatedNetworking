@@ -26,12 +26,13 @@ distributed orchestration, negotiation, retrieval, controller tools, and closed
 loops already has substantial precedent. The architecture needs a more precise
 networking contribution to support a strong novelty claim.
 
-The recommendations are carried into the five paper priorities,
-adaptive agent decision loop,
-existing-node responsibilities,
-and journal evaluation plan.
-Those updates specify intended behavior and experiments; they do not turn the
-candidate contributions into verified results.
+The current programme is specified in the [shared system design](paper-1-federated-evidence/design.md)
+and [Paper 1 validation plan](paper-1-federated-evidence/plan.md), with separate
+plans for [compensation](paper-2-compensation/plan.md) and
+[grounded reasoning](paper-3-grounded-reasoning/plan.md). Those documents specify
+intended behavior and experiments; they do not turn the candidate contributions
+into verified results. The historical comparison below still needs reassessment
+against that scope.
 
 ## 1. Scope and evidence
 
@@ -77,7 +78,7 @@ it does not prove that no later published version exists.
 
 ## 2. The system being assessed
 
-The current design has independently owned packet A, optical, and packet B
+The design assessed in this historical catalogue has independently owned packet A, optical, and packet B
 domains. Each domain operates one persistent AI DSO: the agent and domain service
 orchestrator are the same runtime. Its four workflows and shared context utility
 contain 57 named nodes, with three conditional generative-LLM reasoning nodes.
@@ -96,8 +97,10 @@ The design couples ACO discrete exploration, PSO continuous resource allocation,
 owner utility evaluation, weighted Nash bargaining, verified service execution,
 and continual performance-predictor updates. Retrieval grounds selected LLM
 calls. Learning must change later estimates/decisions, not owner authority or
-hard policy. None of these four mechanisms is optional in the full system. See the node catalogue
-for the current workflow inventory.
+hard policy. All four mechanisms were required in that earlier scope. The current
+workflow inventory is the [Paper 1 node set](paper-1-federated-evidence/design.md#76-the-langgraph-node-set),
+with additions defined by the [Paper 2](paper-2-compensation/design.md#6-the-assurance-graph)
+and [Paper 3](paper-3-grounded-reasoning/design.md#2-where-reasoning-sits) designs.
 
 ```mermaid
 flowchart LR

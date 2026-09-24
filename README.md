@@ -6,10 +6,13 @@ context database. The agents retrieve over a shared topology graph and their own
 history, negotiate one end-to-end service over **A2A**, and learn from verified
 outcomes that only their peers can observe.
 
-Start with the **[design](paper-1-federated-evidence/design.md)** — it is the build reference. The
-**[research and build plan](paper-1-federated-evidence/plan.md)** says what to measure and in what
-order. Those two documents are the current scope; everything in
-[`docs/old/`](docs/old) is superseded source material.
+Start with the **[shared system design](paper-1-federated-evidence/design.md)** —
+it is the build reference. The **[research and build plan](paper-1-federated-evidence/plan.md)**
+says what to measure and in what order. Paper 1 defines the base system;
+[Paper 2](paper-2-compensation/README.md) and
+[Paper 3](paper-3-grounded-reasoning/README.md) document their respective
+extensions. Root-level documents cover installation, the data plane, known
+issues, the MCP contract and related work. Earlier designs remain in git history.
 
 ```text
 client-a

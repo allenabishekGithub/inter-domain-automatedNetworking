@@ -1,7 +1,7 @@
 # Paper 2 — System design
 
 **Scope:** what Paper 2 adds to Paper 1's system.
-**Canonical source:** [`paper-1/design.md`](../paper-1-federated-evidence/design.md)
+**Canonical source:** [`paper-1-federated-evidence/design.md`](../paper-1-federated-evidence/design.md)
 is the base system and is authoritative for everything inherited. This document
 is authoritative for Paper 2's additions.
 
@@ -15,7 +15,7 @@ is authoritative for Paper 2's additions.
 | New action | `set_offered_rate(mbps)` on `packet-a-mcp` only |
 | New tables | `tick`, `control_state` |
 | Claims | **C9** compensation, **C10** stability |
-| Gating premise | Rate reduction must actually reduce loss — Phase 1 check 4 |
+| Gating premise | Rate reduction must actually reduce loss — additional check during Paper 1's Phase 1 (§10) |
 
 **The argument in one line.** Under Paper 1's action space the loss terms are
 separable, so no domain can help another; exactly one capability breaks that,
@@ -183,7 +183,7 @@ main structural addition.
 | --- | --- | --- |
 | `loop_tick` | E | Timer entry. Open a tick record, stamp it, journal |
 | `refresh_observations` | E | *reused* — execute the observation plan via MCP |
-| `attribute_quality` | R | Current delivered quality → owning segment, by the strongest method available (P1 §9.2) |
+| `attribute_quality` | R | Current delivered quality → owning segment, by the strongest method available ([Paper 1 §10.2](../paper-1-federated-evidence/design.md#102-three-methods-strongest-first)) |
 | `publish_state_summary` | E | Emit this domain's periodic summary; content **and rate** are the disclosure decision |
 | `compensation_gate` | **G** | **New gate.** Hysteresis, action-rate limit, hold-down, attribution precondition |
 | `select_control` | R | Given attribution and headroom: which control, and how much |
@@ -439,8 +439,9 @@ With random-drop netem it will not: loss ratio stays flat and the sender simply
 delivers less for nothing. The profile must be a rate-limited bottleneck with a
 queue, so that the loss is congestion and responds to offered load.
 
-This is **Phase 1 check 4** in Paper 1's plan — ten minutes, run long before
-anything here is built. **If it fails, the coupling mechanism does not exist and
+Run this additional check during [Paper 1's Phase 1](../paper-1-federated-evidence/plan.md#8-build-phases),
+alongside its three base-system premise checks and long before anything here is
+built. **If it fails, the coupling mechanism does not exist and
 this paper does not exist in its current form.**
 
 ---

@@ -56,16 +56,16 @@ capability beyond them.
 
 ## Architecture
 
-The full system design is [`docs/design.md`](design.md). The sections
+The full system design is [`design.md`](design.md). The sections
 this paper leans on hardest:
 
 | Section | Why it matters here |
 | --- | --- |
-| §2 | The observation asymmetry — the paper's premise |
-| §4.1 | Conditions and the three visibility classes, including the modelled-only trap |
-| §8 | Features/labels split, the RLS predictor, what sharing changes |
-| §9.1–9.3 | Four-segment decomposition, three attribution methods, the action rule |
-| §11.1–11.5 | The SIMAP, and why a shared map is the precondition for peer evidence meaning anything |
+| [§2](design.md#2-the-premise-ownership-splits-observation) | The observation asymmetry — the paper's premise |
+| [§5](design.md#5-conditions-what-makes-this-a-learning-problem) | Conditions and the three visibility classes, including the modelled-only trap |
+| [§11](design.md#11-learning-and-sharing) | Features/labels split, the RLS predictor, what sharing changes |
+| [§10](design.md#10-attribution) | Four-segment decomposition, three attribution methods, the action rule |
+| [§8](design.md#8-the-simap) | The SIMAP, and why a shared map is the precondition for peer evidence meaning anything |
 
 This paper's own [`design.md`](design.md) additionally specifies the **25-node
 LangGraph set** scoped to P1 (§7.6, with each of the 14 reasoning nodes'
@@ -75,13 +75,14 @@ This is the **base graph** — two graphs, 25 nodes, 14 reasoning / 6 gates / 5
 effectors. Paper 2 adds a third graph and seven more nodes; Paper 3 keeps this
 topology exactly.
 
-**This paper does not need:** continuous loops or rate adaptation (§9.5–9.7,
-Paper 2), or evaluation of the reasoning layer (§10, Paper 3).
+**This paper does not need:** continuous loops or rate adaptation
+([Paper 2 design](../paper-2-compensation/design.md)), or evaluation of the
+reasoning layer ([Paper 3 plan](../paper-3-grounded-reasoning/plan.md)).
 
 **Open decision — settle before Phase 4 ends.** Whether this paper runs the
 reasoning engine at all. Deterministic agents drop Phase 5, are three to four
 months cheaper and far more reproducible, but invite *"why is this agentic?"*.
-See [plan §2](../README.md#three-papers--choose-one).
+See the [programme overview](../README.md#three-papers--choose-one).
 
 ## Experiments
 
@@ -116,9 +117,10 @@ Then Phase 1's premise checks — any of which can kill a claim cheaply.
 | [`design.md`](design.md) | System architecture as this paper builds and uses it |
 | [`plan.md`](plan.md) | Claims, experiments, baselines, metrics, build phases, threats |
 
-`../docs/design.md` remains **canonical for the shared system**; this folder's
-`design.md` is authoritative for what this paper adds or scopes out. If they
-disagree, the shared document wins and this one is stale.
+This folder's [`design.md`](design.md) is **canonical for the shared system**.
+Papers 2 and 3 inherit that base and define their additions in their own design
+documents. This folder's [`plan.md`](plan.md) defines the base build phases and
+validation programme.
 
 ## Working here
 

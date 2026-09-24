@@ -15,7 +15,7 @@ live forwarding, recovery and optical performance were **not verified**.
 design and optimization. Missing lab dependencies here are expected; the earlier
 assessment's environment inventory records a limit on its evidence, not a
 requirement to prepare this VM as a validation host. Follow the
-planning and design priorities
+current [build phases](paper-1-federated-evidence/plan.md#8-build-phases)
 to document each finding's intended behavior, alternatives, chosen approach,
 implementation dependencies and acceptance criteria. Keep design resolution,
 implementation status and validation evidence distinct. Execute the required
@@ -153,10 +153,12 @@ durable progress and explicit recovery without claiming atomic hardware changes.
 **Close when:** a second-write failure, lost response and adapter restart retain
 enough evidence to reconcile or report unresolved state without blindly
 repeating effects. Verify delivered traffic independently of configured route
-references. This work belongs with the roadmap's controller transaction phase.
+references. This work belongs with the
+[MCP implementation phase](paper-1-federated-evidence/plan.md#8-build-phases)
+and the [controller contract](mcp-server-design.md#shared-tool-and-result-contract).
 
 Sources: [backup path operations](packet-network/backup_path.py),
-controller transaction roadmap.
+[controller transaction contract](mcp-server-design.md#shared-tool-and-result-contract).
 
 **F7 — Avoid disruptive optical writes when retaining a verified channel.**
 
@@ -250,23 +252,26 @@ additional reproduced runtime defects. They remain open.
   establish a contiguous 90–100 ms outage. Close this item with a reproducible
   deploy–traffic–retune–packet-repair–optical-cut–teardown run and independent
   outcome checks. This validates the fixture, not the still-unimplemented DSO
-  federation. See the artifact plan.
+  federation. See the
+  [run-bundle specification](paper-1-federated-evidence/plan.md#12-run-bundle-and-reproducibility).
 - **C3 — Align documentation and experiment scope.** Update remaining fixed
   channel-1/four-candidate descriptions to match the two-channel/eight-candidate
   fixture; remove claims of an existing packet journal or installed optical-rule
   readback; update the optical test count from 25 to 40 at this snapshot. Resolve
-  scope descriptions across the richer simulator, present single-flow emulation,
-  and allocation-capable emulation to implement. The 23 September revision makes
-  ACO, PSO, Nash bargaining, and continual predictor learning required; B0 uses
-  learning, and B1 disables generative calls without disabling the numerical
-  learner. Validate the revised node mapping, component ablations, actual
-  continuous allocation, and chronological learning evidence. Define a policy-approved
+  scope descriptions against the current three-paper programme: Paper 1 uses
+  exact enumeration, shared evidence and predictor learning; Paper 2 adds rate
+  compensation; Paper 3 evaluates reasoning and retrieval. The earlier
+  ACO/PSO/Nash and continuous-allocation requirements are superseded. Validate
+  the current node mapping, component ablations and chronological learning
+  evidence. Define a policy-approved
   packet provisioning action for healthy-path selection rather than relying on
   a repair command's rehearsal `--force` flag. Close with consistent capability
-  and study profiles across the architecture,
-  node catalogue, [data-plane specification](data-plane.md),
+  and study profiles across the
+  [shared architecture](paper-1-federated-evidence/design.md),
+  [node set](paper-1-federated-evidence/design.md#76-the-langgraph-node-set),
+  [data-plane specification](data-plane.md),
   [installation guide](installation.md), component READMEs and
-  validation plan.
+  [validation plan](paper-1-federated-evidence/plan.md).
 
 Resolve F1–F5 before treating fixture output as reliable automated experiment
 evidence. Resolve F6–F10 and C1 alongside the scoped adapters and assurance
